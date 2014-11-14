@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "MyFilter.h"
 
+#include "Factory.h"
 #include "MyPin.h"
 
 namespace SaneAudioRenderer
 {
     MyFilter::MyFilter(HRESULT& result)
-        : CBaseFilter("Audio Renderer", nullptr, this, __uuidof(MyFilter))
+        : CBaseFilter("Audio Renderer", nullptr, this, Factory::GetFilterGuid())
     {
         assert(result == S_OK);
 

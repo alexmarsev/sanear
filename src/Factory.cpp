@@ -27,4 +27,10 @@ namespace SaneAudioRenderer
 
         return result;
     }
+
+    const GUID& Factory::GetFilterGuid()
+    {
+        static const GUID guid = {0x2AE00773, 0x819A, 0x40FB, {0xA5, 0x54, 0x54, 0x82, 0x7E, 0x11, 0x63, 0x59}};
+        return guid;
+    }
 }

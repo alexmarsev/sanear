@@ -1,5 +1,7 @@
 #pragma once
 
+#include <guiddef.h>
+
 namespace SaneAudioRenderer
 {
     class Factory final
@@ -9,5 +11,6 @@ namespace SaneAudioRenderer
         Factory() = delete;
 
         static HRESULT CreateFilter(IBaseFilter** ppOut);
+        static const GUID& GetFilterGuid();
     };
 }

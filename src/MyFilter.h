@@ -6,8 +6,7 @@ namespace SaneAudioRenderer
 {
     class MyPin;
 
-    class __declspec(uuid("2AE00773-819A-40FB-A554-54827E116359"))
-    MyFilter final
+    class MyFilter final
         : public CCritSec
         , public CBaseFilter
     {
