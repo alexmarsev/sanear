@@ -10,6 +10,8 @@ namespace SaneAudioRenderer
         {
             DspChunk chunk;
 
+            // TODO: can gradually accumulate error - decide what to do with it
+
             auto timeToFrames = [&](REFERENCE_TIME time)
             {
                 return (size_t)(time * sampleFormat.nSamplesPerSec / OneSecond);
