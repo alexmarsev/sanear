@@ -179,6 +179,8 @@ namespace SaneAudioRenderer
         {
             TimePeriodHelper timePeriodHelper(1);
 
+            m_graphClock->UnslaveClockFromAudio();
+
             try
             {
                 for (;;)
