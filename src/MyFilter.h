@@ -4,6 +4,7 @@
 
 namespace SaneAudioRenderer
 {
+    struct ISettings;
     class MyPin;
 
     class MyFilter final
@@ -12,7 +13,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        explicit MyFilter(HRESULT& result);
+        explicit MyFilter(ISettings* pSettings, HRESULT& result);
         MyFilter(const MyFilter&) = delete;
         MyFilter& operator=(const MyFilter&) = delete;
 

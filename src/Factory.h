@@ -3,6 +3,8 @@
 #include <dshow.h>
 #include <guiddef.h>
 
+#include "Settings.h"
+
 namespace SaneAudioRenderer
 {
     class Factory final
@@ -11,7 +13,7 @@ namespace SaneAudioRenderer
 
         Factory() = delete;
 
-        static HRESULT CreateFilter(IBaseFilter** ppOut);
+        static HRESULT CreateFilter(IBaseFilter** ppOut, ISettings* pSettings);
         static const GUID& GetFilterGuid();
     };
 }

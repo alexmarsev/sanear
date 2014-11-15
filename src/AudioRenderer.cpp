@@ -74,18 +74,19 @@ namespace SaneAudioRenderer
         }
     }
 
-    AudioRenderer::AudioRenderer(IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result)
+    AudioRenderer::AudioRenderer(ISettings* pSettings, IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result)
         : m_deviceManager(result)
         , m_graphClock(pClock)
         , m_flush(TRUE/*manual reset*/)
         , m_bufferFilled(bufferFilled)
+        , m_settings(pSettings)
     {
         if (FAILED(result))
             return;
 
         try
         {
-            if (!m_graphClock)
+            if (!m_settings || !m_graphClock)
                 throw E_UNEXPECTED;
 
             if (static_cast<HANDLE>(m_flush) == NULL ||
@@ -93,6 +94,8 @@ namespace SaneAudioRenderer
             {
                 throw E_OUTOFMEMORY;
             }
+
+            m_settingsSerial = m_settings->Serial();
 
             if (!m_deviceManager.CreateDevice(m_device))
                 throw E_OUTOFMEMORY;

@@ -3,10 +3,10 @@
 
 namespace SaneAudioRenderer
 {
-    MyPin::MyPin(CBaseFilter* pFilter, IMyClock* pClock, HRESULT& result)
+    MyPin::MyPin(CBaseFilter* pFilter, ISettings* pSettings, IMyClock* pClock, HRESULT& result)
         : CBaseInputPin("Audio Renderer Input Pin", pFilter, this, &result, TEXT("Input0"))
         , m_bufferFilled(TRUE/*manual reset*/)
-        , m_renderer(pClock, m_bufferFilled, result)
+        , m_renderer(pSettings, pClock, m_bufferFilled, result)
     {
         if (FAILED(result))
             return;

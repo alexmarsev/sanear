@@ -7,6 +7,7 @@
 #include "DspMatrix.h"
 #include "DspRate.h"
 #include "MyClock.h"
+#include "Settings.h"
 
 namespace SaneAudioRenderer
 {
@@ -15,7 +16,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        AudioRenderer(IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result);
+        AudioRenderer(ISettings* pSettings, IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result);
         AudioRenderer(const AudioRenderer&) = delete;
         AudioRenderer& operator=(const AudioRenderer&) = delete;
         ~AudioRenderer();
@@ -63,5 +64,8 @@ namespace SaneAudioRenderer
         //DspLimiter m_dspLimiter;
 
         CAMEvent& m_bufferFilled;
+
+        ISettingsPtr m_settings;
+        int m_settingsSerial;
     };
 }

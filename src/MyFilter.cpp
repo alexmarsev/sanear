@@ -6,7 +6,7 @@
 
 namespace SaneAudioRenderer
 {
-    MyFilter::MyFilter(HRESULT& result)
+    MyFilter::MyFilter(ISettings* pSettings, HRESULT& result)
         : CBaseFilter("Audio Renderer", nullptr, this, Factory::GetFilterGuid())
     {
         assert(result == S_OK);
@@ -17,7 +17,7 @@ namespace SaneAudioRenderer
                 m_clock = new MyClock(result);
 
             if (SUCCEEDED(result))
-                m_pin = std::make_unique<MyPin>(this, m_clock, result);
+                m_pin = std::make_unique<MyPin>(this, pSettings, m_clock, result);
 
             if (SUCCEEDED(result))
                 result = CreatePosPassThru(nullptr, FALSE, m_pin.get(), &m_seeking);

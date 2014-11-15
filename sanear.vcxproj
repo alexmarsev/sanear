@@ -74,6 +74,7 @@
     <ClInclude Include="src\DspMatrix.h" />
     <ClInclude Include="src\DspChunk.h" />
     <ClInclude Include="src\AudioRenderer.h" />
+    <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\MyFilter.h" />
     <ClInclude Include="src\MyClock.h" />

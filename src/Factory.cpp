@@ -5,15 +5,16 @@
 
 namespace SaneAudioRenderer
 {
-    HRESULT Factory::CreateFilter(IBaseFilter** ppOut)
+    HRESULT Factory::CreateFilter(IBaseFilter** ppOut, ISettings* pSettings)
     {
         CheckPointer(ppOut, E_POINTER);
+        CheckPointer(pSettings, E_POINTER);
 
         *ppOut = nullptr;
 
         HRESULT result = S_OK;
 
-        auto pFilter = new(std::nothrow) MyFilter(result);
+        auto pFilter = new(std::nothrow) MyFilter(pSettings, result);
 
         if (!pFilter)
             return E_OUTOFMEMORY;

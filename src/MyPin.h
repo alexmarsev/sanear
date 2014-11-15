@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MyClock.h"
 #include "AudioRenderer.h"
 
 namespace SaneAudioRenderer
@@ -11,7 +10,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyPin(CBaseFilter* pFilter, IMyClock* pClock, HRESULT& result);
+        MyPin(CBaseFilter* pFilter, ISettings* pSettings, IMyClock* pClock, HRESULT& result);
         MyPin(const MyPin&) = delete;
         MyPin& operator=(const MyPin&) = delete;
 
