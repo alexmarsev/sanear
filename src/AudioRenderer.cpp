@@ -31,7 +31,7 @@ namespace SaneAudioRenderer
                     AM_SAMPLE2_PROPERTIES croppedSampleProps = sampleProps;
                     assert((int32_t)cropBytes < croppedSampleProps.lActual);
                     croppedSampleProps.pbBuffer += cropBytes;
-                    croppedSampleProps.lActual -= (int)cropBytes;
+                    croppedSampleProps.lActual -= (int32_t)cropBytes;
 
                     chunk = DspChunk(pSample, croppedSampleProps, sampleFormat);
                 }
