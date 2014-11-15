@@ -36,6 +36,7 @@ namespace SaneAudioRenderer
         STDMETHODIMP ChangeState(PinFunction pinFunction);
 
         IMyClockPtr m_clock;
+        IBasicAudioPtr m_basicAudio;
         std::unique_ptr<MyPin> m_pin;
         IUnknownPtr m_seeking;
     };

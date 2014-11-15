@@ -6,6 +6,7 @@
 //#include "DspLimiter.h"
 #include "DspMatrix.h"
 #include "DspRate.h"
+#include "DspVolume.h"
 #include "MyClock.h"
 #include "Settings.h"
 
@@ -35,6 +36,9 @@ namespace SaneAudioRenderer
         void Pause();
         void Stop();
 
+        float GetVolume() const { return m_volume; }
+        void SetVolume(float volume) { m_volume = volume; }
+
     private:
 
         void InitializeProcessors();
@@ -61,11 +65,14 @@ namespace SaneAudioRenderer
         //DspGain m_dspGain;
         DspRate m_dspRate;
         DspCrossfeed m_dspCrossfeed;
+        DspVolume m_dspVolume;
         //DspLimiter m_dspLimiter;
 
         CAMEvent& m_bufferFilled;
 
         ISettingsPtr m_settings;
         int m_settingsSerial;
+
+        std::atomic<float> m_volume = 1.0f;
     };
 }

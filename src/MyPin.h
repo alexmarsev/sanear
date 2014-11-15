@@ -31,6 +31,10 @@ namespace SaneAudioRenderer
         HRESULT Run(REFERENCE_TIME startTime) override;
         HRESULT Inactive() override;
 
+        // TODO: refactor me
+        float GetVolume() const { return m_renderer.GetVolume(); }
+        void SetVolume(float volume) { m_renderer.SetVolume(volume); }
+
         bool StateTransitionFinished(uint32_t timeoutMilliseconds);
 
     private:

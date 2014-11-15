@@ -78,6 +78,7 @@ namespace SaneAudioRenderer
         : m_deviceManager(result)
         , m_graphClock(pClock)
         , m_flush(TRUE/*manual reset*/)
+        , m_dspVolume(*this)
         , m_bufferFilled(bufferFilled)
         , m_settings(pSettings)
     {
@@ -134,6 +135,7 @@ namespace SaneAudioRenderer
                 //m_dspGain.Process(chunk);
                 m_dspRate.Process(chunk);
                 m_dspCrossfeed.Process(chunk);
+                m_dspVolume.Process(chunk);
                 //m_dspLimiter.Process(chunk);
 
                 DspChunk::ToFloat(chunk);
@@ -164,6 +166,7 @@ namespace SaneAudioRenderer
                 //m_dspGain.Finish(chunk);
                 m_dspRate.Finish(chunk);
                 m_dspCrossfeed.Finish(chunk);
+                m_dspVolume.Finish(chunk);
                 //m_dspLimiter.Finish(chunk);
 
                 DspChunk::ToFloat(chunk);

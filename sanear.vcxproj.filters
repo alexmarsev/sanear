@@ -34,6 +34,9 @@
     <ClCompile Include="src\DspCrossfeed.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\DspVolume.cpp">
+      <Filter>Renderer\Processors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -76,6 +79,9 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\DspCrossfeed.h">
+      <Filter>Renderer\Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspVolume.h">
       <Filter>Renderer\Processors</Filter>
     </ClInclude>
   </ItemGroup>

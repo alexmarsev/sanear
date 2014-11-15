@@ -6,6 +6,52 @@
 
 namespace SaneAudioRenderer
 {
+    namespace
+    {
+        class MyBasicAudio final
+            : public CBasicAudio
+        {
+        public:
+
+            MyBasicAudio(MyPin& myPin) : CBasicAudio(TEXT("Basic Audio"), nullptr), m_myPin(myPin) {}
+            MyBasicAudio(const MyBasicAudio&) = delete;
+            MyBasicAudio& operator=(const MyBasicAudio&) = delete;
+
+            STDMETHODIMP put_Volume(long volume) override
+            {
+                if (volume < -10000 || volume > 0) return E_FAIL;
+                float f = (volume == 0) ? 1.0f : pow(10.0f, (float)volume / 2000);
+                m_myPin.SetVolume(f);
+                return S_OK;
+            }
+
+            STDMETHODIMP get_Volume(long* pVolume) override
+            {
+                CheckPointer(pVolume, E_POINTER);
+                float f = m_myPin.GetVolume();
+                *pVolume = (f == 1.0f) ? 0 : (long)(log10(f) * 2000);
+                assert(*pVolume <= 0 && *pVolume >= -10000);
+                return S_OK;
+            }
+
+            STDMETHODIMP put_Balance(long) override
+            {
+                return E_NOTIMPL;
+            }
+
+            STDMETHODIMP get_Balance(long* pBalance) override
+            {
+                CheckPointer(pBalance, E_POINTER);
+                *pBalance = 0;
+                return S_OK;
+            }
+
+        private:
+
+            MyPin& m_myPin;
+        };
+    }
+
     MyFilter::MyFilter(ISettings* pSettings, HRESULT& result)
         : CBaseFilter("Audio Renderer", nullptr, this, Factory::GetFilterGuid())
     {
@@ -20,6 +66,9 @@ namespace SaneAudioRenderer
                 m_pin = std::make_unique<MyPin>(this, pSettings, m_clock, result);
 
             if (SUCCEEDED(result))
+                m_basicAudio = new MyBasicAudio(*m_pin);
+
+            if (SUCCEEDED(result))
                 result = CreatePosPassThru(nullptr, FALSE, m_pin.get(), &m_seeking);
         }
         catch (std::bad_alloc&)
@@ -32,6 +81,9 @@ namespace SaneAudioRenderer
     {
         if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
             return m_clock->QueryInterface(riid, ppv);
+
+        if (riid == IID_IBasicAudio)
+            return m_basicAudio->QueryInterface(riid, ppv);
 
         if (riid == IID_IMediaSeeking)
             return m_seeking->QueryInterface(riid, ppv);
