@@ -13,7 +13,7 @@ namespace SaneAudioRenderer
             WM_CREATE_DEVICE = WM_USER + 100,
         };
 
-        template<class T>
+        template <class T>
         bool IsLastInstance(T& smartPointer)
         {
             bool ret = (smartPointer.GetInterfacePtr()->AddRef() == 2);

@@ -2,8 +2,9 @@
 
 namespace SaneAudioRenderer
 {
+    // This is an internal interface, and can be changed anytime.
     struct __declspec(uuid("B6E42D80-6CAB-4D9B-91F4-F6FE5C4C64E6"))
-    IMyClock : public IUnknown
+    IMyClock : IUnknown
     {
         STDMETHOD_(void, SlaveClockToAudio)(IAudioClock* pAudioClock, int64_t audioStart) = 0;
         STDMETHOD_(void, UnslaveClockFromAudio)() = 0;

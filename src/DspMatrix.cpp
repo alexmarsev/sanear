@@ -170,7 +170,7 @@ namespace SaneAudioRenderer
             return matrix;
         }
 
-        template<size_t InputChannels, size_t OutputChannels>
+        template <size_t InputChannels, size_t OutputChannels>
         void Mix(const float* inputData, float* outputData, const float* matrix, size_t frames)
         {
             for (size_t frame = 0; frame < frames; frame++)

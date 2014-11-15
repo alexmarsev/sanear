@@ -12,40 +12,40 @@ namespace SaneAudioRenderer
         Double,
     };
 
-    template<DspFormat OutputFormat>
+    template <DspFormat OutputFormat>
     struct DspFormatTraits;
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Pcm8>
     {
         typedef int8_t SampleType;
     };
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Pcm16>
     {
         typedef int16_t SampleType;
     };
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Pcm24>
     {
         typedef int32_t SampleType;
     };
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Pcm32>
     {
         typedef int32_t SampleType;
     };
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Float>
     {
         typedef float SampleType;
     };
 
-    template<>
+    template <>
     struct DspFormatTraits<DspFormat::Double>
     {
         typedef double SampleType;
