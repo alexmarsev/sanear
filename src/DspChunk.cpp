@@ -38,13 +38,13 @@ namespace SaneAudioRenderer
         template<>
         inline void ConvertSample<DspFormat::Pcm8, DspFormat::Float>(const int8_t& input, float& output)
         {
-            output = (float)input / -INT8_MIN;
+            output = (float)input / ((int32_t)INT8_MAX + 1);
         }
 
         template<>
         inline void ConvertSample<DspFormat::Pcm8, DspFormat::Double>(const int8_t& input, double& output)
         {
-            output = (double)input / -INT8_MIN;
+            output = (double)input / ((int32_t)INT8_MAX + 1);
         }
 
         template<>
@@ -68,13 +68,13 @@ namespace SaneAudioRenderer
         template<>
         inline void ConvertSample<DspFormat::Pcm16, DspFormat::Float>(const int16_t& input, float& output)
         {
-            output = (float)input / -INT16_MIN;
+            output = (float)input / ((int32_t)INT16_MAX + 1);
         }
 
         template<>
         inline void ConvertSample<DspFormat::Pcm16, DspFormat::Double>(const int16_t& input, double& output)
         {
-            output = (double)input / -INT16_MIN;
+            output = (double)input / ((int32_t)INT16_MAX + 1);
         }
 
         template<>
@@ -98,13 +98,13 @@ namespace SaneAudioRenderer
         template<>
         inline void ConvertSample<DspFormat::Pcm24, DspFormat::Float>(const int32_t& input, float& output)
         {
-            output = (float)input / (-INT32_MIN >> 8);
+            output = (float)input / ((INT32_MAX >> 8) + 1);
         }
 
         template<>
         inline void ConvertSample<DspFormat::Pcm24, DspFormat::Double>(const int32_t& input, double& output)
         {
-            output = (double)input / (-INT32_MIN >> 8);
+            output = (double)input / ((INT32_MAX >> 8) + 1);
         }
 
         template<>
@@ -128,13 +128,13 @@ namespace SaneAudioRenderer
         template<>
         inline void ConvertSample<DspFormat::Pcm32, DspFormat::Float>(const int32_t& input, float& output)
         {
-            output = (float)input / -INT32_MIN;
+            output = (float)input / ((int64_t)INT32_MAX + 1);
         }
 
         template<>
         inline void ConvertSample<DspFormat::Pcm32, DspFormat::Double>(const int32_t& input, double& output)
         {
-            output = (double)input / -INT32_MIN;
+            output = (double)input / ((int64_t)INT32_MAX + 1);
         }
 
         template<>
