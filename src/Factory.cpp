@@ -13,17 +13,17 @@ namespace SaneAudioRenderer
 
         HRESULT result = S_OK;
 
-        MyFilter* pRenderer = new(std::nothrow) MyFilter(result);
+        auto pFilter = new(std::nothrow) MyFilter(result);
 
-        if (!pRenderer)
+        if (!pFilter)
             return E_OUTOFMEMORY;
 
-        pRenderer->AddRef();
+        pFilter->AddRef();
 
         if (SUCCEEDED(result))
-            result = pRenderer->QueryInterface(IID_PPV_ARGS(ppOut));
+            result = pFilter->QueryInterface(IID_PPV_ARGS(ppOut));
 
-        pRenderer->Release();
+        pFilter->Release();
 
         return result;
     }

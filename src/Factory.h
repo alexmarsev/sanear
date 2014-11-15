@@ -1,5 +1,6 @@
 #pragma once
 
+#include <dshow.h>
 #include <guiddef.h>
 
 namespace SaneAudioRenderer
