@@ -37,6 +37,9 @@
     <ClCompile Include="src\DspVolume.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\MyBasicAudio.cpp">
+      <Filter>DirectShow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -83,6 +86,9 @@
     </ClInclude>
     <ClInclude Include="src\DspVolume.h">
       <Filter>Renderer\Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MyBasicAudio.h">
+      <Filter>DirectShow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,8 @@ namespace SaneAudioRenderer
 
         DECLARE_IUNKNOWN
 
+        STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void** ppv) override;
+
         HRESULT CheckMediaType(const CMediaType* pmt) override;
         HRESULT SetMediaType(const CMediaType* pmt) override;
 
@@ -31,10 +33,6 @@ namespace SaneAudioRenderer
         HRESULT Run(REFERENCE_TIME startTime) override;
         HRESULT Inactive() override;
 
-        // TODO: refactor me
-        float GetVolume() const { return m_renderer.GetVolume(); }
-        void SetVolume(float volume) { m_renderer.SetVolume(volume); }
-
         bool StateTransitionFinished(uint32_t timeoutMilliseconds);
 
     private:
@@ -47,6 +45,8 @@ namespace SaneAudioRenderer
         CCritSec m_receiveMutex;
 
         CAMEvent m_bufferFilled;
+
+        IBasicAudioPtr m_basicAudio;
         AudioRenderer m_renderer;
     };
 }

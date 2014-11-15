@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MyPin.h"
 
+#include "MyBasicAudio.h"
+
 namespace SaneAudioRenderer
 {
     MyPin::MyPin(CBaseFilter* pFilter, ISettings* pSettings, IMyClock* pClock, HRESULT& result)
@@ -12,9 +14,17 @@ namespace SaneAudioRenderer
             return;
 
         if (static_cast<HANDLE>(m_bufferFilled) == NULL)
-        {
             result = E_OUTOFMEMORY;
-        }
+
+        m_basicAudio = new MyBasicAudio(m_renderer);
+    }
+
+    STDMETHODIMP MyPin::NonDelegatingQueryInterface(REFIID riid, void** ppv)
+    {
+        if (riid == IID_IBasicAudio)
+            return m_basicAudio->QueryInterface(riid, ppv);
+
+        return CBaseInputPin::NonDelegatingQueryInterface(riid, ppv);
     }
 
     HRESULT MyPin::CheckMediaType(const CMediaType* pmt)
