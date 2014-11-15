@@ -10,10 +10,9 @@ namespace SaneAudioRenderer
         {
             DspChunk chunk;
 
-            auto timeToBytes = [&](REFERENCE_TIME time)
+            auto timeToFrames = [&](REFERENCE_TIME time)
             {
-                size_t frames = (size_t)(time * sampleFormat.nSamplesPerSec / OneSecond);
-                return frames * sampleFormat.nChannels * sampleFormat.wBitsPerSample / 8;
+                return (size_t)(time * sampleFormat.nSamplesPerSec / OneSecond);
             };
 
             if (sampleProps.tStop <= previousSampleEndTime)
@@ -24,28 +23,44 @@ namespace SaneAudioRenderer
             else if (sampleProps.tStart < previousSampleEndTime)
             {
                 // Crop the sample.
-                size_t cropBytes = timeToBytes(previousSampleEndTime - sampleProps.tStart);
+                size_t cropFrames = timeToFrames(previousSampleEndTime - sampleProps.tStart);
+                if (cropFrames > 0)
+                {
+                    size_t cropBytes = cropFrames * sampleFormat.nChannels * sampleFormat.wBitsPerSample / 8;
 
-                AM_SAMPLE2_PROPERTIES croppedSampleProps = sampleProps;
-                assert(cropBytes < croppedSampleProps.lActual);
-                croppedSampleProps.pbBuffer += cropBytes;
-                croppedSampleProps.lActual -= (int)cropBytes;
+                    AM_SAMPLE2_PROPERTIES croppedSampleProps = sampleProps;
+                    assert((int32_t)cropBytes < croppedSampleProps.lActual);
+                    croppedSampleProps.pbBuffer += cropBytes;
+                    croppedSampleProps.lActual -= (int)cropBytes;
 
-                chunk = DspChunk(pSample, croppedSampleProps, sampleFormat);
+                    chunk = DspChunk(pSample, croppedSampleProps, sampleFormat);
+                }
+                else
+                {
+                    chunk = DspChunk(pSample, sampleProps, sampleFormat);
+                }
             }
             else if (sampleProps.tStart > previousSampleEndTime)
             {
                 // Zero-pad the sample.
-                size_t extendBytes = timeToBytes(sampleProps.tStart - previousSampleEndTime);
+                size_t extendFrames = timeToFrames(sampleProps.tStart - previousSampleEndTime);
+                if (extendFrames > 0)
+                {
+                    DspChunk tempChunk(pSample, sampleProps, sampleFormat);
 
-                DspChunk tempChunk(pSample, sampleProps, sampleFormat);
+                    chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
+                                     tempChunk.GetFrameCount() + extendFrames, tempChunk.GetRate());
 
-                chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
-                                 tempChunk.GetFrameCount() + extendBytes / tempChunk.GetFrameSize(), tempChunk.GetRate());
+                    size_t extendBytes = extendFrames * chunk.GetFrameSize();
 
-                assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
-                ZeroMemory(chunk.GetData(), extendBytes);
-                memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
+                    assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
+                    ZeroMemory(chunk.GetData(), extendBytes);
+                    memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
+                }
+                else
+                {
+                    chunk = DspChunk(pSample, sampleProps, sampleFormat);
+                }
             }
             else
             {
