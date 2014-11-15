@@ -1,6 +1,9 @@
 #pragma once
 
-#define NOMINMAX
+#ifndef NOMINMAX
+#   define NOMINMAX
+#endif
+
 #include <windows.h>
 
 #include <streams.h>
