@@ -31,6 +31,9 @@
     <ClCompile Include="src\Factory.cpp">
       <Filter>DirectShow</Filter>
     </ClCompile>
+    <ClCompile Include="src\DspCrossfeed.cpp">
+      <Filter>Renderer\Processors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="src\Settings.h">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspCrossfeed.h">
+      <Filter>Renderer\Processors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

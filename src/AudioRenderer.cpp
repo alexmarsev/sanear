@@ -133,7 +133,7 @@ namespace SaneAudioRenderer
                 m_dspMatrix.Process(chunk);
                 //m_dspGain.Process(chunk);
                 m_dspRate.Process(chunk);
-                //m_dspCrossfeed.Process(chunk);
+                m_dspCrossfeed.Process(chunk);
                 //m_dspLimiter.Process(chunk);
 
                 DspChunk::ToFloat(chunk);
@@ -163,7 +163,7 @@ namespace SaneAudioRenderer
                 m_dspMatrix.Finish(chunk);
                 //m_dspGain.Finish(chunk);
                 m_dspRate.Finish(chunk);
-                //m_dspCrossfeed.Finish(chunk);
+                m_dspCrossfeed.Finish(chunk);
                 //m_dspLimiter.Finish(chunk);
 
                 DspChunk::ToFloat(chunk);
@@ -305,8 +305,8 @@ namespace SaneAudioRenderer
         //m_dspGain.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
         m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nSamplesPerSec,
                              m_device.format.Format.nChannels);
-        //m_dspCrossfeed.Initialize(m_device.format.Format.nSamplesPerSec, m_device.format.Format.nChannels,
-        //                          getChannelMask(m_device.format));
+        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), m_device.format.Format.nSamplesPerSec,
+                                  m_device.format.Format.nChannels, getChannelMask(m_device.format));
         //m_dspLimiter.Initialize(m_device.format.Format.nSamplesPerSec);
     }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DeviceManager.h"
-//#include "DspCrossfeed.h"
+#include "DspCrossfeed.h"
 //#include "DspGain.h"
 //#include "DspLimiter.h"
 #include "DspMatrix.h"
@@ -60,7 +60,7 @@ namespace SaneAudioRenderer
         DspMatrix m_dspMatrix;
         //DspGain m_dspGain;
         DspRate m_dspRate;
-        //DspCrossfeed m_dspCrossfeed;
+        DspCrossfeed m_dspCrossfeed;
         //DspLimiter m_dspLimiter;
 
         CAMEvent& m_bufferFilled;
