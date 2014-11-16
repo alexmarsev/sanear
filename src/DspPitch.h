@@ -24,5 +24,10 @@ namespace SaneAudioRenderer
         soundtouch::SoundTouch m_stouch;
 
         bool m_active = false;
+
+        uint32_t m_rate;
+        uint32_t m_channels;
+
+        int32_t m_offset;
     };
 }

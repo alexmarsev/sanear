@@ -6,7 +6,13 @@ namespace SaneAudioRenderer
     void DspPitch::Initialize(float pitch, uint32_t rate, uint32_t channels)
     {
         m_stouch.clear();
+
         m_active = false;
+
+        m_rate = rate;
+        m_channels = channels;
+
+        m_offset = 0;
 
         if (pitch != 1.0f)
         {
@@ -29,14 +35,18 @@ namespace SaneAudioRenderer
         {
             DspChunk::ToFloat(chunk);
 
+            assert(chunk.GetRate() == m_rate);
+            assert(chunk.GetChannelCount() == m_channels);
+
             m_stouch.putSamples((const float*)chunk.GetConstData(), chunk.GetFrameCount());
+            m_offset += chunk.GetFrameCount();
 
-            DspChunk output(chunk.GetFormat(), chunk.GetChannelCount(), m_stouch.numSamples(), chunk.GetRate());
+            DspChunk output(DspFormat::Float, m_channels, m_stouch.numSamples(), m_rate);
 
-            ZeroMemory(output.GetData(), output.GetSize());
-            size_t done = m_stouch.receiveSamples((float*)output.GetData(), output.GetFrameCount());
+            uint32_t done = m_stouch.receiveSamples((float*)output.GetData(), output.GetFrameCount());
             assert(done == output.GetFrameCount());
             output.Shrink(done);
+            m_offset -= done;
 
             chunk = std::move(output);
         }
@@ -44,6 +54,26 @@ namespace SaneAudioRenderer
 
     void DspPitch::Finish(DspChunk& chunk)
     {
-        Process(chunk);
+        if (m_active)
+        {
+            Process(chunk);
+
+            assert(m_offset >= 0);
+            if (m_offset > 0)
+            {
+                DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_offset, m_rate);
+
+                if (!chunk.IsEmpty())
+                    memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
+
+                m_stouch.flush();
+
+                uint32_t done = m_stouch.receiveSamples((float*)output.GetData() + chunk.GetSampleCount(), m_offset);
+                assert(done == m_offset);
+                m_offset -= done;
+
+                chunk = std::move(output);
+            }
+        }
     }
 }
