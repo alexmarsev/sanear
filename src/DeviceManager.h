@@ -1,5 +1,7 @@
 #pragma once
 
+#include "DspFormat.h"
+
 namespace SaneAudioRenderer
 {
     struct AudioDevice final
@@ -10,6 +12,7 @@ namespace SaneAudioRenderer
         uint32_t              bufferDuration;
         IAudioRenderClientPtr audioRenderClient;
         IAudioClockPtr        audioClock;
+        DspFormat             dspFormat;
     };
 
     class DeviceManager final

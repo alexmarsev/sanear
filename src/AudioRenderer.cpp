@@ -139,7 +139,7 @@ namespace SaneAudioRenderer
                 m_dspVolume.Process(chunk);
                 //m_dspLimiter.Process(chunk);
 
-                DspChunk::ToFloat(chunk);
+                DspChunk::ToFormat(m_device.dspFormat, chunk);
 
                 m_lastSampleEnd = sampleProps.tStop;
             }
@@ -171,7 +171,7 @@ namespace SaneAudioRenderer
                 m_dspVolume.Finish(chunk);
                 //m_dspLimiter.Finish(chunk);
 
-                DspChunk::ToFloat(chunk);
+                DspChunk::ToFormat(m_device.dspFormat, chunk);
             }
             catch (std::bad_alloc&)
             {

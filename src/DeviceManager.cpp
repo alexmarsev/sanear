@@ -81,6 +81,8 @@ namespace SaneAudioRenderer
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioClock)));
 
+            m_device.dspFormat = DspFormat::Float;
+
             return 0;
         }
         catch (HRESULT)
