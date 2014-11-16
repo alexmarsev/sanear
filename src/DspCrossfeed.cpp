@@ -13,7 +13,6 @@ namespace SaneAudioRenderer
             m_bs2b.set_srate(rate);
 
             m_active = true;
-            m_rate = rate;
         }
     }
 
@@ -23,10 +22,7 @@ namespace SaneAudioRenderer
         {
             DspChunk::ToFloat(chunk);
 
-            assert(chunk.GetFormat() == DspFormat::Float);
             assert(chunk.GetChannelCount() == 2);
-            assert(chunk.GetRate() == m_rate);
-
             m_bs2b.cross_feed((float*)chunk.GetData(), (int)chunk.GetFrameCount());
         }
     }

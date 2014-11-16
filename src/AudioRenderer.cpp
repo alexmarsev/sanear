@@ -133,6 +133,7 @@ namespace SaneAudioRenderer
 
                 m_dspMatrix.Process(chunk);
                 //m_dspGain.Process(chunk);
+                m_dspPitch.Process(chunk);
                 m_dspRate.Process(chunk);
                 m_dspCrossfeed.Process(chunk);
                 m_dspVolume.Process(chunk);
@@ -164,6 +165,7 @@ namespace SaneAudioRenderer
             {
                 m_dspMatrix.Finish(chunk);
                 //m_dspGain.Finish(chunk);
+                m_dspPitch.Finish(chunk);
                 m_dspRate.Finish(chunk);
                 m_dspCrossfeed.Finish(chunk);
                 m_dspVolume.Finish(chunk);
@@ -235,8 +237,8 @@ namespace SaneAudioRenderer
         m_device.audioClient->Reset();
         m_bufferFilled.Reset();
 
-        if (m_inputFormatInitialized)
-            InitializeProcessors();
+        //if (m_inputFormatInitialized)
+        //    InitializeProcessors();
 
         m_flush.Reset();
 
@@ -256,12 +258,16 @@ namespace SaneAudioRenderer
         InitializeProcessors();
     }
 
-    void AudioRenderer::NewSegment()
+    void AudioRenderer::NewSegment(double rate)
     {
         CAutoLock objectLock(this);
-        assert(m_state != State_Running);
+        //assert(m_state != State_Running);
 
         m_lastSampleEnd = 0;
+        m_rate = rate;
+
+        if (m_inputFormatInitialized)
+            InitializeProcessors();
     }
 
     void AudioRenderer::Play(REFERENCE_TIME startTime)
@@ -272,7 +278,7 @@ namespace SaneAudioRenderer
 
         m_graphClock->SlaveClockToAudio(m_device.audioClock, startTime);
         m_device.audioClient->Start();
-        assert(m_bufferFilled.Check());
+        //assert(m_bufferFilled.Check());
     }
 
     void AudioRenderer::Pause()
@@ -308,8 +314,9 @@ namespace SaneAudioRenderer
         m_dspMatrix.Initialize(m_inputFormat.Format.nChannels, getChannelMask(m_inputFormat),
                                m_device.format.Format.nChannels, getChannelMask(m_device.format));
         //m_dspGain.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
-        m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nSamplesPerSec,
-                             m_device.format.Format.nChannels);
+        m_dspPitch.Initialize((float)(1.0 / m_rate), m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
+        m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, lround(m_device.format.Format.nSamplesPerSec / m_rate),
+                             m_device.format.Format.nChannels); // TODO: may accumulate errors when m_rate != 1.0
         m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), m_device.format.Format.nSamplesPerSec,
                                   m_device.format.Format.nChannels, getChannelMask(m_device.format));
         //m_dspLimiter.Initialize(m_device.format.Format.nSamplesPerSec);

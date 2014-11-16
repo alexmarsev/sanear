@@ -24,6 +24,5 @@ namespace SaneAudioRenderer
         bs2b_base m_bs2b;
 
         bool m_active = false;
-        uint32_t m_rate;
     };
 }

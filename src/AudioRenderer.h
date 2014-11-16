@@ -5,6 +5,7 @@
 //#include "DspGain.h"
 //#include "DspLimiter.h"
 #include "DspMatrix.h"
+#include "DspPitch.h"
 #include "DspRate.h"
 #include "DspVolume.h"
 #include "MyClock.h"
@@ -30,7 +31,7 @@ namespace SaneAudioRenderer
 
         void SetFormat(const WAVEFORMATEX& inputFormat);
 
-        void NewSegment();
+        void NewSegment(double rate);
 
         void Play(REFERENCE_TIME startTime);
         void Pause();
@@ -63,6 +64,7 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         //DspGain m_dspGain;
+        DspPitch m_dspPitch;
         DspRate m_dspRate;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
@@ -74,5 +76,6 @@ namespace SaneAudioRenderer
         int m_settingsSerial;
 
         std::atomic<float> m_volume = 1.0f;
+        double m_rate = 1.0;
     };
 }
