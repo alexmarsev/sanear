@@ -304,22 +304,24 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_inputFormatInitialized);
 
-        auto getChannelMask = [](const WAVEFORMATEXTENSIBLE& format)
+        auto getChannelMask = [](const WAVEFORMATEX& format)
         {
-            return format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
+            return format.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
                        reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(format).dwChannelMask :
-                       DspMatrix::GetDefaultChannelMask(format.Format.nChannels);
+                       DspMatrix::GetDefaultChannelMask(format.nChannels);
         };
 
-        m_dspMatrix.Initialize(m_inputFormat.Format.nChannels, getChannelMask(m_inputFormat),
-                               m_device.format.Format.nChannels, getChannelMask(m_device.format));
-        //m_dspGain.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
-        m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nSamplesPerSec,
-                             m_device.format.Format.nChannels);
-        m_dspTempo.Initialize((float)m_rate, m_device.format.Format.nSamplesPerSec, m_device.format.Format.nChannels);
-        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), m_device.format.Format.nSamplesPerSec,
-                                  m_device.format.Format.nChannels, getChannelMask(m_device.format));
-        //m_dspLimiter.Initialize(m_device.format.Format.nSamplesPerSec);
+        const auto& inFormat = m_inputFormat.Format;
+        const auto& outFormat = m_device.format.Format;
+
+        m_dspMatrix.Initialize(inFormat.nChannels, getChannelMask(inFormat),
+                               outFormat.nChannels, getChannelMask(outFormat));
+        //m_dspGain.Initialize(inFormat.nSamplesPerSec, outFormat.nChannels);
+        m_dspRate.Initialize(inFormat.nSamplesPerSec, outFormat.nSamplesPerSec, outFormat.nChannels);
+        m_dspTempo.Initialize((float)m_rate, outFormat.nSamplesPerSec, outFormat.nChannels);
+        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outFormat.nSamplesPerSec,
+                                  outFormat.nChannels, getChannelMask(outFormat));
+        //m_dspLimiter.Initialize(outFormat.nSamplesPerSec);
     }
 
     bool AudioRenderer::Push(DspChunk& chunk)
