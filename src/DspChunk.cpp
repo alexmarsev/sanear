@@ -24,12 +24,6 @@ namespace SaneAudioRenderer
         }
 
         template <>
-        inline void ConvertSample<DspFormat::Pcm8, DspFormat::Pcm24>(const int8_t& input, int32_t& output)
-        {
-            output = (int32_t)input << 16;
-        }
-
-        template <>
         inline void ConvertSample<DspFormat::Pcm8, DspFormat::Pcm32>(const int8_t& input, int32_t& output)
         {
             output = (int32_t)input << 24;
@@ -54,12 +48,6 @@ namespace SaneAudioRenderer
         }
 
         template <>
-        inline void ConvertSample<DspFormat::Pcm16, DspFormat::Pcm24>(const int16_t& input, int32_t& output)
-        {
-            output = (int32_t)input << 8;
-        }
-
-        template <>
         inline void ConvertSample<DspFormat::Pcm16, DspFormat::Pcm32>(const int16_t& input, int32_t& output)
         {
             output = (int32_t)input << 16;
@@ -78,45 +66,9 @@ namespace SaneAudioRenderer
         }
 
         template <>
-        inline void ConvertSample<DspFormat::Pcm24, DspFormat::Pcm16>(const int32_t& input, int16_t& output)
-        {
-            output = (int16_t)(input >> 8);
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Pcm24, DspFormat::Pcm24>(const int32_t& input, int32_t& output)
-        {
-            output = input;
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Pcm24, DspFormat::Pcm32>(const int32_t& input, int32_t& output)
-        {
-            output = input << 8;
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Pcm24, DspFormat::Float>(const int32_t& input, float& output)
-        {
-            output = (float)input / ((INT32_MAX >> 8) + 1);
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Pcm24, DspFormat::Double>(const int32_t& input, double& output)
-        {
-            output = (double)input / ((INT32_MAX >> 8) + 1);
-        }
-
-        template <>
         inline void ConvertSample<DspFormat::Pcm32, DspFormat::Pcm16>(const int32_t& input, int16_t& output)
         {
             output = (int16_t)(input >> 16);
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Pcm32, DspFormat::Pcm24>(const int32_t& input, int32_t& output)
-        {
-            output = input >> 8;
         }
 
         template <>
@@ -144,12 +96,6 @@ namespace SaneAudioRenderer
         }
 
         template <>
-        inline void ConvertSample<DspFormat::Float, DspFormat::Pcm24>(const float& input, int32_t& output)
-        {
-            output = (int32_t)(input * (INT32_MAX >> 8));
-        }
-
-        template <>
         inline void ConvertSample<DspFormat::Float, DspFormat::Pcm32>(const float& input, int32_t& output)
         {
             output = (int32_t)(input * INT32_MAX);
@@ -171,12 +117,6 @@ namespace SaneAudioRenderer
         inline void ConvertSample<DspFormat::Double, DspFormat::Pcm16>(const double& input, int16_t& output)
         {
             output = (int16_t)(input * INT16_MAX);
-        }
-
-        template <>
-        inline void ConvertSample<DspFormat::Double, DspFormat::Pcm24>(const double& input, int32_t& output)
-        {
-            output = (int32_t)(input * (INT32_MAX >> 8));
         }
 
         template <>
@@ -227,10 +167,6 @@ namespace SaneAudioRenderer
                     ConvertSamples<DspFormat::Pcm16, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
                     break;
 
-                case DspFormat::Pcm24:
-                    ConvertSamples<DspFormat::Pcm24, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
-                    break;
-
                 case DspFormat::Pcm32:
                     ConvertSamples<DspFormat::Pcm32, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
                     break;
@@ -259,10 +195,6 @@ namespace SaneAudioRenderer
         {
             case DspFormat::Pcm16:
                 ConvertChunk<DspFormat::Pcm16>(chunk);
-                break;
-
-            case DspFormat::Pcm24:
-                ConvertChunk<DspFormat::Pcm24>(chunk);
                 break;
 
             case DspFormat::Pcm32:
@@ -318,8 +250,7 @@ namespace SaneAudioRenderer
         else if (sampleFormat.wFormatTag == WAVE_FORMAT_PCM)
         {
             m_format = (sampleFormat.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                       (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                       (sampleFormat.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+                       (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 : DspFormat::Pcm32;
         }
         else if (sampleFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
@@ -332,14 +263,14 @@ namespace SaneAudioRenderer
             else if (sampleFormatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_PCM)
             {
                 m_format = (sampleFormat.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                           (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                           (sampleFormat.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+                           (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 : DspFormat::Pcm32;
             }
         }
 
         // Unpack pcm24 samples right away.
-        if (m_format == DspFormat::Pcm24)
+        if (sampleFormat.wBitsPerSample == 24)
         {
+            assert(m_format == DspFormat::Pcm32);
             m_dataSize = m_dataSize / 3 * 4;
             Allocate();
 
@@ -347,7 +278,8 @@ namespace SaneAudioRenderer
             {
                 int32_t x = *(uint16_t*)(m_constData + i * 3);
                 int32_t h = *(uint8_t*)(m_constData + i * 3 + 2);
-                x |= ((h << 24) >> 8);
+                x |= (h << 16);
+                x <<= 8;
                 ((int32_t*)m_data.get())[i] = x;
             }
 

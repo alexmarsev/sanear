@@ -6,7 +6,6 @@ namespace SaneAudioRenderer
     {
         Pcm8,
         Pcm16,
-        Pcm24,
         Pcm32,
         Float,
         Double,
@@ -25,12 +24,6 @@ namespace SaneAudioRenderer
     struct DspFormatTraits<DspFormat::Pcm16>
     {
         typedef int16_t SampleType;
-    };
-
-    template <>
-    struct DspFormatTraits<DspFormat::Pcm24>
-    {
-        typedef int32_t SampleType;
     };
 
     template <>
