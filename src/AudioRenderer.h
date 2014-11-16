@@ -5,8 +5,8 @@
 //#include "DspGain.h"
 //#include "DspLimiter.h"
 #include "DspMatrix.h"
-#include "DspPitch.h"
 #include "DspRate.h"
+#include "DspTempo.h"
 #include "DspVolume.h"
 #include "MyClock.h"
 #include "Settings.h"
@@ -64,8 +64,8 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         //DspGain m_dspGain;
-        DspPitch m_dspPitch;
         DspRate m_dspRate;
+        DspTempo m_dspTempo;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
         //DspLimiter m_dspLimiter;

@@ -6,15 +6,15 @@
 
 namespace SaneAudioRenderer
 {
-    class DspPitch final
+    class DspTempo final
     {
     public:
 
-        DspPitch() = default;
-        DspPitch(const DspPitch&) = delete;
-        DspPitch& operator=(const DspPitch&) = delete;
+        DspTempo() = default;
+        DspTempo(const DspTempo&) = delete;
+        DspTempo& operator=(const DspTempo&) = delete;
 
-        void Initialize(float pitch, uint32_t rate, uint32_t channels);
+        void Initialize(float tempo, uint32_t rate, uint32_t channels);
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
@@ -27,7 +27,5 @@ namespace SaneAudioRenderer
 
         uint32_t m_rate;
         uint32_t m_channels;
-
-        int32_t m_offset;
     };
 }

@@ -133,8 +133,8 @@ namespace SaneAudioRenderer
 
                 m_dspMatrix.Process(chunk);
                 //m_dspGain.Process(chunk);
-                m_dspPitch.Process(chunk);
                 m_dspRate.Process(chunk);
+                m_dspTempo.Process(chunk);
                 m_dspCrossfeed.Process(chunk);
                 m_dspVolume.Process(chunk);
                 //m_dspLimiter.Process(chunk);
@@ -165,8 +165,8 @@ namespace SaneAudioRenderer
             {
                 m_dspMatrix.Finish(chunk);
                 //m_dspGain.Finish(chunk);
-                m_dspPitch.Finish(chunk);
                 m_dspRate.Finish(chunk);
+                m_dspTempo.Finish(chunk);
                 m_dspCrossfeed.Finish(chunk);
                 m_dspVolume.Finish(chunk);
                 //m_dspLimiter.Finish(chunk);
@@ -314,9 +314,9 @@ namespace SaneAudioRenderer
         m_dspMatrix.Initialize(m_inputFormat.Format.nChannels, getChannelMask(m_inputFormat),
                                m_device.format.Format.nChannels, getChannelMask(m_device.format));
         //m_dspGain.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
-        m_dspPitch.Initialize((float)(1.0 / m_rate), m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nChannels);
-        m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, lround(m_device.format.Format.nSamplesPerSec / m_rate),
-                             m_device.format.Format.nChannels); // TODO: may accumulate errors when m_rate != 1.0
+        m_dspRate.Initialize(m_inputFormat.Format.nSamplesPerSec, m_device.format.Format.nSamplesPerSec,
+                             m_device.format.Format.nChannels);
+        m_dspTempo.Initialize((float)m_rate, m_device.format.Format.nSamplesPerSec, m_device.format.Format.nChannels);
         m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), m_device.format.Format.nSamplesPerSec,
                                   m_device.format.Format.nChannels, getChannelMask(m_device.format));
         //m_dspLimiter.Initialize(m_device.format.Format.nSamplesPerSec);

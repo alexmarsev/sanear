@@ -40,7 +40,7 @@
     <ClCompile Include="src\MyBasicAudio.cpp">
       <Filter>DirectShow</Filter>
     </ClCompile>
-    <ClCompile Include="src\DspPitch.cpp">
+    <ClCompile Include="src\DspTempo.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
   </ItemGroup>
@@ -93,7 +93,7 @@
     <ClInclude Include="src\MyBasicAudio.h">
       <Filter>DirectShow</Filter>
     </ClInclude>
-    <ClInclude Include="src\DspPitch.h">
+    <ClInclude Include="src\DspTempo.h">
       <Filter>Renderer\Processors</Filter>
     </ClInclude>
   </ItemGroup>
