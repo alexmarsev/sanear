@@ -97,9 +97,6 @@ namespace SaneAudioRenderer
             }
 
             m_settingsSerial = m_settings->Serial();
-
-            if (!m_deviceManager.CreateDevice(m_device))
-                throw E_OUTOFMEMORY;
         }
         catch (HRESULT ex)
         {
@@ -252,6 +249,8 @@ namespace SaneAudioRenderer
         m_inputFormat = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
                             reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
                             WAVEFORMATEXTENSIBLE{inputFormat};
+
+        m_deviceManager.CreateDevice(m_device, m_inputFormat);
 
         m_inputFormatInitialized = true;
 

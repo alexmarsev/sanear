@@ -24,7 +24,7 @@ namespace SaneAudioRenderer
         DeviceManager& operator=(const DeviceManager&) = delete;
         ~DeviceManager();
 
-        bool CreateDevice(AudioDevice& device);
+        bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format);
 
     private:
 
@@ -40,5 +40,6 @@ namespace SaneAudioRenderer
         std::promise<bool> m_windowInitialized;;
 
         AudioDevice m_device;
+        WAVEFORMATEXTENSIBLE m_format;
     };
 }

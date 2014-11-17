@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "DeviceManager.h"
 
+#include "DspMatrix.h"
+
 namespace SaneAudioRenderer
 {
     namespace
@@ -18,6 +20,24 @@ namespace SaneAudioRenderer
         {
             bool ret = (smartPointer.GetInterfacePtr()->AddRef() == 2);
             smartPointer.GetInterfacePtr()->Release();
+            return ret;
+        }
+
+
+        WAVEFORMATEXTENSIBLE BuildFormat(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
+                                         uint32_t rate, uint32_t channelCount, DWORD channelMask)
+        {
+            WAVEFORMATEXTENSIBLE ret;
+            ret.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+            ret.Format.nChannels = channelCount;
+            ret.Format.nSamplesPerSec = rate;
+            ret.Format.nAvgBytesPerSec = formatBits / 8 * rate * channelCount;
+            ret.Format.nBlockAlign = formatBits / 8 * channelCount;
+            ret.Format.wBitsPerSample = formatBits;
+            ret.Format.cbSize = 22;
+            ret.Samples.wValidBitsPerSample = formatExtProps;
+            ret.dwChannelMask = channelMask;
+            ret.SubFormat = formatGuid;
             return ret;
         }
     }
@@ -40,9 +60,10 @@ namespace SaneAudioRenderer
         CloseHandle(m_hThread);
     }
 
-    bool DeviceManager::CreateDevice(AudioDevice& device)
+    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format)
     {
         device = {};
+        m_format = format;
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
         device = m_device;
         return ret;
@@ -64,14 +85,46 @@ namespace SaneAudioRenderer
 
             WAVEFORMATEX* pFormat;
             ThrowIfFailed(m_device.audioClient->GetMixFormat(&pFormat));
-            m_device.format = pFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                                  *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pFormat) :
-                                  WAVEFORMATEXTENSIBLE{*pFormat};
+            WAVEFORMATEXTENSIBLE mixFormat = pFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
+                                                 *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pFormat) :
+                                                 WAVEFORMATEXTENSIBLE{*pFormat};
             CoTaskMemFree(pFormat);
 
-            m_device.bufferDuration = 1000;
+            m_device.bufferDuration = 200;
 
-            ThrowIfFailed(m_device.audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0,
+            auto getChannelMask = [](const WAVEFORMATEX& format)
+            {
+                return format.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
+                           reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(format).dwChannelMask :
+                           DspMatrix::GetDefaultChannelMask(format.nChannels);
+            };
+
+            std::array<std::pair<DspFormat, WAVEFORMATEXTENSIBLE>, 9> priorities =
+            {
+                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+
+                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+
+                std::make_pair(DspFormat::Float, mixFormat)
+            };
+
+            for (const auto& f : priorities)
+            {
+                if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.second.Format, nullptr)))
+                {
+                    m_device.dspFormat = f.first;
+                    m_device.format = f.second;
+                    break;
+                }
+            }
+
+            ThrowIfFailed(m_device.audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, 0,
                                                            MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
                                                            0, &m_device.format.Format, nullptr));
 
@@ -80,8 +133,6 @@ namespace SaneAudioRenderer
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioClock)));
-
-            m_device.dspFormat = DspFormat::Float;
 
             return 0;
         }
