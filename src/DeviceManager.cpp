@@ -92,24 +92,17 @@ namespace SaneAudioRenderer
 
             m_device.bufferDuration = 200;
 
-            auto getChannelMask = [](const WAVEFORMATEX& format)
-            {
-                return format.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                           reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(format).dwChannelMask :
-                           DspMatrix::GetDefaultChannelMask(format.nChannels);
-            };
-
             std::array<std::pair<DspFormat, WAVEFORMATEXTENSIBLE>, 9> priorities =
             {
-                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
 
-                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
-                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, getChannelMask(mixFormat.Format))),
+                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
 
                 std::make_pair(DspFormat::Float, mixFormat)
             };

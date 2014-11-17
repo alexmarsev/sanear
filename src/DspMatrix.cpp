@@ -261,9 +261,12 @@ namespace SaneAudioRenderer
         Process(chunk);
     }
 
-    DWORD DspMatrix::GetDefaultChannelMask(uint32_t channels)
+    DWORD DspMatrix::GetChannelMask(const WAVEFORMATEXTENSIBLE& format)
     {
-        switch (channels)
+        if (format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            return format.dwChannelMask;
+
+        switch (format.Format.nChannels)
         {
             case 1:
                 return KSAUDIO_SPEAKER_MONO;

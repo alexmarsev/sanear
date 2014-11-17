@@ -303,24 +303,19 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_inputFormatInitialized);
 
-        auto getChannelMask = [](const WAVEFORMATEX& format)
-        {
-            return format.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                       reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(format).dwChannelMask :
-                       DspMatrix::GetDefaultChannelMask(format.nChannels);
-        };
+        const auto inRate = m_inputFormat.Format.nSamplesPerSec;
+        const auto inChannels = m_inputFormat.Format.nChannels;
+        const auto inMask = DspMatrix::GetChannelMask(m_inputFormat);
+        const auto outRate = m_device.format.Format.nSamplesPerSec;
+        const auto outChannels = m_device.format.Format.nChannels;
+        const auto outMask = DspMatrix::GetChannelMask(m_device.format);
 
-        const auto& inFormat = m_inputFormat.Format;
-        const auto& outFormat = m_device.format.Format;
-
-        m_dspMatrix.Initialize(inFormat.nChannels, getChannelMask(inFormat),
-                               outFormat.nChannels, getChannelMask(outFormat));
-        //m_dspGain.Initialize(inFormat.nSamplesPerSec, outFormat.nChannels);
-        m_dspRate.Initialize(inFormat.nSamplesPerSec, outFormat.nSamplesPerSec, outFormat.nChannels);
-        m_dspTempo.Initialize((float)m_rate, outFormat.nSamplesPerSec, outFormat.nChannels);
-        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outFormat.nSamplesPerSec,
-                                  outFormat.nChannels, getChannelMask(outFormat));
-        //m_dspLimiter.Initialize(outFormat.nSamplesPerSec);
+        m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
+        //m_dspGain.Initialize(inRate, inChannels);
+        m_dspRate.Initialize(inRate, outRate, outChannels);
+        m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
+        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outRate, outChannels, outMask);
+        //m_dspLimiter.Initialize(outRate);
     }
 
     bool AudioRenderer::Push(DspChunk& chunk)
