@@ -355,9 +355,8 @@ namespace SaneAudioRenderer
             memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
             ThrowIfFailed(m_device.audioRenderClient->ReleaseBuffer(doFrames, 0));
 
-            // If the buffer is filled enough to start playback, set the corresponding event. Otherwise reset it.
-            OneSecond * (bufferPadding + doFrames) / m_device.format.Format.nSamplesPerSec > m_device.streamLatency ?
-                m_bufferFilled.Set() : m_bufferFilled.Reset();
+            // If the buffer is fully filled, set the corresponding event.
+            (bufferPadding + doFrames == bufferFrames) ? m_bufferFilled.Set() : m_bufferFilled.Reset();
 
             doneFrames += doFrames;
             m_pushedFrames += doFrames;

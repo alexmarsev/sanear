@@ -8,7 +8,6 @@ namespace SaneAudioRenderer
     {
         IAudioClientPtr       audioClient;
         WAVEFORMATEXTENSIBLE  format;
-        REFERENCE_TIME        streamLatency;
         uint32_t              bufferDuration;
         IAudioRenderClientPtr audioRenderClient;
         IAudioClockPtr        audioClock;

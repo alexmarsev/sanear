@@ -121,8 +121,6 @@ namespace SaneAudioRenderer
                                                            MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
                                                            0, &m_device.format.Format, nullptr));
 
-            ThrowIfFailed(m_device.audioClient->GetStreamLatency(&m_device.streamLatency));
-
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioClock)));
