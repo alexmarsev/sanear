@@ -36,11 +36,11 @@ namespace SaneAudioRenderer
             assert(chunk.GetRate() == m_rate);
             assert(chunk.GetChannelCount() == m_channels);
 
-            m_stouch.putSamples((const float*)chunk.GetConstData(), chunk.GetFrameCount());
+            m_stouch.putSamples((const float*)chunk.GetConstData(), (uint32_t)chunk.GetFrameCount());
 
             DspChunk output(DspFormat::Float, m_channels, m_stouch.numSamples(), m_rate);
 
-            uint32_t done = m_stouch.receiveSamples((float*)output.GetData(), output.GetFrameCount());
+            uint32_t done = m_stouch.receiveSamples((float*)output.GetData(), (uint32_t)output.GetFrameCount());
             assert(done == output.GetFrameCount());
             output.Shrink(done);
 
