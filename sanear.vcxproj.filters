@@ -43,6 +43,9 @@
     <ClCompile Include="src\DspTempo.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\DspLimiter.cpp">
+      <Filter>Renderer\Processors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -94,6 +97,9 @@
       <Filter>DirectShow</Filter>
     </ClInclude>
     <ClInclude Include="src\DspTempo.h">
+      <Filter>Renderer\Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspLimiter.h">
       <Filter>Renderer\Processors</Filter>
     </ClInclude>
   </ItemGroup>

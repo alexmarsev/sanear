@@ -3,7 +3,7 @@
 #include "DeviceManager.h"
 #include "DspCrossfeed.h"
 //#include "DspGain.h"
-//#include "DspLimiter.h"
+#include "DspLimiter.h"
 #include "DspMatrix.h"
 #include "DspRate.h"
 #include "DspTempo.h"
@@ -68,7 +68,7 @@ namespace SaneAudioRenderer
         DspTempo m_dspTempo;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
-        //DspLimiter m_dspLimiter;
+        DspLimiter m_dspLimiter;
 
         CAMEvent& m_bufferFilled;
 

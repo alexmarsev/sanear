@@ -170,6 +170,7 @@ namespace SaneAudioRenderer
         template <>
         inline void ConvertSample<DspFormat::Float, DspFormat::Pcm32>(const float& input, int32_t& output)
         {
+            assert(fabs(input) <= 1.0f);
             output = (int32_t)(input * (INT32_MAX - 127));
         }
 

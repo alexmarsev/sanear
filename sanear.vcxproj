@@ -72,6 +72,7 @@
     <ClInclude Include="src\DeviceManager.h" />
     <ClInclude Include="src\DspCrossfeed.h" />
     <ClInclude Include="src\DspFormat.h" />
+    <ClInclude Include="src\DspLimiter.h" />
     <ClInclude Include="src\DspMatrix.h" />
     <ClInclude Include="src\DspChunk.h" />
     <ClInclude Include="src\AudioRenderer.h" />
@@ -90,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="src\DeviceManager.cpp" />
     <ClCompile Include="src\DspCrossfeed.cpp" />
+    <ClCompile Include="src\DspLimiter.cpp" />
     <ClCompile Include="src\DspMatrix.cpp" />
     <ClCompile Include="src\DspChunk.cpp" />
     <ClCompile Include="src\DspTempo.cpp" />
