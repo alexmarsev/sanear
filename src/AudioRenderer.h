@@ -3,7 +3,6 @@
 #include "DeviceManager.h"
 #include "DspCrossfeed.h"
 #include "DspDither.h"
-//#include "DspGain.h"
 #include "DspLimiter.h"
 #include "DspMatrix.h"
 #include "DspRate.h"
@@ -64,7 +63,6 @@ namespace SaneAudioRenderer
         uint64_t m_pushedFrames = 0;
 
         DspMatrix m_dspMatrix;
-        //DspGain m_dspGain;
         DspRate m_dspRate;
         DspTempo m_dspTempo;
         DspCrossfeed m_dspCrossfeed;

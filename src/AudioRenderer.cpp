@@ -129,7 +129,6 @@ namespace SaneAudioRenderer
                     return true;
 
                 m_dspMatrix.Process(chunk);
-                //m_dspGain.Process(chunk);
                 m_dspRate.Process(chunk);
                 m_dspTempo.Process(chunk);
                 m_dspCrossfeed.Process(chunk);
@@ -162,7 +161,6 @@ namespace SaneAudioRenderer
             try
             {
                 m_dspMatrix.Finish(chunk);
-                //m_dspGain.Finish(chunk);
                 m_dspRate.Finish(chunk);
                 m_dspTempo.Finish(chunk);
                 m_dspCrossfeed.Finish(chunk);
@@ -313,7 +311,6 @@ namespace SaneAudioRenderer
         const auto outMask = DspMatrix::GetChannelMask(m_device.format);
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
-        //m_dspGain.Initialize(inRate, inChannels);
         m_dspRate.Initialize(inRate, outRate, outChannels);
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outRate, outChannels, outMask);
