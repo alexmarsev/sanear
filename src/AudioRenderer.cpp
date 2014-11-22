@@ -135,6 +135,7 @@ namespace SaneAudioRenderer
                 m_dspCrossfeed.Process(chunk);
                 m_dspVolume.Process(chunk);
                 m_dspLimiter.Process(chunk);
+                m_dspDither.Process(chunk);
 
                 DspChunk::ToFormat(m_device.dspFormat, chunk);
 
@@ -167,6 +168,7 @@ namespace SaneAudioRenderer
                 m_dspCrossfeed.Finish(chunk);
                 m_dspVolume.Finish(chunk);
                 m_dspLimiter.Finish(chunk);
+                m_dspDither.Finish(chunk);
 
                 DspChunk::ToFormat(m_device.dspFormat, chunk);
             }
@@ -316,6 +318,7 @@ namespace SaneAudioRenderer
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate);
+        m_dspDither.Initialize(m_device.dspFormat);
     }
 
     bool AudioRenderer::Push(DspChunk& chunk)
