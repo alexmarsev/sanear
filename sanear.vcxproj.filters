@@ -28,9 +28,6 @@
     <ClCompile Include="src\AudioRenderer.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="src\Factory.cpp">
-      <Filter>DirectShow</Filter>
-    </ClCompile>
     <ClCompile Include="src\DspCrossfeed.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
@@ -48,6 +45,10 @@
     </ClCompile>
     <ClCompile Include="src\DspDither.cpp">
       <Filter>Renderer\Processors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Factory.cpp" />
+    <ClCompile Include="src\Settings.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,12 +85,6 @@
     <ClInclude Include="src\AudioRenderer.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Factory.h">
-      <Filter>DirectShow</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Settings.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="src\DspCrossfeed.h">
       <Filter>Renderer\Processors</Filter>
     </ClInclude>
@@ -107,6 +102,11 @@
     </ClInclude>
     <ClInclude Include="src\DspDither.h">
       <Filter>Renderer\Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Interfaces.h" />
+    <ClInclude Include="src\Factory.h" />
+    <ClInclude Include="src\Settings.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

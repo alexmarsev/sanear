@@ -8,8 +8,8 @@
 #include "DspRate.h"
 #include "DspTempo.h"
 #include "DspVolume.h"
+#include "Interfaces.h"
 #include "MyClock.h"
-#include "Settings.h"
 
 namespace SaneAudioRenderer
 {
@@ -73,7 +73,6 @@ namespace SaneAudioRenderer
         CAMEvent& m_bufferFilled;
 
         ISettingsPtr m_settings;
-        int m_settingsSerial;
 
         std::atomic<float> m_volume = 1.0f;
         double m_rate = 1.0;

@@ -95,8 +95,6 @@ namespace SaneAudioRenderer
             {
                 throw E_OUTOFMEMORY;
             }
-
-            m_settingsSerial = m_settings->Serial();
         }
         catch (HRESULT ex)
         {
@@ -313,7 +311,7 @@ namespace SaneAudioRenderer
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(inRate, outRate, outChannels);
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
-        m_dspCrossfeed.Initialize(!!m_settings->CrossfeedEnabled(), outRate, outChannels, outMask);
+        m_dspCrossfeed.Initialize(!!m_settings->UseStereoCrossfeed(), outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate);
         m_dspDither.Initialize(m_device.dspFormat);
     }

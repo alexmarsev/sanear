@@ -1,14 +1,32 @@
 #pragma once
 
-#include <comdef.h>
+#include "Interfaces.h"
 
 namespace SaneAudioRenderer
 {
-    struct __declspec(uuid("AFA2A9DB-16FC-4B63-86CB-E38803D8BE7A"))
-    ISettings : IUnknown
+    class Settings final
+        : public CUnknown
+        , public ISettings
     {
-        STDMETHOD_(int, Serial)() = 0;
-        STDMETHOD_(BOOL, CrossfeedEnabled)() = 0;
+    public:
+
+        DECLARE_IUNKNOWN
+
+        Settings();
+        Settings(const Settings&) = delete;
+        Settings& operator=(const Settings&) = delete;
+
+        STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void** ppv) override;
+
+        STDMETHODIMP_(BOOL) UseExclusiveMode() override { return m_useExclusiveMode; }
+        STDMETHODIMP_(void) SetUseExclusiveMode(BOOL value) override { m_useExclusiveMode = value; }
+
+        STDMETHODIMP_(BOOL) UseStereoCrossfeed() override { return m_useStereoCrossfeed; }
+        STDMETHODIMP_(void) SetUseStereoCrossfeed(BOOL value) override { m_useStereoCrossfeed = value; }
+
+    private:
+
+        std::atomic<BOOL> m_useExclusiveMode = FALSE;
+        std::atomic<BOOL> m_useStereoCrossfeed = FALSE;
     };
-    _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
 }

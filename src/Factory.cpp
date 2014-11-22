@@ -2,10 +2,31 @@
 #include "Factory.h"
 
 #include "MyFilter.h"
+#include "Settings.h"
 
 namespace SaneAudioRenderer
 {
-    HRESULT Factory::CreateFilter(IBaseFilter** ppOut, ISettings* pSettings)
+    HRESULT Factory::CreateSettings(ISettings** ppOut)
+    {
+        CheckPointer(ppOut, E_POINTER);
+
+        *ppOut = nullptr;
+
+        auto pSettings = new(std::nothrow) Settings();
+
+        if (!pSettings)
+            return E_OUTOFMEMORY;
+
+        pSettings->AddRef();
+
+        HRESULT result = pSettings->QueryInterface(IID_PPV_ARGS(ppOut));
+
+        pSettings->Release();
+
+        return result;
+    }
+
+    HRESULT Factory::CreateFilter(ISettings* pSettings, IBaseFilter** ppOut)
     {
         CheckPointer(ppOut, E_POINTER);
         CheckPointer(pSettings, E_POINTER);

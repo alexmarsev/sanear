@@ -79,6 +79,7 @@
     <ClInclude Include="src\AudioRenderer.h" />
     <ClInclude Include="src\DspTempo.h" />
     <ClInclude Include="src\DspVolume.h" />
+    <ClInclude Include="src\Interfaces.h" />
     <ClInclude Include="src\MyBasicAudio.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Utils.h" />
@@ -108,6 +109,7 @@
     <ClCompile Include="src\MyPin.cpp" />
     <ClCompile Include="src\DspRate.cpp" />
     <ClCompile Include="src\AudioRenderer.cpp" />
+    <ClCompile Include="src\Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\sanear.props" />
