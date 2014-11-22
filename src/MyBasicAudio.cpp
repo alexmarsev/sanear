@@ -60,6 +60,8 @@ namespace SaneAudioRenderer
         *pBalance = (f == 0.0f) ?
                         0 : (long)(copysign(log10(abs(f)), f) * 2000.0f);
 
+        assert(*pBalance >= -10000 && *pBalance <= 10000);
+
         return S_OK;
     }
 }
