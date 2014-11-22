@@ -9,7 +9,7 @@ namespace SaneAudioRenderer
     {
         float balance = m_renderer.GetBalance();
 
-        if (!chunk.IsEmpty() && balance != 0.0f)
+        if (!chunk.IsEmpty() && balance != 0.0f && chunk.GetChannelCount() == 2)
         {
             assert(balance >= -1.0f && balance <= 1.0f);
             DspChunk::ToFloat(chunk);
