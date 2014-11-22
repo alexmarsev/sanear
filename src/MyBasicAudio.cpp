@@ -38,16 +38,27 @@ namespace SaneAudioRenderer
         return S_OK;
     }
 
-    STDMETHODIMP MyBasicAudio::put_Balance(long)
+    STDMETHODIMP MyBasicAudio::put_Balance(long balance)
     {
-        return E_NOTIMPL;
+        if (balance < -10000 || balance > 10000)
+            return E_FAIL;
+
+        float f = (balance == 0) ?
+                      0.0f : pow(10.0f, (float)abs(balance) / -2000.0f);
+
+        m_renderer.SetBalance(copysign(f, (float)balance));
+
+        return S_OK;
     }
 
     STDMETHODIMP MyBasicAudio::get_Balance(long* pBalance)
     {
         CheckPointer(pBalance, E_POINTER);
 
-        *pBalance = 0;
+        float f = m_renderer.GetBalance();
+
+        *pBalance = (f == 0.0f) ?
+                        0 : (long)(copysign(log10(abs(f)), f) * 2000.0f);
 
         return S_OK;
     }

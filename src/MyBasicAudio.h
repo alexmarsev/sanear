@@ -15,7 +15,7 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP put_Volume(long volume) override;
         STDMETHODIMP get_Volume(long* pVolume) override;
-        STDMETHODIMP put_Balance(long) override;
+        STDMETHODIMP put_Balance(long balance) override;
         STDMETHODIMP get_Balance(long* pBalance) override;
 
     private:

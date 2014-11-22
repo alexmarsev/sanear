@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DeviceManager.h"
+#include "DspBalance.h"
 #include "DspCrossfeed.h"
 #include "DspDither.h"
 #include "DspLimiter.h"
@@ -39,6 +40,8 @@ namespace SaneAudioRenderer
 
         float GetVolume() const { return m_volume; }
         void SetVolume(float volume) { m_volume = volume; }
+        float GetBalance() const { return m_balance; }
+        void SetBalance(float balance) { m_balance = balance; }
 
     private:
 
@@ -67,6 +70,7 @@ namespace SaneAudioRenderer
         DspTempo m_dspTempo;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
+        DspBalance m_dspBalance;
         DspLimiter m_dspLimiter;
         DspDither m_dspDither;
 
@@ -75,6 +79,7 @@ namespace SaneAudioRenderer
         ISettingsPtr m_settings;
 
         std::atomic<float> m_volume = 1.0f;
+        std::atomic<float> m_balance = 0.0f;
         double m_rate = 1.0;
     };
 }

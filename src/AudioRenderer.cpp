@@ -79,6 +79,7 @@ namespace SaneAudioRenderer
         , m_graphClock(pClock)
         , m_flush(TRUE/*manual reset*/)
         , m_dspVolume(*this)
+        , m_dspBalance(*this)
         , m_bufferFilled(bufferFilled)
         , m_settings(pSettings)
     {
@@ -131,6 +132,7 @@ namespace SaneAudioRenderer
                 m_dspTempo.Process(chunk);
                 m_dspCrossfeed.Process(chunk);
                 m_dspVolume.Process(chunk);
+                m_dspBalance.Process(chunk);
                 m_dspLimiter.Process(chunk);
                 m_dspDither.Process(chunk);
 
@@ -163,6 +165,7 @@ namespace SaneAudioRenderer
                 m_dspTempo.Finish(chunk);
                 m_dspCrossfeed.Finish(chunk);
                 m_dspVolume.Finish(chunk);
+                m_dspBalance.Finish(chunk);
                 m_dspLimiter.Finish(chunk);
                 m_dspDither.Finish(chunk);
 
