@@ -1,6 +1,7 @@
 #pragma once
 
 #include <comdef.h>
+#include <ocidl.h>
 
 namespace SaneAudioRenderer
 {
@@ -14,4 +15,11 @@ namespace SaneAudioRenderer
         STDMETHOD_(void, SetUseStereoCrossfeed)(BOOL) = 0;
     };
     _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
+
+    struct __declspec(uuid("03481710-D73E-4674-839F-03EDE2D60ED8"))
+    ISpecifyPropertyPages2 : ISpecifyPropertyPages
+    {
+        STDMETHOD(CreatePage)(const GUID& guid, IPropertyPage** ppPage) = 0;
+    };
+    _COM_SMARTPTR_TYPEDEF(ISpecifyPropertyPages2, __uuidof(ISpecifyPropertyPages2));
 }

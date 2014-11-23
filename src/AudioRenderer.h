@@ -15,7 +15,7 @@
 namespace SaneAudioRenderer
 {
     class AudioRenderer final
-        : CCritSec
+        : public CCritSec
     {
     public:
 
@@ -42,6 +42,9 @@ namespace SaneAudioRenderer
         void SetVolume(float volume) { m_volume = volume; }
         float GetBalance() const { return m_balance; }
         void SetBalance(float balance) { m_balance = balance; }
+
+        std::unique_ptr<WAVEFORMATEXTENSIBLE> GetInputFormat();
+        std::unique_ptr<AudioDevice> GetDeviceFormat();
 
     private:
 

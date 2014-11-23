@@ -1,22 +1,20 @@
 #pragma once
 
-#include "AudioRenderer.h"
-
 namespace SaneAudioRenderer
 {
+    class AudioRenderer;
+
     class MyPin final
         : public CCritSec
         , public CBaseInputPin
     {
     public:
 
-        MyPin(CBaseFilter* pFilter, ISettings* pSettings, IMyClock* pClock, HRESULT& result);
+        MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, CAMEvent& bufferFilled, HRESULT& result);
         MyPin(const MyPin&) = delete;
         MyPin& operator=(const MyPin&) = delete;
 
         DECLARE_IUNKNOWN
-
-        STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void** ppv) override;
 
         HRESULT CheckMediaType(const CMediaType* pmt) override;
         HRESULT SetMediaType(const CMediaType* pmt) override;
@@ -44,9 +42,7 @@ namespace SaneAudioRenderer
 
         CCritSec m_receiveMutex;
 
-        CAMEvent m_bufferFilled;
-
-        IBasicAudioPtr m_basicAudio;
-        AudioRenderer m_renderer;
+        CAMEvent& m_bufferFilled;
+        AudioRenderer& m_renderer;
     };
 }

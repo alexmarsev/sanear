@@ -1,14 +1,17 @@
 #include "pch.h"
 #include "MyFilter.h"
 
+#include "AudioRenderer.h"
 #include "Factory.h"
 #include "MyBasicAudio.h"
 #include "MyPin.h"
+#include "MyPropertyPage.h"
 
 namespace SaneAudioRenderer
 {
     MyFilter::MyFilter(ISettings* pSettings, HRESULT& result)
         : CBaseFilter("Audio Renderer", nullptr, this, Factory::GetFilterGuid())
+        , m_bufferFilled(TRUE/*manual reset*/)
     {
         assert(result == S_OK);
 
@@ -18,7 +21,13 @@ namespace SaneAudioRenderer
                 m_clock = new MyClock(result);
 
             if (SUCCEEDED(result))
-                m_pin = std::make_unique<MyPin>(this, pSettings, m_clock, result);
+                m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, m_bufferFilled, result);
+
+            if (SUCCEEDED(result))
+                m_basicAudio = new MyBasicAudio(*m_renderer);
+
+            if (SUCCEEDED(result))
+                m_pin = std::make_unique<MyPin>(*m_renderer, this, m_bufferFilled, result);
 
             if (SUCCEEDED(result))
                 result = CreatePosPassThru(nullptr, FALSE, m_pin.get(), &m_seeking);
@@ -35,10 +44,16 @@ namespace SaneAudioRenderer
             return m_clock->QueryInterface(riid, ppv);
 
         if (riid == IID_IBasicAudio)
-            return m_pin->QueryInterface(riid, ppv);
+            return m_basicAudio->QueryInterface(riid, ppv);
 
         if (riid == IID_IMediaSeeking)
             return m_seeking->QueryInterface(riid, ppv);
+
+        if (riid == __uuidof(ISpecifyPropertyPages2))
+            return GetInterface(static_cast<ISpecifyPropertyPages2*>(this), ppv);
+
+        if (riid == IID_ISpecifyPropertyPages)
+            return GetInterface(static_cast<ISpecifyPropertyPages*>(this), ppv);
 
         return CBaseFilter::NonDelegatingQueryInterface(riid, ppv);
     }
@@ -80,6 +95,48 @@ namespace SaneAudioRenderer
             return VFW_S_STATE_INTERMEDIATE;
 
         return S_OK;
+    }
+
+    STDMETHODIMP MyFilter::GetPages(CAUUID* pPages)
+    {
+        CheckPointer(pPages, E_POINTER);
+
+        pPages->cElems = 1;
+        pPages->pElems = (GUID*)CoTaskMemAlloc(sizeof(GUID));
+        CheckPointer(pPages->pElems, E_OUTOFMEMORY);
+        *pPages->pElems = __uuidof(MyPropertyPage);
+
+        return S_OK;
+    }
+
+    STDMETHODIMP MyFilter::CreatePage(const GUID& guid, IPropertyPage** ppPage)
+    {
+        CheckPointer(ppPage, E_POINTER);
+
+        if (guid != __uuidof(MyPropertyPage))
+            return E_UNEXPECTED;
+
+        MyPropertyPage* pPage;
+
+        try
+        {
+            CAutoLock rendererLock(m_renderer.get());
+            auto inputFormat = m_renderer->GetInputFormat();
+            auto devicetFormat = m_renderer->GetDeviceFormat();
+            pPage = new MyPropertyPage(inputFormat.get(), devicetFormat.get());
+        }
+        catch (std::bad_alloc&)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        pPage->AddRef();
+
+        HRESULT result = pPage->QueryInterface(IID_PPV_ARGS(ppPage));
+
+        pPage->Release();
+
+        return result;
     }
 
     template <FILTER_STATE NewState, typename PinFunction>

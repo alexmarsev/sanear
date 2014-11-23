@@ -292,11 +292,30 @@ namespace SaneAudioRenderer
 
     void AudioRenderer::Stop()
     {
+        // TODO: release audio device here
+
         CAutoLock objectLock(this);
         m_state = State_Stopped;
 
         m_graphClock->UnslaveClockFromAudio();
         m_device.audioClient->Stop();
+    }
+
+    std::unique_ptr<WAVEFORMATEXTENSIBLE> AudioRenderer::GetInputFormat()
+    {
+        CAutoLock objectLock(this);
+
+        if (!m_inputFormatInitialized)
+            return nullptr;
+
+        return std::make_unique<WAVEFORMATEXTENSIBLE>(m_inputFormat);
+    }
+
+    std::unique_ptr<AudioDevice> AudioRenderer::GetDeviceFormat()
+    {
+        CAutoLock objectLock(this);
+
+        return std::make_unique<AudioDevice>(m_device);
     }
 
     void AudioRenderer::InitializeProcessors()

@@ -53,6 +53,9 @@
     <ClCompile Include="src\DspBalance.cpp">
       <Filter>Renderer\Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\MyPropertyPage.cpp">
+      <Filter>DirectShow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -113,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="src\DspBalance.h">
       <Filter>Renderer\Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MyPropertyPage.h">
+      <Filter>DirectShow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

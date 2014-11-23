@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "MyBasicAudio.h"
 
-#include "MyPin.h"
+#include "AudioRenderer.h"
 
 namespace SaneAudioRenderer
 {

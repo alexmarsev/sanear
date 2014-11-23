@@ -82,6 +82,7 @@
     <ClInclude Include="src\DspVolume.h" />
     <ClInclude Include="src\Interfaces.h" />
     <ClInclude Include="src\MyBasicAudio.h" />
+    <ClInclude Include="src\MyPropertyPage.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\MyFilter.h" />
@@ -105,6 +106,7 @@
     <ClCompile Include="src\MyFilter.cpp" />
     <ClCompile Include="src\MyClock.cpp" />
     <ClCompile Include="src\Factory.cpp" />
+    <ClCompile Include="src\MyPropertyPage.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

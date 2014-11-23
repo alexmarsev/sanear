@@ -1,19 +1,21 @@
 #pragma once
 
+#include "Interfaces.h"
 #include "MyClock.h"
 
 namespace SaneAudioRenderer
 {
-    struct ISettings;
+    class AudioRenderer;
     class MyPin;
 
     class MyFilter final
         : public CCritSec
         , public CBaseFilter
+        , public ISpecifyPropertyPages2
     {
     public:
 
-        explicit MyFilter(ISettings* pSettings, HRESULT& result);
+        MyFilter(ISettings* pSettings, HRESULT& result);
         MyFilter(const MyFilter&) = delete;
         MyFilter& operator=(const MyFilter&) = delete;
 
@@ -30,12 +32,18 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP GetState(DWORD timeoutMilliseconds, FILTER_STATE* pState) override;
 
+        STDMETHODIMP GetPages(CAUUID* pPages) override;
+        STDMETHODIMP CreatePage(const GUID& guid, IPropertyPage** ppPage) override;
+
     private:
 
         template <FILTER_STATE NewState, typename PinFunction>
         STDMETHODIMP ChangeState(PinFunction pinFunction);
 
         IMyClockPtr m_clock;
+        CAMEvent m_bufferFilled;
+        std::unique_ptr<AudioRenderer> m_renderer;
+        IBasicAudioPtr m_basicAudio;
         std::unique_ptr<MyPin> m_pin;
         IUnknownPtr m_seeking;
     };

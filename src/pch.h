@@ -24,6 +24,7 @@
 #include <map>
 #include <memory>
 #include <random>
+#include <string>
 
 #include "Utils.h"
 
@@ -38,4 +39,5 @@ namespace SaneAudioRenderer
 
     _COM_SMARTPTR_TYPEDEF(IMediaSample, __uuidof(IMediaSample));
     _COM_SMARTPTR_TYPEDEF(IBasicAudio, __uuidof(IBasicAudio));
+    _COM_SMARTPTR_TYPEDEF(IPropertyPageSite, __uuidof(IPropertyPageSite));
 }
