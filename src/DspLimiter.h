@@ -12,16 +12,17 @@ namespace SaneAudioRenderer
         DspLimiter(const DspLimiter&) = delete;
         DspLimiter& operator=(const DspLimiter&) = delete;
 
-        void Initialize(uint32_t rate);
+        void Initialize(uint32_t rate, bool exclusive);
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
 
     private:
 
-        void AnalyzeLastChunk(float limit);
+        void AnalyzeLastChunk();
         void ModifyFirstChunk();
 
+        float m_limit;
         int32_t m_attackFrames;
         int32_t m_releaseFrames;
         size_t m_windowFrames;

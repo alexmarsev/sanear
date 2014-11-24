@@ -334,7 +334,7 @@ namespace SaneAudioRenderer
         m_dspRate.Initialize(inRate, outRate, outChannels);
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(!!m_settings->UseStereoCrossfeed(), outRate, outChannels, outMask);
-        m_dspLimiter.Initialize(outRate);
+        m_dspLimiter.Initialize(outRate, m_device.exclusive);
         m_dspDither.Initialize(m_device.dspFormat);
     }
 
