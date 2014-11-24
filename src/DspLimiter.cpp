@@ -23,7 +23,7 @@ namespace SaneAudioRenderer
         m_limit = (exclusive ? 1.0f : 0.98f);
         m_attackFrames = rate / 100; // 10ms
         m_releaseFrames = rate / 100; // 10ms
-        m_windowFrames = m_attackFrames * 2 + m_releaseFrames + 1;
+        m_windowFrames = m_attackFrames + m_releaseFrames + 1;
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
@@ -95,21 +95,23 @@ namespace SaneAudioRenderer
                     if (frame + chunkFirstFrame > back.first ||
                         f(nextToBack, back, chunkFirstFrame + frame) < sample)
                     {
-                        if (m_peaks.size() > 2 &&
-                            sample > nextToBack.second &&
-                            nextToBack.first > chunkFirstFrame + frame - m_attackFrames &&
-                            f(m_peaks[m_peaks.size() - 3].first, m_peaks[m_peaks.size() - 3].second, chunkFirstFrame + frame, sample, nextToBack.first) > nextToBack.second)
+                        while (m_peaks.size() > 1)
                         {
-                            DbgOutString((std::wstring(L"replace ") + std::to_wstring(chunkFirstFrame + frame) + L" " + std::to_wstring(sample) + L"\n").c_str());
-                            nextToBack.first = chunkFirstFrame + frame;
-                            nextToBack.second = sample;
-                            back.first = chunkFirstFrame + frame + m_releaseFrames;
+                            auto& back = m_peaks.back();
+                            auto& nextToBack = m_peaks[m_peaks.size() - 2];
+                            if (sample >= back.second &&
+                                nextToBack.first >= chunkFirstFrame + frame - m_attackFrames - m_releaseFrames &&
+                                f(nextToBack.first, nextToBack.second, chunkFirstFrame + frame, sample, back.first) >= back.second)
+                            {
+                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back.first) + L" " + std::to_wstring(back.second) + L"\n").c_str());
+                                m_peaks.pop_back();
+                                continue;
+                            }
+                            break;
                         }
-                        else
                         {
                             DbgOutString((std::wstring(L"add ") + std::to_wstring(chunkFirstFrame + frame) + L" " + std::to_wstring(sample) + L"\n").c_str());
-                            back.first = chunkFirstFrame + frame;
-                            back.second = sample;
+                            m_peaks.emplace_back(chunkFirstFrame + frame, sample);
                             m_peaks.emplace_back(chunkFirstFrame + frame + m_releaseFrames, m_limit);
                         }
                     }
