@@ -251,7 +251,7 @@ namespace SaneAudioRenderer
                             reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
                             WAVEFORMATEXTENSIBLE{inputFormat};
 
-        m_deviceManager.CreateDevice(m_device, m_inputFormat);
+        m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode());
 
         m_inputFormatInitialized = true;
 

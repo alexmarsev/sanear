@@ -60,10 +60,11 @@ namespace SaneAudioRenderer
         CloseHandle(m_hThread);
     }
 
-    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format)
+    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive)
     {
         device = {};
         m_format = format;
+        m_exclusive = exclusive;
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
         device = m_device;
         return ret;
@@ -92,35 +93,45 @@ namespace SaneAudioRenderer
 
             m_device.bufferDuration = 200;
 
-            std::array<std::pair<DspFormat, WAVEFORMATEXTENSIBLE>, 11> priorities =
+            m_device.exclusive = m_exclusive;
+
+            if (m_device.exclusive)
             {
-                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-
-                std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-
-                std::make_pair(DspFormat::Float, mixFormat)
-            };
-
-            for (const auto& f : priorities)
-            {
-                if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.second.Format, nullptr)))
+                std::array<std::pair<DspFormat, WAVEFORMATEXTENSIBLE>, 11> priorities =
                 {
-                    m_device.dspFormat = f.first;
-                    m_device.format = f.second;
-                    break;
+                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+
+                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+
+                    std::make_pair(DspFormat::Float, mixFormat)
+                };
+
+                for (const auto& f : priorities)
+                {
+                    if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.second.Format, nullptr)))
+                    {
+                        m_device.dspFormat = f.first;
+                        m_device.format = f.second;
+                        break;
+                    }
                 }
             }
+            else
+            {
+                m_device.dspFormat = DspFormat::Float;
+                m_device.format = mixFormat;
+            }
 
-            ThrowIfFailed(m_device.audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, 0,
-                                                           MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
+            ThrowIfFailed(m_device.audioClient->Initialize(m_device.exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
+                                                           0, MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
                                                            0, &m_device.format.Format, nullptr));
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));

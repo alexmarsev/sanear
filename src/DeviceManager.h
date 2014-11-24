@@ -12,6 +12,7 @@ namespace SaneAudioRenderer
         IAudioRenderClientPtr audioRenderClient;
         IAudioClockPtr        audioClock;
         DspFormat             dspFormat;
+        bool                  exclusive;
     };
 
     class DeviceManager final
@@ -23,7 +24,7 @@ namespace SaneAudioRenderer
         DeviceManager& operator=(const DeviceManager&) = delete;
         ~DeviceManager();
 
-        bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format);
+        bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive);
 
     private:
 
@@ -40,5 +41,6 @@ namespace SaneAudioRenderer
 
         AudioDevice m_device;
         WAVEFORMATEXTENSIBLE m_format;
+        bool m_exclusive;
     };
 }

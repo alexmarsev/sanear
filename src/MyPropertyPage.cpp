@@ -110,7 +110,7 @@ namespace SaneAudioRenderer
     MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat)
         : CUnknown("Audio Renderer Property Page", nullptr)
     {
-        std::wstring exclusiveField = (pDeviceFormat ? L"Yes" : L"-");
+        std::wstring exclusiveField = (pDeviceFormat ? (pDeviceFormat->exclusive ? L"Yes" : L"No") : L"-");
 
         std::wstring bufferField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->bufferDuration) + L"ms" : L"-");
 
