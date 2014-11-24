@@ -2,6 +2,7 @@
 #include "MyPropertyPage.h"
 
 #include "DeviceManager.h"
+#include "DspMatrix.h"
 
 namespace SaneAudioRenderer
 {
@@ -97,6 +98,13 @@ namespace SaneAudioRenderer
 
             throw std::logic_error("Unexpected WAVEFORMATEX has gotten through, twice.");
         }
+
+        std::wstring GetHexString(uint32_t number)
+        {
+            std::array<wchar_t, 9> temp;
+            wsprintf(temp.data(), L"%X", number);
+            return std::wstring(L"0x") + temp.data();
+        }
     }
 
     MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat)
@@ -108,8 +116,10 @@ namespace SaneAudioRenderer
 
         std::wstring codecField = (pInputFormat ? L"PCM" : L"-");
 
-        std::wstring channelsInputField = (pInputFormat ? std::to_wstring(pInputFormat->Format.nChannels) : L"-");
-        std::wstring channelsDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format.Format.nChannels) : L"-");
+        std::wstring channelsInputField = (pInputFormat ? std::to_wstring(pInputFormat->Format.nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pInputFormat)) + L")" : L"-");
+        std::wstring channelsDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format.Format.nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(pDeviceFormat->format)) + L")" : L"-");
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
