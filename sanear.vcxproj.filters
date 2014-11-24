@@ -14,13 +14,13 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="src\DspMatrix.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\DspChunk.cpp">
-      <Filter>Renderer\Processors\Base</Filter>
+      <Filter>Processors\Base</Filter>
     </ClCompile>
     <ClCompile Include="src\DspRate.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\DeviceManager.cpp">
       <Filter>Renderer</Filter>
@@ -29,29 +29,29 @@
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\DspCrossfeed.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\DspVolume.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\MyBasicAudio.cpp">
       <Filter>DirectShow</Filter>
     </ClCompile>
     <ClCompile Include="src\DspTempo.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\DspLimiter.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\DspDither.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\Factory.cpp" />
     <ClCompile Include="src\Settings.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\DspBalance.cpp">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClCompile>
     <ClCompile Include="src\MyPropertyPage.cpp">
       <Filter>DirectShow</Filter>
@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\pch.h">
       <Filter>Common</Filter>
@@ -77,13 +77,13 @@
       <Filter>DirectShow</Filter>
     </ClInclude>
     <ClInclude Include="src\DspFormat.h">
-      <Filter>Renderer\Processors\Base</Filter>
+      <Filter>Processors\Base</Filter>
     </ClInclude>
     <ClInclude Include="src\DspChunk.h">
-      <Filter>Renderer\Processors\Base</Filter>
+      <Filter>Processors\Base</Filter>
     </ClInclude>
     <ClInclude Include="src\DspRate.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\DeviceManager.h">
       <Filter>Renderer</Filter>
@@ -92,22 +92,22 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\DspCrossfeed.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\DspVolume.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\MyBasicAudio.h">
       <Filter>DirectShow</Filter>
     </ClInclude>
     <ClInclude Include="src\DspTempo.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\DspLimiter.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\DspDither.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\Interfaces.h" />
     <ClInclude Include="src\Factory.h" />
@@ -115,7 +115,7 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\DspBalance.h">
-      <Filter>Renderer\Processors</Filter>
+      <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\MyPropertyPage.h">
       <Filter>DirectShow</Filter>
@@ -131,10 +131,10 @@
     <Filter Include="Renderer">
       <UniqueIdentifier>{0dffffd5-d64c-40fb-b287-a85fd25a01ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Processors">
+    <Filter Include="Processors">
       <UniqueIdentifier>{e8ae44fa-1f63-44d6-b082-9b38edb6f5e2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Processors\Base">
+    <Filter Include="Processors\Base">
       <UniqueIdentifier>{a3828985-2937-4570-8aa1-110935fd6227}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

@@ -330,31 +330,7 @@ namespace SaneAudioRenderer
         assert(m_mediaSample);
         assert(m_constData);
 
-        if (sampleFormat.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
-        {
-            m_format = (sampleFormat.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
-        }
-        else if (sampleFormat.wFormatTag == WAVE_FORMAT_PCM)
-        {
-            m_format = (sampleFormat.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                       (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                       (sampleFormat.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
-        }
-        else if (sampleFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        {
-            const WAVEFORMATEXTENSIBLE& sampleFormatExtensible = (const WAVEFORMATEXTENSIBLE&)sampleFormat;
-
-            if (sampleFormatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
-            {
-                m_format = (sampleFormat.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
-            }
-            else if (sampleFormatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_PCM)
-            {
-                m_format = (sampleFormat.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                           (sampleFormat.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                           (sampleFormat.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
-            }
-        }
+        m_format = DspFormatFromWaveFormat(sampleFormat);
     }
 
     DspChunk::DspChunk(DspChunk&& other)

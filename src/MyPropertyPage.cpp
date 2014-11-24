@@ -66,41 +66,13 @@ namespace SaneAudioRenderer
             *(WORD*)(&out[8]) += 1;
         }
 
-        std::wstring GetformatString(const WAVEFORMATEX& in)
+        std::wstring GetFormatString(const WAVEFORMATEX& format)
         {
-            // TODO: refactor this
+            DspFormat dspFormat = DspFormatFromWaveFormat(format);
 
-            DspFormat dspFormat = DspFormat::Pcm8;
-            bool pcm24in32 = false;
-
-            if (in.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
-            {
-                dspFormat = (in.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
-            }
-            else if (in.wFormatTag == WAVE_FORMAT_PCM)
-            {
-                dspFormat = (in.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                            (in.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                            (in.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
-            }
-            else if (in.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            {
-                const WAVEFORMATEXTENSIBLE& inExtensible = (const WAVEFORMATEXTENSIBLE&)in;
-
-                if (inExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
-                {
-                    dspFormat = (in.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
-                }
-                else if (inExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_PCM)
-                {
-                    dspFormat = (in.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                                (in.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                                (in.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
-
-                    if (dspFormat == DspFormat::Pcm32 && inExtensible.Samples.wValidBitsPerSample == 24)
-                        pcm24in32 = true;
-                }
-            }
+            bool pcm24in32 = (dspFormat == DspFormat::Pcm32 &&
+                                 format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                                 ((const WAVEFORMATEXTENSIBLE&)format).Samples.wValidBitsPerSample == 24);
 
             switch (dspFormat)
             {
@@ -123,7 +95,7 @@ namespace SaneAudioRenderer
                     return L"Double";
             }
 
-            return L"-";
+            throw std::logic_error("Unexpected WAVEFORMATEX has gotten through, twice.");
         }
     }
 
@@ -141,8 +113,8 @@ namespace SaneAudioRenderer
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
-        std::wstring formatInputField = (pInputFormat ? GetformatString(pInputFormat->Format) : L"-");
-        std::wstring formatDeviceField = (pDeviceFormat ? GetformatString(pDeviceFormat->format.Format) : L"-");
+        std::wstring formatInputField = (pInputFormat ? GetFormatString(pInputFormat->Format) : L"-");
+        std::wstring formatDeviceField = (pDeviceFormat ? GetFormatString(pDeviceFormat->format.Format) : L"-");
         std::wstring formatField = (formatInputField == formatDeviceField) ?
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 

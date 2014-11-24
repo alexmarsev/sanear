@@ -64,4 +64,35 @@ namespace SaneAudioRenderer
                (format == DspFormat::Pcm24) ? 3 :
                (format == DspFormat::Double) ? 8 : 4;
     }
+
+    inline DspFormat DspFormatFromWaveFormat(const WAVEFORMATEX& format)
+    {
+        if (format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+        {
+            return (format.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
+        }
+        else if (format.wFormatTag == WAVE_FORMAT_PCM)
+        {
+            return (format.wBitsPerSample == 8) ? DspFormat::Pcm8 :
+                   (format.wBitsPerSample == 16) ? DspFormat::Pcm16 :
+                   (format.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+        }
+        else if (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        {
+            const WAVEFORMATEXTENSIBLE& formatExtensible = (const WAVEFORMATEXTENSIBLE&)format;
+
+            if (formatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
+            {
+                return (format.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
+            }
+            else if (formatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_PCM)
+            {
+                return (format.wBitsPerSample == 8) ? DspFormat::Pcm8 :
+                       (format.wBitsPerSample == 16) ? DspFormat::Pcm16 :
+                       (format.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+            }
+        }
+
+        throw std::logic_error("Unexpected WAVEFORMATEX has gotten through.");
+    }
 }
