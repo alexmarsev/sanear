@@ -78,46 +78,45 @@ namespace SaneAudioRenderer
 
             if (sample > m_limit)
             {
+                const uint64_t peakFrame = chunkFirstFrame + frame;
                 if (m_peaks.empty())
                 {
-                    uint64_t start = chunkFirstFrame + frame > m_attackFrames ?
-                                         chunkFirstFrame + frame - m_attackFrames : 0;
-                    m_peaks.emplace_back(start, m_limit);
-                    m_peaks.emplace_back(chunkFirstFrame + frame, sample);
-                    m_peaks.emplace_back(chunkFirstFrame + frame + m_releaseFrames, m_limit);
-                    DbgOutString((std::wstring(L"start ") + std::to_wstring(chunkFirstFrame + frame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                    m_peaks.emplace_back(peakFrame > m_attackFrames ? peakFrame - m_attackFrames : 0, m_limit);
+                    m_peaks.emplace_back(peakFrame, sample);
+                    m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
+                    DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
                 }
                 else
                 {
-                    auto& back = m_peaks.back();
-                    auto& nextToBack = m_peaks[m_peaks.size() - 2];
-                    assert(back.second == m_limit);
-                    if (frame + chunkFirstFrame > back.first ||
-                        f(nextToBack, back, chunkFirstFrame + frame) < sample)
+                    assert(m_peaks.size() > 1);
+                    assert(m_peaks.back().second == m_limit);
+                    auto back = m_peaks.rbegin();
+                    auto nextToBack = back + 1;
+                    if (peakFrame > back->first || f(*nextToBack, *back, peakFrame) < sample)
                     {
-                        while (m_peaks.size() > 1)
+                        while (nextToBack != m_peaks.rend())
                         {
-                            auto& back = m_peaks.back();
-                            auto& nextToBack = m_peaks[m_peaks.size() - 2];
-                            if (sample >= back.second &&
-                                nextToBack.first >= chunkFirstFrame + frame - m_attackFrames - m_releaseFrames &&
-                                f(nextToBack.first, nextToBack.second, chunkFirstFrame + frame, sample, back.first) >= back.second)
+                            if (sample >= back->second &&
+                                nextToBack->first >= peakFrame - m_attackFrames - m_releaseFrames &&
+                                f(nextToBack->first, nextToBack->second, peakFrame, sample, back->first) >= back->second)
                             {
-                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back.first) + L" " + std::to_wstring(back.second) + L"\n").c_str());
+                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " + std::to_wstring(back->second) + L"\n").c_str());
                                 m_peaks.pop_back();
+                                back = m_peaks.rbegin();
+                                nextToBack = back + 1;
                                 continue;
                             }
                             break;
                         }
                         {
-                            DbgOutString((std::wstring(L"add ") + std::to_wstring(chunkFirstFrame + frame) + L" " + std::to_wstring(sample) + L"\n").c_str());
-                            m_peaks.emplace_back(chunkFirstFrame + frame, sample);
-                            m_peaks.emplace_back(chunkFirstFrame + frame + m_releaseFrames, m_limit);
+                            DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                            m_peaks.emplace_back(peakFrame, sample);
+                            m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
                         }
                     }
                     else
                     {
-                        DbgOutString((std::wstring(L"consume ") + std::to_wstring(chunkFirstFrame + frame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                        DbgOutString((std::wstring(L"consume ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
                     }
                 }
             }
