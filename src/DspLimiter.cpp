@@ -5,14 +5,21 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        float f(uint64_t leftPos, float leftValue, uint64_t rightPos, float rightValue, uint64_t pos)
+        inline float f_x(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right)
         {
-            return leftValue + (float)(pos - leftPos) / (rightPos - leftPos) * (rightValue - leftValue);
+            assert(right.first > left.first);
+            return (right.second - left.second) / (right.first - left.first);
         }
 
-        float f(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right, uint64_t pos)
+        inline float f(const std::pair<uint64_t, float>& left, float x, uint64_t pos)
         {
-            return f(left.first, left.second, right.first, right.second, pos);
+            return left.second + x * (pos - left.first);
+        }
+
+        inline float f(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right, uint64_t pos)
+        {
+            assert(pos >= left.first && pos <= right.first);
+            return f(left, f_x(left, right), pos);
         }
     }
 
@@ -109,7 +116,7 @@ namespace SaneAudioRenderer
         {
             float sample = 0.0f;
             for (size_t i = 0; i < channels; i++)
-                sample = std::max(std::abs(data[frame * channels + i]), sample);
+                sample = std::fmax(std::fabs(data[frame * channels + i]), sample);
 
             if (sample > m_limit)
             {
@@ -137,7 +144,7 @@ namespace SaneAudioRenderer
                         while (nextToBack != m_peaks.rend())
                         {
                             if (sample >= back->second &&
-                                f(nextToBack->first, nextToBack->second, peakFrame, sample, back->first) > back->second)
+                                f(*nextToBack, {peakFrame, sample}, back->first) > back->second)
                             {
                                 //DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
                                 //                                       std::to_wstring(back->second) + L"\n").c_str());
@@ -179,32 +186,39 @@ namespace SaneAudioRenderer
             const size_t firstFrameOffset = chunkFirstFrame > m_peaks.front().first ?
                                                 0 : (size_t)(m_peaks.front().first - chunkFirstFrame);
 
+            assert(m_peaks.size() > 1);
+            auto left = m_peaks[0];
+            auto right = m_peaks[1];
+            float x = f_x(left, right);
+
             auto data = reinterpret_cast<float*>(chunk.GetData());
-            for (size_t frame = firstFrameOffset; frame < chunkFrameCount; frame++)
+            for (size_t i = firstFrameOffset; i < chunkFrameCount; i++)
             {
-                assert(m_peaks.size() > 1);
-                const auto& left = m_peaks[0];
-                const auto& right = m_peaks[1];
-                assert(right.first > left.first);
+                const uint64_t frame = chunkFirstFrame + i;
+                const float divisor = f(left, x, frame);
 
-                float divisor = f(left, right, chunkFirstFrame + frame);
-
-                for (size_t i = 0; i < channels; i++)
+                for (size_t channel = 0; channel < channels; channel++)
                 {
-                    float& sample = data[frame * channels + i];
+                    float& sample = data[i * channels + channel];
                     sample = sample / divisor * m_limit;
-                    assert(std::abs(sample) <= m_limit);
+                    assert(std::fabs(sample) <= m_limit);
                 }
 
-                if (right.first <= chunkFirstFrame + frame)
+                if (right.first <= frame)
                 {
-                    assert(right.first == chunkFirstFrame + frame);
+                    assert(right.first == frame);
                     m_peaks.pop_front();
                     if (m_peaks.size() == 1)
                     {
                         //DbgOutString(L"clear\n");
                         m_peaks.clear();
                         break;
+                    }
+                    else
+                    {
+                        left = m_peaks[0];
+                        right = m_peaks[1];
+                        x = f_x(left, right);
                     }
                 }
             }
