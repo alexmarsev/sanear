@@ -32,10 +32,16 @@ namespace SaneAudioRenderer
 
     void DspLimiter::Process(DspChunk& chunk)
     {
-        if (!chunk.IsEmpty() && chunk.GetFormat() == DspFormat::Float)
+        if (chunk.IsEmpty())
+            return;
+
+        if (m_limit != 1.0f || chunk.GetFormat() == DspFormat::Float || !m_buffer.empty())
         {
+            DspChunk::ToFloat(chunk);
+
             m_bufferFrameCount += chunk.GetFrameCount();
             m_buffer.push_back(std::move(chunk));
+            assert(chunk.IsEmpty());
 
             AnalyzeLastChunk();
 
@@ -55,6 +61,37 @@ namespace SaneAudioRenderer
     void DspLimiter::Finish(DspChunk& chunk)
     {
         Process(chunk);
+
+        if (!m_buffer.empty())
+        {
+            assert(chunk.IsEmpty() || chunk.GetFormat() == DspFormat::Float);
+
+            DspChunk output(DspFormat::Float, m_buffer.front().GetChannelCount(),
+                            chunk.GetFrameCount() + m_bufferFrameCount, m_buffer.front().GetRate());
+
+            size_t offset = chunk.GetSize();
+
+            if (!chunk.IsEmpty())
+                memcpy(output.GetData(), chunk.GetConstData(), offset);
+
+            while (!m_buffer.empty())
+            {
+                ModifyFirstChunk();
+
+                const auto& front = m_buffer.front();
+                assert(front.GetFormat() == DspFormat::Float);
+                memcpy(output.GetData() + offset, front.GetConstData(), front.GetSize());
+                offset += front.GetSize();
+                m_bufferFrameCount -= front.GetFrameCount();
+                m_bufferFirstFrame += front.GetFrameCount();
+
+                m_buffer.pop_front();
+            }
+
+            assert(m_bufferFrameCount == 0);
+
+            chunk = std::move(output);
+        }
     }
 
     void DspLimiter::AnalyzeLastChunk()
