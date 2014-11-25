@@ -1,18 +1,16 @@
 #include "pch.h"
 #include "DspLimiter.h"
 
-#include <string>
-
 namespace SaneAudioRenderer
 {
     namespace
     {
-        float f(int64_t leftPos, float leftValue, int64_t rightPos, float rightValue, uint64_t pos)
+        float f(uint64_t leftPos, float leftValue, uint64_t rightPos, float rightValue, uint64_t pos)
         {
             return leftValue + (float)(pos - leftPos) / (rightPos - leftPos) * (rightValue - leftValue);
         }
 
-        float f(const std::pair<int64_t, float>& left, const std::pair<int64_t, float>& right, uint64_t pos)
+        float f(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right, uint64_t pos)
         {
             return f(left.first, left.second, right.first, right.second, pos);
         }
@@ -21,9 +19,9 @@ namespace SaneAudioRenderer
     void DspLimiter::Initialize(uint32_t rate, bool exclusive)
     {
         m_limit = (exclusive ? 1.0f : 0.98f);
-        m_attackFrames = rate / 100; // 10ms
-        m_releaseFrames = rate / 100; // 10ms
-        m_windowFrames = m_attackFrames + m_releaseFrames + 1;
+        m_windowFrames = rate / 50; // 20ms
+        m_attackFrames = m_windowFrames / 2;
+        m_releaseFrames = m_windowFrames / 2;
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
@@ -74,7 +72,7 @@ namespace SaneAudioRenderer
         {
             float sample = 0.0f;
             for (size_t i = 0; i < channels; i++)
-                sample = fmax(fabs(data[frame * channels + i]), sample);
+                sample = std::max(std::abs(data[frame * channels + i]), sample);
 
             if (sample > m_limit)
             {
@@ -84,7 +82,8 @@ namespace SaneAudioRenderer
                     m_peaks.emplace_back(peakFrame > m_attackFrames ? peakFrame - m_attackFrames : 0, m_limit);
                     m_peaks.emplace_back(peakFrame, sample);
                     m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
-                    DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                    DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
+                                                            std::to_wstring(sample) + L"\n").c_str());
                 }
                 else
                 {
@@ -97,10 +96,10 @@ namespace SaneAudioRenderer
                         while (nextToBack != m_peaks.rend())
                         {
                             if (sample >= back->second &&
-                                nextToBack->first >= peakFrame - m_attackFrames - m_releaseFrames &&
                                 f(nextToBack->first, nextToBack->second, peakFrame, sample, back->first) >= back->second)
                             {
-                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " + std::to_wstring(back->second) + L"\n").c_str());
+                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
+                                                                       std::to_wstring(back->second) + L"\n").c_str());
                                 m_peaks.pop_back();
                                 back = m_peaks.rbegin();
                                 nextToBack = back + 1;
@@ -109,14 +108,16 @@ namespace SaneAudioRenderer
                             break;
                         }
                         {
-                            DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                            DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
+                                                                  std::to_wstring(sample) + L"\n").c_str());
                             m_peaks.emplace_back(peakFrame, sample);
                             m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
                         }
                     }
                     else
                     {
-                        DbgOutString((std::wstring(L"consume ") + std::to_wstring(peakFrame) + L" " + std::to_wstring(sample) + L"\n").c_str());
+                        DbgOutString((std::wstring(L"consume ") + std::to_wstring(peakFrame) + L" " +
+                                                                  std::to_wstring(sample) + L"\n").c_str());
                     }
                 }
             }
@@ -135,13 +136,13 @@ namespace SaneAudioRenderer
             const uint32_t channels = chunk.GetChannelCount();
 
             const size_t firstFrameOffset = chunkFirstFrame > m_peaks.front().first ?
-                                                0 : m_peaks.front().first - chunkFirstFrame;
+                                                0 : (size_t)(m_peaks.front().first - chunkFirstFrame);
 
             auto data = reinterpret_cast<float*>(chunk.GetData());
             for (size_t frame = firstFrameOffset; frame < chunkFrameCount; frame++)
             {
-                assert(m_peaks.size() >= 2);
-                const auto& left = m_peaks.front();
+                assert(m_peaks.size() > 1);
+                const auto& left = m_peaks[0];
                 const auto& right = m_peaks[1];
                 assert(right.first > left.first);
 
@@ -151,12 +152,12 @@ namespace SaneAudioRenderer
                 {
                     float& sample = data[frame * channels + i];
                     sample *= (double)m_limit / divisor;
-                    assert(fabs(sample) <= m_limit);
+                    assert(std::abs(sample) <= m_limit);
                 }
 
-                if (right.first <= frame + chunkFirstFrame)
+                if (right.first <= chunkFirstFrame + frame)
                 {
-                    assert(right.first == frame + chunkFirstFrame);
+                    assert(right.first == chunkFirstFrame + frame);
                     m_peaks.pop_front();
                     if (m_peaks.size() == 1)
                     {
