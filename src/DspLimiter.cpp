@@ -116,7 +116,7 @@ namespace SaneAudioRenderer
         {
             float sample = 0.0f;
             for (size_t i = 0; i < channels; i++)
-                sample = std::fmax(std::fabs(data[frame * channels + i]), sample);
+                sample = std::max(std::fabs(data[frame * channels + i]), sample);
 
             if (sample > m_limit)
             {
