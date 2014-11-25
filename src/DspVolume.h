@@ -14,11 +14,13 @@ namespace SaneAudioRenderer
         DspVolume(const DspVolume&) = delete;
         DspVolume& operator=(const DspVolume&) = delete;
 
+        void Initialize(bool exclusive);
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
 
     private:
 
         const AudioRenderer& m_renderer;
+        bool m_exclusive;
     };
 }
