@@ -119,8 +119,8 @@ namespace SaneAudioRenderer
                     m_peaks.emplace_back(peakFrame > m_attackFrames ? peakFrame - m_attackFrames : 0, m_limit);
                     m_peaks.emplace_back(peakFrame, sample);
                     m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
-                    DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
-                                                            std::to_wstring(sample) + L"\n").c_str());
+                    //DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
+                    //                                        std::to_wstring(sample) + L"\n").c_str());
                 }
                 else
                 {
@@ -130,13 +130,17 @@ namespace SaneAudioRenderer
                     auto nextToBack = back + 1;
                     if (peakFrame > back->first || f(*nextToBack, *back, peakFrame) < sample)
                     {
+                        m_peaks.pop_back();
+                        back = m_peaks.rbegin();
+                        nextToBack = back + 1;
+
                         while (nextToBack != m_peaks.rend())
                         {
                             if (sample >= back->second &&
-                                f(nextToBack->first, nextToBack->second, peakFrame, sample, back->first) >= back->second)
+                                f(nextToBack->first, nextToBack->second, peakFrame, sample, back->first) > back->second)
                             {
-                                DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
-                                                                       std::to_wstring(back->second) + L"\n").c_str());
+                                //DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
+                                //                                       std::to_wstring(back->second) + L"\n").c_str());
                                 m_peaks.pop_back();
                                 back = m_peaks.rbegin();
                                 nextToBack = back + 1;
@@ -145,16 +149,16 @@ namespace SaneAudioRenderer
                             break;
                         }
                         {
-                            DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
-                                                                  std::to_wstring(sample) + L"\n").c_str());
+                            //DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
+                            //                                      std::to_wstring(sample) + L"\n").c_str());
                             m_peaks.emplace_back(peakFrame, sample);
                             m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
                         }
                     }
                     else
                     {
-                        DbgOutString((std::wstring(L"consume ") + std::to_wstring(peakFrame) + L" " +
-                                                                  std::to_wstring(sample) + L"\n").c_str());
+                        //DbgOutString((std::wstring(L"consume ") + std::to_wstring(peakFrame) + L" " +
+                        //                                          std::to_wstring(sample) + L"\n").c_str());
                     }
                 }
             }
@@ -188,7 +192,7 @@ namespace SaneAudioRenderer
                 for (size_t i = 0; i < channels; i++)
                 {
                     float& sample = data[frame * channels + i];
-                    sample *= (double)m_limit / divisor;
+                    sample = sample / divisor * m_limit;
                     assert(std::abs(sample) <= m_limit);
                 }
 
@@ -198,7 +202,7 @@ namespace SaneAudioRenderer
                     m_peaks.pop_front();
                     if (m_peaks.size() == 1)
                     {
-                        DbgOutString(L"clear\n");
+                        //DbgOutString(L"clear\n");
                         m_peaks.clear();
                         break;
                     }
