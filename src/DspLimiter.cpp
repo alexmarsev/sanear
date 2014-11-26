@@ -26,9 +26,9 @@ namespace SaneAudioRenderer
     void DspLimiter::Initialize(uint32_t rate, bool exclusive)
     {
         m_limit = (exclusive ? 1.0f : 0.98f);
-        m_windowFrames = rate / 50; // 20ms
-        m_attackFrames = rate / 1000; // 1ms
-        m_releaseFrames = rate / 1000; // 1ms
+        m_attackFrames = rate / 1700;
+        m_releaseFrames = rate / 70;
+        m_windowFrames = m_attackFrames + m_releaseFrames;
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
