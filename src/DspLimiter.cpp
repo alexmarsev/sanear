@@ -27,8 +27,8 @@ namespace SaneAudioRenderer
     {
         m_limit = (exclusive ? 1.0f : 0.98f);
         m_windowFrames = rate / 50; // 20ms
-        m_attackFrames = m_windowFrames / 2;
-        m_releaseFrames = m_windowFrames / 2;
+        m_attackFrames = rate / 1000; // 1ms
+        m_releaseFrames = rate / 1000; // 1ms
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
