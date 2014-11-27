@@ -55,6 +55,7 @@ namespace SaneAudioRenderer
 
     DeviceManager::~DeviceManager()
     {
+        m_queuedDestroy = true;
         PostMessage(m_hWindow, WM_DESTROY, 0, 0);
         WaitForSingleObject(m_hThread, INFINITE);
         CloseHandle(m_hThread);
@@ -65,6 +66,7 @@ namespace SaneAudioRenderer
         device = {};
         m_format = format;
         m_exclusive = exclusive;
+        m_queuedCreate = true;
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
         device = m_device;
         return ret;
@@ -72,6 +74,11 @@ namespace SaneAudioRenderer
 
     LRESULT DeviceManager::OnCreateDevice()
     {
+        if (!m_queuedCreate)
+            return 1;
+
+        m_queuedCreate = false;
+
         ReleaseDevice();
         try
         {
@@ -203,7 +210,8 @@ namespace SaneAudioRenderer
         switch (msg)
         {
             case WM_DESTROY:
-                PostQuitMessage(0);
+                if (m_queuedDestroy)
+                    PostQuitMessage(0);
                 return 0;
 
             case WM_CREATE_DEVICE:

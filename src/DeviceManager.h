@@ -35,6 +35,9 @@ namespace SaneAudioRenderer
         DWORD ThreadProc();
         LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+        bool m_queuedDestroy = false;
+        bool m_queuedCreate = false;
+
         HANDLE m_hThread;
         HWND m_hWindow = NULL;
         std::promise<bool> m_windowInitialized;;
