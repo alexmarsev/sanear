@@ -16,7 +16,7 @@ namespace SaneAudioRenderer
             memcpy(&out[out.size() - size], src, size);
         }
 
-        template<typename T>
+        template <typename T>
         void Write(std::vector<char>& out, T t)
         {
             Write(out, &t, sizeof(T));
