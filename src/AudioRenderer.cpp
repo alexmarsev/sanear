@@ -127,16 +127,19 @@ namespace SaneAudioRenderer
                 if (chunk.IsEmpty())
                     return true;
 
-                m_dspMatrix.Process(chunk);
-                m_dspRate.Process(chunk);
-                m_dspTempo.Process(chunk);
-                m_dspCrossfeed.Process(chunk);
-                m_dspVolume.Process(chunk);
-                m_dspBalance.Process(chunk);
-                m_dspLimiter.Process(chunk);
-                m_dspDither.Process(chunk);
+                if (m_deviceInitialized)
+                {
+                    m_dspMatrix.Process(chunk);
+                    m_dspRate.Process(chunk);
+                    m_dspTempo.Process(chunk);
+                    m_dspCrossfeed.Process(chunk);
+                    m_dspVolume.Process(chunk);
+                    m_dspBalance.Process(chunk);
+                    m_dspLimiter.Process(chunk);
+                    m_dspDither.Process(chunk);
 
-                DspChunk::ToFormat(m_device.dspFormat, chunk);
+                    DspChunk::ToFormat(m_device.dspFormat, chunk);
+                }
 
                 m_lastSampleEnd = sampleProps.tStop;
             }
@@ -158,18 +161,24 @@ namespace SaneAudioRenderer
             CAutoLock objectLock(this);
             assert(m_state != State_Stopped);
 
+            if (!m_deviceInitialized)
+                blockUntilEnd = false;
+
             try
             {
-                m_dspMatrix.Finish(chunk);
-                m_dspRate.Finish(chunk);
-                m_dspTempo.Finish(chunk);
-                m_dspCrossfeed.Finish(chunk);
-                m_dspVolume.Finish(chunk);
-                m_dspBalance.Finish(chunk);
-                m_dspLimiter.Finish(chunk);
-                m_dspDither.Finish(chunk);
+                if (m_deviceInitialized)
+                {
+                    m_dspMatrix.Finish(chunk);
+                    m_dspRate.Finish(chunk);
+                    m_dspTempo.Finish(chunk);
+                    m_dspCrossfeed.Finish(chunk);
+                    m_dspVolume.Finish(chunk);
+                    m_dspBalance.Finish(chunk);
+                    m_dspLimiter.Finish(chunk);
+                    m_dspDither.Finish(chunk);
 
-                DspChunk::ToFormat(m_device.dspFormat, chunk);
+                    DspChunk::ToFormat(m_device.dspFormat, chunk);
+                }
             }
             catch (std::bad_alloc&)
             {
@@ -251,7 +260,7 @@ namespace SaneAudioRenderer
                             reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
                             WAVEFORMATEXTENSIBLE{inputFormat};
 
-        m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode());
+        m_deviceInitialized = m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode());
 
         m_inputFormatInitialized = true;
 
@@ -276,7 +285,9 @@ namespace SaneAudioRenderer
         assert(m_state != State_Running);
         m_state = State_Running;
 
-        m_graphClock->SlaveClockToAudio(m_device.audioClock, startTime);
+        m_startTime = startTime;
+
+        m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime);
         m_device.audioClient->Start();
         //assert(m_bufferFilled.Check());
     }
@@ -315,6 +326,9 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
+        if (!m_deviceInitialized)
+            return nullptr;
+
         return std::make_unique<AudioDevice>(m_device);
     }
 
@@ -322,6 +336,7 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
         assert(m_inputFormatInitialized);
+        assert(m_deviceInitialized);
 
         const auto inRate = m_inputFormat.Format.nSamplesPerSec;
         const auto inChannels = m_inputFormat.Format.nChannels;
@@ -358,29 +373,65 @@ namespace SaneAudioRenderer
 
             assert(m_state != State_Stopped);
 
-            // Get up-to-date information on the device buffer.
-            UINT32 bufferFrames, bufferPadding;
-            ThrowIfFailed(m_device.audioClient->GetBufferSize(&bufferFrames));
-            ThrowIfFailed(m_device.audioClient->GetCurrentPadding(&bufferPadding));
+            if (m_deviceInitialized)
+            {
+                try
+                {
+                    // Get up-to-date information on the device buffer.
+                    UINT32 bufferFrames, bufferPadding;
+                    ThrowIfFailed(m_device.audioClient->GetBufferSize(&bufferFrames));
+                    ThrowIfFailed(m_device.audioClient->GetCurrentPadding(&bufferPadding));
 
-            // Find out how many frames we can write this time.
-            const UINT32 doFrames = std::min(bufferFrames - bufferPadding, (UINT32)(chunkFrames - doneFrames));
+                    // Find out how many frames we can write this time.
+                    const UINT32 doFrames = std::min(bufferFrames - bufferPadding, (UINT32)(chunkFrames - doneFrames));
 
-            if (doFrames == 0)
-                continue;
+                    if (doFrames == 0)
+                        continue;
 
-            // Write frames to the device buffer.
-            BYTE* deviceBuffer;
-            ThrowIfFailed(m_device.audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
-            assert(frameSize == (m_device.format.Format.wBitsPerSample / 8 * m_device.format.Format.nChannels));
-            memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
-            ThrowIfFailed(m_device.audioRenderClient->ReleaseBuffer(doFrames, 0));
+                    // Write frames to the device buffer.
+                    BYTE* deviceBuffer;
+                    ThrowIfFailed(m_device.audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
+                    assert(frameSize == (m_device.format.Format.wBitsPerSample / 8 * m_device.format.Format.nChannels));
+                    memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
+                    ThrowIfFailed(m_device.audioRenderClient->ReleaseBuffer(doFrames, 0));
 
-            // If the buffer is fully filled, set the corresponding event.
-            (bufferPadding + doFrames == bufferFrames) ? m_bufferFilled.Set() : m_bufferFilled.Reset();
+                    // If the buffer is fully filled, set the corresponding event.
+                    (bufferPadding + doFrames == bufferFrames) ? m_bufferFilled.Set() : m_bufferFilled.Reset();
 
-            doneFrames += doFrames;
-            m_pushedFrames += doFrames;
+                    doneFrames += doFrames;
+                    m_pushedFrames += doFrames;
+
+                    continue;
+                }
+                catch (HRESULT)
+                {
+                    m_device = {};
+                    m_deviceInitialized = false;
+                    m_graphClock->UnslaveClockFromAudio();
+                }
+            }
+
+            assert(!m_deviceInitialized);
+            assert(m_inputFormatInitialized);
+
+            if (m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode()))
+            {
+                m_deviceInitialized = true;
+
+                InitializeProcessors();
+
+                if (m_state == State_Running)
+                    m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_lastSampleEnd);
+
+                // TODO: properly slave the clock after the device was re-created in paused state
+
+                break;
+            }
+            else if (m_state == State_Running &&
+                     m_graphClock->GetTime() + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
+            {
+                break;
+            }
         }
 
         return true;

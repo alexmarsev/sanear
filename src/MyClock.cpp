@@ -51,4 +51,9 @@ namespace SaneAudioRenderer
         CAutoLock lock(this);
         m_audioClock = nullptr;
     }
+
+    STDMETHODIMP_(REFERENCE_TIME) MyClock::GetTime()
+    {
+        return GetPrivateTime();
+    }
 }
