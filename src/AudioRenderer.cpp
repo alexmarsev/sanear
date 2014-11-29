@@ -120,6 +120,20 @@ namespace SaneAudioRenderer
             CAutoLock objectLock(this);
             assert(m_state != State_Stopped);
 
+            if (!m_deviceInitialized &&
+                m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode()))
+            {
+                m_deviceInitialized = true;
+
+                assert(m_inputFormatInitialized);
+                InitializeProcessors();
+
+                if (m_state == State_Running)
+                    StartDevice(m_startTime + m_lastSampleEnd);
+
+                // TODO: properly slave the clock after the device was re-created in paused state
+            }
+
             try
             {
                 chunk = PreProcess(pSample, sampleProps, m_inputFormat.Format, m_lastSampleEnd);
@@ -202,6 +216,8 @@ namespace SaneAudioRenderer
                     {
                         CAutoLock objectLock(this);
 
+                        assert(m_deviceInitialized);
+
                         UINT64 deviceClockFrequency, deviceClockPosition;
                         ThrowIfFailed(m_device.audioClock->GetFrequency(&deviceClockFrequency));
                         ThrowIfFailed(m_device.audioClock->GetPosition(&deviceClockPosition, nullptr));
@@ -241,11 +257,11 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_state != State_Running);
 
-        m_device.audioClient->Reset();
-        m_bufferFilled.Reset();
-
-        //if (m_inputFormatInitialized)
-        //    InitializeProcessors();
+        if (m_deviceInitialized)
+        {
+            m_device.audioClient->Reset();
+            m_bufferFilled.Reset();
+        }
 
         m_flush.Reset();
 
@@ -260,22 +276,20 @@ namespace SaneAudioRenderer
                             reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
                             WAVEFORMATEXTENSIBLE{inputFormat};
 
-        m_deviceInitialized = m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode());
-
         m_inputFormatInitialized = true;
 
-        InitializeProcessors();
+        ClearDevice();
     }
 
     void AudioRenderer::NewSegment(double rate)
     {
         CAutoLock objectLock(this);
-        //assert(m_state != State_Running);
 
         m_lastSampleEnd = 0;
         m_rate = rate;
 
-        if (m_inputFormatInitialized)
+        assert(m_inputFormatInitialized);
+        if (m_deviceInitialized)
             InitializeProcessors();
     }
 
@@ -286,10 +300,7 @@ namespace SaneAudioRenderer
         m_state = State_Running;
 
         m_startTime = startTime;
-
-        m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime);
-        m_device.audioClient->Start();
-        //assert(m_bufferFilled.Check());
+        StartDevice(m_startTime);
     }
 
     void AudioRenderer::Pause()
@@ -297,8 +308,11 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         m_state = State_Paused;
 
-        m_graphClock->UnslaveClockFromAudio();
-        m_device.audioClient->Stop();
+        if (m_deviceInitialized)
+        {
+            m_graphClock->UnslaveClockFromAudio();
+            m_device.audioClient->Stop();
+        }
     }
 
     void AudioRenderer::Stop()
@@ -308,8 +322,7 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         m_state = State_Stopped;
 
-        m_graphClock->UnslaveClockFromAudio();
-        m_device.audioClient->Stop();
+        ClearDevice();
     }
 
     std::unique_ptr<WAVEFORMATEXTENSIBLE> AudioRenderer::GetInputFormat()
@@ -330,6 +343,34 @@ namespace SaneAudioRenderer
             return nullptr;
 
         return std::make_unique<AudioDevice>(m_device);
+    }
+
+    void AudioRenderer::StartDevice(REFERENCE_TIME clockStartTime)
+    {
+        CAutoLock objectLock(this);
+        assert(m_state == State_Running);
+
+        if (m_deviceInitialized)
+        {
+            m_graphClock->SlaveClockToAudio(m_device.audioClock, clockStartTime);
+            m_device.audioClient->Start();
+            //assert(m_bufferFilled.Check());
+        }
+    }
+
+    void AudioRenderer::ClearDevice()
+    {
+        CAutoLock objectLock(this);
+
+        if (m_deviceInitialized)
+        {
+            m_graphClock->UnslaveClockFromAudio();
+            m_device.audioClient->Stop();
+            m_bufferFilled.Reset();
+        }
+
+        m_deviceInitialized = false;
+        m_device = {};
     }
 
     void AudioRenderer::InitializeProcessors()
@@ -405,30 +446,13 @@ namespace SaneAudioRenderer
                 }
                 catch (HRESULT)
                 {
-                    m_device = {};
-                    m_deviceInitialized = false;
-                    m_graphClock->UnslaveClockFromAudio();
+                    ClearDevice();
                 }
             }
 
             assert(!m_deviceInitialized);
-            assert(m_inputFormatInitialized);
-
-            if (m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode()))
-            {
-                m_deviceInitialized = true;
-
-                InitializeProcessors();
-
-                if (m_state == State_Running)
-                    m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_lastSampleEnd);
-
-                // TODO: properly slave the clock after the device was re-created in paused state
-
-                break;
-            }
-            else if (m_state == State_Running &&
-                     m_graphClock->GetTime() + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
+            if (m_state == State_Running &&
+                m_graphClock->GetTime() + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
             {
                 break;
             }

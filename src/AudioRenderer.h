@@ -48,6 +48,9 @@ namespace SaneAudioRenderer
 
     private:
 
+        void StartDevice(REFERENCE_TIME clockStartTime);
+        void ClearDevice();
+
         void InitializeProcessors();
 
         bool Push(DspChunk& chunk);
