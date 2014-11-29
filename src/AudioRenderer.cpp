@@ -317,8 +317,6 @@ namespace SaneAudioRenderer
 
     void AudioRenderer::Stop()
     {
-        // TODO: release audio device here
-
         CAutoLock objectLock(this);
         m_state = State_Stopped;
 
@@ -371,6 +369,7 @@ namespace SaneAudioRenderer
 
         m_deviceInitialized = false;
         m_device = {};
+        m_deviceManager.ReleaseDevice();
     }
 
     void AudioRenderer::InitializeProcessors()

@@ -25,10 +25,9 @@ namespace SaneAudioRenderer
         ~DeviceManager();
 
         bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive);
+        void ReleaseDevice();
 
     private:
-
-        void ReleaseDevice();
 
         LRESULT OnCreateDevice();
 
