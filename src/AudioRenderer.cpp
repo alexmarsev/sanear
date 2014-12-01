@@ -214,7 +214,8 @@ namespace SaneAudioRenderer
                 {
                     CAutoLock objectLock(this);
 
-                    assert(m_deviceInitialized);
+                    if (!m_deviceInitialized)
+                        return true;
 
                     UINT64 deviceClockFrequency, deviceClockPosition;
 
