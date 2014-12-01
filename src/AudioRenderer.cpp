@@ -238,7 +238,7 @@ namespace SaneAudioRenderer
             }
             catch (HRESULT)
             {
-                assert(false);
+                ClearDevice();
             }
 
             return true;
