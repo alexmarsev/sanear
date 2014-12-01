@@ -131,10 +131,7 @@ namespace SaneAudioRenderer
                 m_startOffset = m_lastSampleEnd;
 
                 if (m_state == State_Running)
-                {
-                    StartDevice(m_startTime + m_startOffset);
-                    m_startOffset = 0;
-                }
+                    StartDevice();
             }
 
             try
@@ -304,8 +301,7 @@ namespace SaneAudioRenderer
         m_state = State_Running;
 
         m_startTime = startTime;
-        StartDevice(m_startTime + m_startOffset);
-        m_startOffset = 0;
+        StartDevice();
     }
 
     void AudioRenderer::Pause()
@@ -348,14 +344,15 @@ namespace SaneAudioRenderer
         return std::make_unique<AudioDevice>(m_device);
     }
 
-    void AudioRenderer::StartDevice(REFERENCE_TIME clockStartTime)
+    void AudioRenderer::StartDevice()
     {
         CAutoLock objectLock(this);
         assert(m_state == State_Running);
 
         if (m_deviceInitialized)
         {
-            m_graphClock->SlaveClockToAudio(m_device.audioClock, clockStartTime);
+            m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_startOffset);
+            m_startOffset = 0;
             m_device.audioClient->Start();
             //assert(m_bufferFilled.Check());
         }

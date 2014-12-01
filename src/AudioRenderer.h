@@ -48,7 +48,7 @@ namespace SaneAudioRenderer
 
     private:
 
-        void StartDevice(REFERENCE_TIME clockStartTime);
+        void StartDevice();
         void ClearDevice();
 
         void InitializeProcessors();
@@ -68,6 +68,7 @@ namespace SaneAudioRenderer
 
         REFERENCE_TIME m_startOffset = 0;
         REFERENCE_TIME m_startTime = 0;
+
         REFERENCE_TIME m_lastSampleEnd = 0;
 
         CAMEvent m_flush;
