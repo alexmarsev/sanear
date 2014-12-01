@@ -207,38 +207,40 @@ namespace SaneAudioRenderer
 
             m_graphClock->UnslaveClockFromAudio();
 
-            try
+            for (;;)
             {
-                for (;;)
+                int64_t actual, target;
+
                 {
-                    int64_t actual, target;
+                    CAutoLock objectLock(this);
 
+                    assert(m_deviceInitialized);
+
+                    UINT64 deviceClockFrequency, deviceClockPosition;
+
+                    try
                     {
-                        CAutoLock objectLock(this);
-
-                        assert(m_deviceInitialized);
-
-                        UINT64 deviceClockFrequency, deviceClockPosition;
                         ThrowIfFailed(m_device.audioClock->GetFrequency(&deviceClockFrequency));
                         ThrowIfFailed(m_device.audioClock->GetPosition(&deviceClockPosition, nullptr));
-
-                        actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
-                        target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
-
-                        if (actual >= target)
-                        {
-                            assert(actual == target);
-                            break;
-                        }
+                    }
+                    catch (HRESULT)
+                    {
+                        ClearDevice();
+                        return true;
                     }
 
-                    if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
-                        return false;
+                    actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
+                    target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
+
+                    if (actual >= target)
+                    {
+                        assert(actual == target);
+                        break;
+                    }
                 }
-            }
-            catch (HRESULT)
-            {
-                ClearDevice();
+
+                if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
+                    return false;
             }
 
             return true;
