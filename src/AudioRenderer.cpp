@@ -209,7 +209,8 @@ namespace SaneAudioRenderer
 
             for (;;)
             {
-                int64_t actual, target;
+                int64_t actual = INT64_MAX;
+                int64_t target;
 
                 {
                     CAutoLock objectLock(this);
@@ -230,14 +231,12 @@ namespace SaneAudioRenderer
                         return true;
                     }
 
+                    const auto previous = actual;
                     actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
                     target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
 
-                    if (actual >= target)
-                    {
-                        assert(actual == target);
+                    if (actual == target || actual == previous)
                         break;
-                    }
                 }
 
                 if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
