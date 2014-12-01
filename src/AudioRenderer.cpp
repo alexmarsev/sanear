@@ -128,10 +128,13 @@ namespace SaneAudioRenderer
                 assert(m_inputFormatInitialized);
                 InitializeProcessors();
 
-                if (m_state == State_Running)
-                    StartDevice(m_startTime + m_lastSampleEnd);
+                m_startOffset = m_lastSampleEnd;
 
-                // TODO: properly slave the clock after the device was re-created in paused state
+                if (m_state == State_Running)
+                {
+                    StartDevice(m_startTime + m_startOffset);
+                    m_startOffset = 0;
+                }
             }
 
             try
@@ -285,6 +288,7 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
+        m_startOffset = 0;
         m_lastSampleEnd = 0;
         m_rate = rate;
 
@@ -300,7 +304,8 @@ namespace SaneAudioRenderer
         m_state = State_Running;
 
         m_startTime = startTime;
-        StartDevice(m_startTime);
+        StartDevice(m_startTime + m_startOffset);
+        m_startOffset = 0;
     }
 
     void AudioRenderer::Pause()

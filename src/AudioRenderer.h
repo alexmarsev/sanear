@@ -66,6 +66,7 @@ namespace SaneAudioRenderer
         WAVEFORMATEXTENSIBLE m_inputFormat;
         bool m_inputFormatInitialized = false;
 
+        REFERENCE_TIME m_startOffset = 0;
         REFERENCE_TIME m_startTime = 0;
         REFERENCE_TIME m_lastSampleEnd = 0;
 
