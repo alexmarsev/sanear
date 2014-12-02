@@ -48,6 +48,8 @@ namespace SaneAudioRenderer
 
     private:
 
+        DspChunk PreProcess(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps);
+
         void StartDevice();
         void ClearDevice();
 

@@ -3,77 +3,6 @@
 
 namespace SaneAudioRenderer
 {
-    namespace
-    {
-        DspChunk PreProcess(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps,
-                            const WAVEFORMATEX& sampleFormat, REFERENCE_TIME previousSampleEndTime)
-        {
-            DspChunk chunk;
-
-            // TODO: can gradually accumulate error - decide what to do with it
-
-            auto timeToFrames = [&](REFERENCE_TIME time)
-            {
-                return (size_t)(time * sampleFormat.nSamplesPerSec / OneSecond);
-            };
-
-            if (sampleProps.tStop <= previousSampleEndTime)
-            {
-                // Drop the sample.
-                assert(chunk.IsEmpty());
-            }
-            else if (sampleProps.tStart < previousSampleEndTime)
-            {
-                // Crop the sample.
-                size_t cropFrames = timeToFrames(previousSampleEndTime - sampleProps.tStart);
-                if (cropFrames > 0)
-                {
-                    size_t cropBytes = cropFrames * sampleFormat.nChannels * sampleFormat.wBitsPerSample / 8;
-
-                    AM_SAMPLE2_PROPERTIES croppedSampleProps = sampleProps;
-                    assert((int32_t)cropBytes < croppedSampleProps.lActual);
-                    croppedSampleProps.pbBuffer += cropBytes;
-                    croppedSampleProps.lActual -= (int32_t)cropBytes;
-
-                    chunk = DspChunk(pSample, croppedSampleProps, sampleFormat);
-                }
-                else
-                {
-                    chunk = DspChunk(pSample, sampleProps, sampleFormat);
-                }
-            }
-            else if (sampleProps.tStart > previousSampleEndTime)
-            {
-                // Zero-pad the sample.
-                size_t extendFrames = timeToFrames(sampleProps.tStart - previousSampleEndTime);
-                if (extendFrames > 0)
-                {
-                    DspChunk tempChunk(pSample, sampleProps, sampleFormat);
-
-                    chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
-                                     tempChunk.GetFrameCount() + extendFrames, tempChunk.GetRate());
-
-                    size_t extendBytes = extendFrames * chunk.GetFrameSize();
-
-                    assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
-                    ZeroMemory(chunk.GetData(), extendBytes);
-                    memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
-                }
-                else
-                {
-                    chunk = DspChunk(pSample, sampleProps, sampleFormat);
-                }
-            }
-            else
-            {
-                // Leave the sample untouched.
-                chunk = DspChunk(pSample, sampleProps, sampleFormat);
-            }
-
-            return chunk;
-        }
-    }
-
     AudioRenderer::AudioRenderer(ISettings* pSettings, IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result)
         : m_deviceManager(result)
         , m_graphClock(pClock)
@@ -136,7 +65,7 @@ namespace SaneAudioRenderer
 
             try
             {
-                chunk = PreProcess(pSample, sampleProps, m_inputFormat.Format, m_lastSampleEnd);
+                chunk = PreProcess(pSample, sampleProps);
 
                 if (chunk.IsEmpty())
                     return true;
@@ -342,6 +271,80 @@ namespace SaneAudioRenderer
             return nullptr;
 
         return std::make_unique<AudioDevice>(m_device);
+    }
+
+    DspChunk AudioRenderer::PreProcess(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps)
+    {
+        CAutoLock objectLock(this);
+
+        assert(m_inputFormatInitialized);
+
+        DspChunk chunk;
+
+        // TODO: can gradually accumulate error - decide what to do with it
+
+        auto timeToFrames = [&](REFERENCE_TIME time)
+        {
+            return (size_t)(time * m_inputFormat.Format.nSamplesPerSec / OneSecond);
+        };
+
+        if (sampleProps.tStop <= m_lastSampleEnd)
+        {
+            // Drop the sample.
+            assert(chunk.IsEmpty());
+        }
+        else if (sampleProps.tStart < m_lastSampleEnd)
+        {
+            // Crop the sample.
+            size_t cropFrames = timeToFrames(m_lastSampleEnd - sampleProps.tStart);
+
+            if (cropFrames > 0)
+            {
+                size_t cropBytes = cropFrames * m_inputFormat.Format.nChannels *
+                                   m_inputFormat.Format.wBitsPerSample / 8;
+
+                AM_SAMPLE2_PROPERTIES croppedSampleProps = sampleProps;
+                assert((int32_t)cropBytes < croppedSampleProps.lActual);
+                croppedSampleProps.pbBuffer += cropBytes;
+                croppedSampleProps.lActual -= (int32_t)cropBytes;
+
+                chunk = DspChunk(pSample, croppedSampleProps, m_inputFormat.Format);
+            }
+            else
+            {
+                chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+            }
+        }
+        else if (sampleProps.tStart > m_lastSampleEnd)
+        {
+            // Zero-pad the sample.
+            size_t extendFrames = timeToFrames(sampleProps.tStart - m_lastSampleEnd);
+
+            if (extendFrames > 0)
+            {
+                DspChunk tempChunk(pSample, sampleProps, m_inputFormat.Format);
+
+                chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
+                                 tempChunk.GetFrameCount() + extendFrames, tempChunk.GetRate());
+
+                size_t extendBytes = extendFrames * chunk.GetFrameSize();
+
+                assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
+                ZeroMemory(chunk.GetData(), extendBytes);
+                memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
+            }
+            else
+            {
+                chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+            }
+        }
+        else
+        {
+            // Leave the sample untouched.
+            chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+        }
+
+        return chunk;
     }
 
     void AudioRenderer::StartDevice()
