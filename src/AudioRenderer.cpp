@@ -236,14 +236,12 @@ namespace SaneAudioRenderer
                     target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
 
                     if (actual == target || actual == previous)
-                        break;
+                        return true;
                 }
 
                 if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
                     return false;
             }
-
-            return true;
         };
 
         return Push(chunk) && (!blockUntilEnd || doBlock());
