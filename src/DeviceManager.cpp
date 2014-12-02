@@ -186,7 +186,7 @@ namespace SaneAudioRenderer
         WNDCLASSEX windowClass{sizeof(windowClass), 0, StaticWindowProc<DeviceManager>, 0, 0, hInstance,
                                NULL, NULL, NULL, nullptr, WindowClass, NULL};
 
-        if (RegisterClassEx(&windowClass))
+        if (coInitializeHelper.Initialized() && RegisterClassEx(&windowClass))
         {
             m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, hInstance, this);
             UnregisterClass(WindowClass, hInstance);
@@ -196,7 +196,7 @@ namespace SaneAudioRenderer
             m_hWindow = NULL;
         }
 
-        if (m_hWindow != NULL && coInitializeHelper.Initialized())
+        if (m_hWindow != NULL)
         {
             m_windowInitialized.set_value(true);
             RunMessageLoop();
