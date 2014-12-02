@@ -37,8 +37,6 @@ namespace SaneAudioRenderer
         // Just in case.
         if (m_state != State_Stopped)
             Stop();
-
-        m_device = {};
     }
 
     bool AudioRenderer::Enqueue(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps)
