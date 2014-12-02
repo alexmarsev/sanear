@@ -94,9 +94,10 @@ namespace SaneAudioRenderer
 
                 case DspFormat::Double:
                     return L"Double";
-            }
 
-            throw std::logic_error("Unexpected WAVEFORMATEX has gotten through, twice.");
+                default:
+                    return L"Unknown";
+            }
         }
     }
 

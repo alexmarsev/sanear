@@ -4,6 +4,7 @@ namespace SaneAudioRenderer
 {
     enum class DspFormat
     {
+        Unknown,
         Pcm8,
         Pcm16,
         Pcm24,
@@ -93,6 +94,6 @@ namespace SaneAudioRenderer
             }
         }
 
-        throw std::logic_error("Unexpected WAVEFORMATEX has gotten through.");
+        return DspFormat::Unknown;
     }
 }

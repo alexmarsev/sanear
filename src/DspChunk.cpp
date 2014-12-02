@@ -274,6 +274,8 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty() || format == chunk.GetFormat())
             return;
 
+        assert(chunk.GetFormat() != DspFormat::Unknown);
+
         switch (format)
         {
             case DspFormat::Pcm16:

@@ -21,32 +21,16 @@ namespace SaneAudioRenderer
     {
         CheckPointer(pmt, E_POINTER);
 
-        if (*pmt->Type() == MEDIATYPE_Audio &&
-            *pmt->FormatType() == FORMAT_WaveFormatEx)
+        auto pType = pmt->Type();
+        auto pFormatType = pmt->FormatType();
+        auto pFormat = pmt->Format();
+
+        if (pType && *pType == MEDIATYPE_Audio &&
+            pFormatType && *pFormatType == FORMAT_WaveFormatEx &&
+            pFormat)
         {
-            WAVEFORMATEX* pFormat = (WAVEFORMATEX*)pmt->Format();
-
-            if (*pmt->Subtype() == MEDIASUBTYPE_IEEE_FLOAT)
-            {
-                switch (pFormat->wBitsPerSample)
-                {
-                    case 32:
-                    case 64:
-                        return S_OK;
-                }
-            }
-
-            if (*pmt->Subtype() == MEDIASUBTYPE_PCM)
-            {
-                switch (pFormat->wBitsPerSample)
-                {
-                    case 8:
-                    case 16:
-                    case 24:
-                    case 32:
-                        return S_OK;
-                }
-            }
+            if (DspFormatFromWaveFormat(*(WAVEFORMATEX*)pFormat) != DspFormat::Unknown)
+                return S_OK;
         }
 
         return S_FALSE;
