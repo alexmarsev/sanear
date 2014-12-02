@@ -47,7 +47,7 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty())
             return;
 
-        if (m_limit != 1.0f || chunk.GetFormat() == DspFormat::Float || !m_buffer.empty())
+        if (m_limit != 1.0f || chunk.GetFormat() == DspFormat::Float)
         {
             DspChunk::ToFloat(chunk);
 
@@ -67,6 +67,21 @@ namespace SaneAudioRenderer
                 chunk = std::move(m_buffer.front());
                 m_buffer.pop_front();
             }
+        }
+        else if (!m_buffer.empty())
+        {
+            DspChunk::ToFloat(chunk);
+
+            m_bufferFrameCount += chunk.GetFrameCount();
+            m_buffer.push_back(std::move(chunk));
+            assert(chunk.IsEmpty());
+
+            DspChunk output;
+            Finish(output);
+            assert(!output.IsEmpty());
+            assert(m_buffer.empty());
+
+            chunk = std::move(output);
         }
     }
 
