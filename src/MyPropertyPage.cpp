@@ -98,13 +98,6 @@ namespace SaneAudioRenderer
 
             throw std::logic_error("Unexpected WAVEFORMATEX has gotten through, twice.");
         }
-
-        std::wstring GetHexString(uint32_t number)
-        {
-            std::array<wchar_t, 9> temp;
-            wsprintf(temp.data(), L"%X", number);
-            return std::wstring(L"0x") + temp.data();
-        }
     }
 
     MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat)

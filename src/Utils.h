@@ -96,4 +96,10 @@ namespace SaneAudioRenderer
     {
         return {values...};
     }
+
+    inline std::wstring GetHexString(uint32_t number)
+    {
+        std::array<wchar_t, 11> temp;
+        return swprintf(temp.data(), temp.size(), L"0x%X", number) > 0 ? temp.data() : L"";
+    }
 }
