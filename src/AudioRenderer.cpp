@@ -195,6 +195,11 @@ namespace SaneAudioRenderer
         m_pushedFrames = 0;
     }
 
+    bool AudioRenderer::CheckFormat(const WAVEFORMATEX& inputFormat)
+    {
+        return DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown;
+    }
+
     void AudioRenderer::SetFormat(const WAVEFORMATEX& inputFormat)
     {
         CAutoLock objectLock(this);
