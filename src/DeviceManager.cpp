@@ -59,6 +59,7 @@ namespace SaneAudioRenderer
         PostMessage(m_hWindow, WM_DESTROY, 0, 0);
         WaitForSingleObject(m_hThread, INFINITE);
         CloseHandle(m_hThread);
+        UnregisterClass(WindowClass, GetModuleHandle(nullptr));
     }
 
     bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive)
@@ -189,7 +190,6 @@ namespace SaneAudioRenderer
         if (coInitializeHelper.Initialized() && RegisterClassEx(&windowClass))
         {
             m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, hInstance, this);
-            UnregisterClass(WindowClass, hInstance);
         }
         else
         {
