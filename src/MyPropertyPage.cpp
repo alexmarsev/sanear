@@ -100,7 +100,8 @@ namespace SaneAudioRenderer
         }
     }
 
-    MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat)
+    MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat,
+                                   std::vector<std::wstring> processors)
         : CUnknown("Audio Renderer Property Page", nullptr)
     {
         std::wstring exclusiveField = (pDeviceFormat ? (pDeviceFormat->exclusive ? L"Yes" : L"No") : L"-");
@@ -126,6 +127,17 @@ namespace SaneAudioRenderer
         std::wstring rateField = (rateInputField == rateDeviceField) ?
                                       rateInputField : rateInputField + L" -> " + rateDeviceField;
 
+        std::wstring processorsField;
+        for (const auto& s : processors)
+        {
+            if (!processorsField.empty())
+                processorsField += L", ";
+
+            processorsField += s;
+        }
+        if (processorsField.empty())
+            processorsField = L"-";
+
         WriteDialogHeader(m_dialogData, L"MS Shell Dlg", 8);
         WriteDialogItem(m_dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 200, 150, L"Renderer Status");
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20, 60, 8, L"Exclusive:");
@@ -140,8 +152,8 @@ namespace SaneAudioRenderer
         WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68, 120, 8, channelsField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80, 60, 8, L"Rate:");
         WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80, 120, 8, rateField);
-        //WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92, 60, 8, L"Processors:");
-        //WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92, 120, 50, processorsField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92, 60, 8, L"Processors:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92, 120, 50, processorsField);
     }
 
     STDMETHODIMP MyPropertyPage::NonDelegatingQueryInterface(REFIID riid, void** ppv)

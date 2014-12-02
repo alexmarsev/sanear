@@ -12,7 +12,10 @@ namespace SaneAudioRenderer
         DspDither(const DspDither&) = delete;
         DspDither& operator=(const DspDither&) = delete;
 
+        std::wstring Name() { return L"Dither"; }
+
         void Initialize(DspFormat outputFormat);
+        bool Active();
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);

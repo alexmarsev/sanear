@@ -271,6 +271,42 @@ namespace SaneAudioRenderer
         return std::make_unique<AudioDevice>(m_device);
     }
 
+    std::vector<std::wstring> AudioRenderer::GetActiveProcessors()
+    {
+        CAutoLock objectLock(this);
+
+        std::vector<std::wstring> ret;
+
+        if (m_inputFormatInitialized && m_deviceInitialized)
+        {
+            if (m_dspMatrix.Active())
+                ret.emplace_back(m_dspMatrix.Name());
+
+            if (m_dspRate.Active())
+                ret.emplace_back(m_dspRate.Name());
+
+            if (m_dspTempo.Active())
+                ret.emplace_back(m_dspTempo.Name());
+
+            if (m_dspCrossfeed.Active())
+                ret.emplace_back(m_dspCrossfeed.Name());
+
+            if (m_dspVolume.Active())
+                ret.emplace_back(m_dspVolume.Name());
+
+            if (m_dspBalance.Active())
+                ret.emplace_back(m_dspBalance.Name());
+
+            if (m_dspLimiter.Active())
+                ret.emplace_back(m_dspLimiter.Name());
+
+            if (m_dspDither.Active())
+                ret.emplace_back(m_dspDither.Name());
+        }
+
+        return ret;
+    }
+
     DspChunk AudioRenderer::PreProcess(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps)
     {
         CAutoLock objectLock(this);

@@ -10,6 +10,11 @@ namespace SaneAudioRenderer
         m_exclusive = exclusive;
     }
 
+    bool DspVolume::Active()
+    {
+        return !m_exclusive || m_renderer.GetVolume() != 1.0f;
+    }
+
     void DspVolume::Process(DspChunk& chunk)
     {
         float volume = std::min(m_renderer.GetVolume(), m_exclusive ? 1.0f : 0.98f);

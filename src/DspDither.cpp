@@ -10,6 +10,11 @@ namespace SaneAudioRenderer
         m_error2 = {};
     }
 
+    bool DspDither::Active()
+    {
+        return m_active;
+    }
+
     void DspDither::Process(DspChunk& chunk)
     {
         // TODO: handle >18 channels situation gracefully (both here and in DspMixer)

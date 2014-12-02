@@ -24,6 +24,11 @@ namespace SaneAudioRenderer
         }
     }
 
+    bool DspRate::Active()
+    {
+        return !!m_soxr;
+    }
+
     void DspRate::Process(DspChunk& chunk)
     {
         if (m_soxr && !chunk.IsEmpty())

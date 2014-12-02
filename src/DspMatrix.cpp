@@ -221,6 +221,11 @@ namespace SaneAudioRenderer
         m_outputChannels = outputChannels;
     }
 
+    bool DspMatrix::Active()
+    {
+        return !!m_matrix;
+    }
+
     void DspMatrix::Process(DspChunk& chunk)
     {
         if (m_matrix && !chunk.IsEmpty())

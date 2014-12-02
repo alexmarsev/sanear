@@ -14,6 +14,10 @@ namespace SaneAudioRenderer
         DspBalance(const DspBalance&) = delete;
         DspBalance& operator=(const DspBalance&) = delete;
 
+        std::wstring Name() { return L"Balance"; }
+
+        bool Active();
+
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
 

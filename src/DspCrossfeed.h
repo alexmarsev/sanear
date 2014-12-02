@@ -14,7 +14,10 @@ namespace SaneAudioRenderer
         DspCrossfeed(const DspCrossfeed&) = delete;
         DspCrossfeed& operator=(const DspCrossfeed&) = delete;
 
+        std::wstring Name() { return L"Crossfeed"; }
+
         void Initialize(bool enable, uint32_t rate, uint32_t channels, DWORD mask);
+        bool Active();
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);

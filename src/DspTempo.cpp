@@ -27,6 +27,11 @@ namespace SaneAudioRenderer
         }
     }
 
+    bool DspTempo::Active()
+    {
+        return m_active;
+    }
+
     void DspTempo::Process(DspChunk& chunk)
     {
         if (m_active && !chunk.IsEmpty())

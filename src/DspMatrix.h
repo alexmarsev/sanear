@@ -12,8 +12,11 @@ namespace SaneAudioRenderer
         DspMatrix(const DspMatrix&) = delete;
         DspMatrix& operator=(const DspMatrix&) = delete;
 
+        std::wstring Name() { return L"Matrix"; }
+
         void Initialize(uint32_t inputChannels, DWORD inputMask,
                         uint32_t outputChannels, DWORD outputMask);
+        bool Active();
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);

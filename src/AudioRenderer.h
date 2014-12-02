@@ -45,6 +45,7 @@ namespace SaneAudioRenderer
 
         std::unique_ptr<WAVEFORMATEXTENSIBLE> GetInputFormat();
         std::unique_ptr<AudioDevice> GetDeviceFormat();
+        std::vector<std::wstring> GetActiveProcessors();
 
     private:
 

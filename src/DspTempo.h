@@ -14,7 +14,10 @@ namespace SaneAudioRenderer
         DspTempo(const DspTempo&) = delete;
         DspTempo& operator=(const DspTempo&) = delete;
 
+        std::wstring Name() { return L"Tempo"; }
+
         void Initialize(float tempo, uint32_t rate, uint32_t channels);
+        bool Active();
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);

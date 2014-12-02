@@ -14,7 +14,11 @@ namespace SaneAudioRenderer
         DspVolume(const DspVolume&) = delete;
         DspVolume& operator=(const DspVolume&) = delete;
 
+        std::wstring Name() { return L"Volume"; }
+
         void Initialize(bool exclusive);
+        bool Active();
+
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
 

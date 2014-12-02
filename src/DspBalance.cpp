@@ -5,6 +5,11 @@
 
 namespace SaneAudioRenderer
 {
+    bool DspBalance::Active()
+    {
+        return m_renderer.GetBalance() != 0.0f;
+    }
+
     void DspBalance::Process(DspChunk& chunk)
     {
         float balance = m_renderer.GetBalance();

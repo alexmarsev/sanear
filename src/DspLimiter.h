@@ -12,7 +12,10 @@ namespace SaneAudioRenderer
         DspLimiter(const DspLimiter&) = delete;
         DspLimiter& operator=(const DspLimiter&) = delete;
 
+        std::wstring Name() { return L"Limiter"; }
+
         void Initialize(uint32_t rate, bool exclusive);
+        bool Active();
 
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);

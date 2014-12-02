@@ -11,7 +11,8 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat);
+        MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat,
+                       std::vector<std::wstring> processors);
         MyPropertyPage(const MyPropertyPage&) = delete;
         MyPropertyPage& operator=(const MyPropertyPage&) = delete;
 

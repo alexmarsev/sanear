@@ -16,6 +16,11 @@ namespace SaneAudioRenderer
         }
     }
 
+    bool DspCrossfeed::Active()
+    {
+        return m_active;
+    }
+
     void DspCrossfeed::Process(DspChunk& chunk)
     {
         if (m_active && !chunk.IsEmpty())

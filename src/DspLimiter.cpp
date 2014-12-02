@@ -37,6 +37,11 @@ namespace SaneAudioRenderer
         m_peaks.clear();
     }
 
+    bool DspLimiter::Active()
+    {
+        return !m_buffer.empty();
+    }
+
     void DspLimiter::Process(DspChunk& chunk)
     {
         if (chunk.IsEmpty())
