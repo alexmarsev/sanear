@@ -90,4 +90,10 @@ namespace SaneAudioRenderer
     private:
         const UINT m_period;
     };
+
+    template <typename... T>
+    inline std::array<typename std::common_type<T...>::type, sizeof...(T)> make_array(T... values)
+    {
+        return {values...};
+    }
 }
