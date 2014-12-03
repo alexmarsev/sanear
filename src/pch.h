@@ -14,6 +14,8 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 
+#include <FunctionDiscoveryKeys_devpkey.h>
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -36,6 +38,7 @@ namespace SaneAudioRenderer
     _COM_SMARTPTR_TYPEDEF(IAudioClient, __uuidof(IAudioClient));
     _COM_SMARTPTR_TYPEDEF(IAudioRenderClient, __uuidof(IAudioRenderClient));
     _COM_SMARTPTR_TYPEDEF(IAudioClock, __uuidof(IAudioClock));
+    _COM_SMARTPTR_TYPEDEF(IPropertyStore, __uuidof(IPropertyStore));
 
     _COM_SMARTPTR_TYPEDEF(IMediaSample, __uuidof(IMediaSample));
     _COM_SMARTPTR_TYPEDEF(IBasicAudio, __uuidof(IBasicAudio));

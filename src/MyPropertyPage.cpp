@@ -121,6 +121,10 @@ namespace SaneAudioRenderer
                                    std::vector<std::wstring> processors)
         : CUnknown("Audio Renderer Property Page", nullptr)
     {
+        std::wstring adapterField = (pDeviceFormat && pDeviceFormat->adapterName) ? *pDeviceFormat->adapterName : L"-";
+
+        std::wstring endpointField = (pDeviceFormat && pDeviceFormat->endpointName) ? *pDeviceFormat->endpointName : L"-";
+
         std::wstring exclusiveField = (pDeviceFormat ? (pDeviceFormat->exclusive ? L"Yes" : L"No") : L"-");
 
         std::wstring bufferField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->bufferDuration) + L"ms" : L"-");
@@ -158,20 +162,24 @@ namespace SaneAudioRenderer
 
         WriteDialogHeader(m_dialogData, L"MS Shell Dlg", 8);
         WriteDialogItem(m_dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 200, 150, L"Renderer Status");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20, 60, 8, L"Exclusive:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20, 120, 8, exclusiveField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 32, 60, 8, L"Buffer:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 32, 120, 8, bufferField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 44, 60, 8, L"Bitstreaming:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44, 120, 8, bitstreamingField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 56, 60, 8, L"Format:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56, 120, 8, formatField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68, 60, 8, L"Channels:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68, 120, 8, channelsField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80, 60, 8, L"Rate:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80, 120, 8, rateField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92, 60, 8, L"Processors:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92, 120, 50, processorsField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20,  60,  8, L"Adapter:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20,  120, 8, adapterField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 32,  60,  8, L"Endpoint:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT, 0x0082FFFF,  73, 32,  120, 8, endpointField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 44,  60,  8, L"Exclusive:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44,  120, 8, exclusiveField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 56,  60,  8, L"Buffer:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  120, 8, bufferField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68,  60,  8, L"Bitstreaming:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  120, 8, bitstreamingField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"Format:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  120, 8, formatField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92,  60,  8, L"Channels:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  120, 8, channelsField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 104, 60,  8, L"Rate:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 104, 120, 8, rateField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 116, 60,  8, L"Processors:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 116, 120, 30, processorsField);
     }
 
     STDMETHODIMP MyPropertyPage::NonDelegatingQueryInterface(REFIID riid, void** ppv)

@@ -24,7 +24,6 @@ namespace SaneAudioRenderer
             return ret;
         }
 
-
         WAVEFORMATEXTENSIBLE BuildFormat(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
                                          uint32_t rate, uint32_t channelCount, DWORD channelMask)
         {
@@ -121,6 +120,22 @@ namespace SaneAudioRenderer
 
             IMMDevicePtr device;
             ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
+
+            IPropertyStorePtr devicePropertyStore;
+            ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+
+            PROPVARIANT adapterName;
+            PropVariantInit(&adapterName);
+            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_DeviceInterface_FriendlyName, &adapterName));
+            m_device.adapterName = std::make_shared<std::wstring>(adapterName.pwszVal);
+            PropVariantClear(&adapterName);
+
+            PROPVARIANT endpointName;
+            PropVariantInit(&endpointName);
+            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_Device_DeviceDesc, &endpointName));
+            m_device.endpointName = std::make_shared<std::wstring>(endpointName.pwszVal);
+            PropVariantClear(&endpointName);
+
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&m_device.audioClient));
 
@@ -189,6 +204,11 @@ namespace SaneAudioRenderer
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioClock)));
 
             return 0;
+        }
+        catch (std::bad_alloc&)
+        {
+            ReleaseDevice();
+            return 1;
         }
         catch (HRESULT)
         {

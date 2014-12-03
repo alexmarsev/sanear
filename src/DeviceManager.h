@@ -6,13 +6,15 @@ namespace SaneAudioRenderer
 {
     struct AudioDevice final
     {
-        IAudioClientPtr       audioClient;
-        WAVEFORMATEXTENSIBLE  format;
-        uint32_t              bufferDuration;
-        IAudioRenderClientPtr audioRenderClient;
-        IAudioClockPtr        audioClock;
-        DspFormat             dspFormat;
-        bool                  exclusive;
+        std::shared_ptr<std::wstring> adapterName;
+        std::shared_ptr<std::wstring> endpointName;
+        IAudioClientPtr               audioClient;
+        WAVEFORMATEXTENSIBLE          format;
+        uint32_t                      bufferDuration;
+        IAudioRenderClientPtr         audioRenderClient;
+        IAudioClockPtr                audioClock;
+        DspFormat                     dspFormat;
+        bool                          exclusive;
     };
 
     class DeviceManager final
