@@ -301,7 +301,8 @@ namespace SaneAudioRenderer
     }
 
     DspChunk::DspChunk()
-        : m_format(DspFormat::Pcm16)
+        : m_format(DspFormat::Unknown)
+        , m_formatSize(1)
         , m_channels(1)
         , m_rate(1)
         , m_dataSize(0)
@@ -312,32 +313,36 @@ namespace SaneAudioRenderer
 
     DspChunk::DspChunk(DspFormat format, uint32_t channels, size_t frames, uint32_t rate)
         : m_format(format)
+        , m_formatSize(DspFormatSize(m_format))
         , m_channels(channels)
         , m_rate(rate)
-        , m_dataSize(DspFormatSize(format) * channels * frames)
+        , m_dataSize(m_formatSize * channels * frames)
         , m_constData(nullptr)
         , m_delayedCopy(false)
     {
+        assert(m_format != DspFormat::Unknown);
         Allocate();
     }
 
     DspChunk::DspChunk(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps, const WAVEFORMATEX& sampleFormat)
         : m_mediaSample(pSample)
+        , m_format(DspFormatFromWaveFormat(sampleFormat))
+        , m_formatSize(m_format != DspFormat::Unknown ? DspFormatSize(m_format) : sampleFormat.wBitsPerSample / 8)
         , m_channels(sampleFormat.nChannels)
         , m_rate(sampleFormat.nSamplesPerSec)
         , m_dataSize(sampleProps.lActual)
         , m_constData((char*)sampleProps.pbBuffer)
         , m_delayedCopy(true)
     {
+        assert(m_formatSize == sampleFormat.wBitsPerSample / 8);
         assert(m_mediaSample);
         assert(m_constData);
-
-        m_format = DspFormatFromWaveFormat(sampleFormat);
     }
 
     DspChunk::DspChunk(DspChunk&& other)
         : m_mediaSample(other.m_mediaSample)
         , m_format(other.m_format)
+        , m_formatSize(other.m_formatSize)
         , m_channels(other.m_channels)
         , m_rate(other.m_rate)
         , m_dataSize(other.m_dataSize)
@@ -355,6 +360,7 @@ namespace SaneAudioRenderer
         {
             m_mediaSample = other.m_mediaSample; other.m_mediaSample = nullptr;
             m_format = other.m_format;
+            m_formatSize = other.m_formatSize;
             m_channels = other.m_channels;
             m_rate = other.m_rate;
             m_dataSize = other.m_dataSize; other.m_dataSize = 0;

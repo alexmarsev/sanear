@@ -60,7 +60,8 @@ namespace SaneAudioRenderer
 
     inline uint32_t DspFormatSize(DspFormat format)
     {
-        return (format == DspFormat::Pcm8) ? 1 :
+        return (format == DspFormat::Unknown) ? 0 :
+               (format == DspFormat::Pcm8) ? 1 :
                (format == DspFormat::Pcm16) ? 2 :
                (format == DspFormat::Pcm24) ? 3 :
                (format == DspFormat::Double) ? 8 : 4;

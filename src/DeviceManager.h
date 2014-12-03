@@ -26,16 +26,19 @@ namespace SaneAudioRenderer
 
         bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive);
         void ReleaseDevice();
+        bool BitstreamFormatSupported(const WAVEFORMATEXTENSIBLE& format);
 
     private:
 
         LRESULT OnCreateDevice();
+        LRESULT OnCheckBitstreamFormat();
 
         DWORD ThreadProc();
         LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
         bool m_queuedDestroy = false;
         bool m_queuedCreate = false;
+        bool m_queuedCheckBitstream = false;
 
         HANDLE m_hThread;
         HWND m_hWindow = NULL;
@@ -44,5 +47,6 @@ namespace SaneAudioRenderer
         AudioDevice m_device;
         WAVEFORMATEXTENSIBLE m_format;
         bool m_exclusive;
+        WAVEFORMATEXTENSIBLE m_checkBitstreamFormat;
     };
 }

@@ -63,23 +63,29 @@ namespace SaneAudioRenderer
 
             try
             {
-                chunk = PreProcess(pSample, sampleProps);
-
-                if (chunk.IsEmpty())
-                    return true;
-
                 if (m_deviceInitialized)
                 {
-                    m_dspMatrix.Process(chunk);
-                    m_dspRate.Process(chunk);
-                    m_dspTempo.Process(chunk);
-                    m_dspCrossfeed.Process(chunk);
-                    m_dspVolume.Process(chunk);
-                    m_dspBalance.Process(chunk);
-                    m_dspLimiter.Process(chunk);
-                    m_dspDither.Process(chunk);
+                    if (m_device.dspFormat != DspFormat::Unknown)
+                    {
+                        chunk = PreProcess(pSample, sampleProps);
 
-                    DspChunk::ToFormat(m_device.dspFormat, chunk);
+                        m_dspMatrix.Process(chunk);
+                        m_dspRate.Process(chunk);
+                        m_dspTempo.Process(chunk);
+                        m_dspCrossfeed.Process(chunk);
+                        m_dspVolume.Process(chunk);
+                        m_dspBalance.Process(chunk);
+                        m_dspLimiter.Process(chunk);
+                        m_dspDither.Process(chunk);
+
+                        DspChunk::ToFormat(m_device.dspFormat, chunk);
+                    }
+                    else
+                    {
+                        assert(m_device.exclusive);
+                        chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                        // TODO: don't ignore first sample offset
+                    }
                 }
 
                 m_lastSampleEnd = sampleProps.tStop;
@@ -107,7 +113,7 @@ namespace SaneAudioRenderer
 
             try
             {
-                if (m_deviceInitialized)
+                if (m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
                 {
                     m_dspMatrix.Finish(chunk);
                     m_dspRate.Finish(chunk);
@@ -195,9 +201,22 @@ namespace SaneAudioRenderer
         m_pushedFrames = 0;
     }
 
-    bool AudioRenderer::CheckFormat(const WAVEFORMATEX& inputFormat)
+    bool AudioRenderer::CheckBitstreamFormat(const WAVEFORMATEX& inputFormat)
     {
-        return DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown;
+        if (DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown)
+            return true;
+
+        if (!m_settings->UseExclusiveMode())
+            return false;
+
+
+        WAVEFORMATEXTENSIBLE format = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
+                                          reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
+                                          WAVEFORMATEXTENSIBLE{inputFormat};
+
+        CAutoLock objectLock(this);
+
+        return m_deviceManager.BitstreamFormatSupported(format);
     }
 
     void AudioRenderer::SetFormat(const WAVEFORMATEX& inputFormat)
@@ -282,7 +301,7 @@ namespace SaneAudioRenderer
 
         std::vector<std::wstring> ret;
 
-        if (m_inputFormatInitialized && m_deviceInitialized)
+        if (m_inputFormatInitialized && m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
         {
             if (m_dspMatrix.Active())
                 ret.emplace_back(m_dspMatrix.Name());
@@ -422,6 +441,9 @@ namespace SaneAudioRenderer
         assert(m_inputFormatInitialized);
         assert(m_deviceInitialized);
 
+        if (m_device.dspFormat == DspFormat::Unknown)
+            return;
+
         const auto inRate = m_inputFormat.Format.nSamplesPerSec;
         const auto inChannels = m_inputFormat.Format.nChannels;
         const auto inMask = DspMatrix::GetChannelMask(m_inputFormat);
@@ -440,6 +462,9 @@ namespace SaneAudioRenderer
 
     bool AudioRenderer::Push(DspChunk& chunk)
     {
+        if (chunk.IsEmpty())
+            return true;
+
         const uint32_t frameSize = chunk.GetFrameSize();
         const size_t chunkFrames = chunk.GetFrameCount();
 

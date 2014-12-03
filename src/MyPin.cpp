@@ -29,7 +29,7 @@ namespace SaneAudioRenderer
             pFormatType && *pFormatType == FORMAT_WaveFormatEx &&
             pFormat)
         {
-            if (m_renderer.CheckFormat(*(WAVEFORMATEX*)pFormat))
+            if (m_renderer.CheckBitstreamFormat(*(WAVEFORMATEX*)pFormat))
                 return S_OK;
         }
 

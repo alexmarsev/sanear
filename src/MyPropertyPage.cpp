@@ -109,7 +109,8 @@ namespace SaneAudioRenderer
 
         std::wstring bufferField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->bufferDuration) + L"ms" : L"-");
 
-        std::wstring bitstreamingField = (pInputFormat ? L"No" : L"-");
+        std::wstring bitstreamingField = (pInputFormat ? (DspFormatFromWaveFormat(pInputFormat->Format) ==
+                                                          DspFormat::Unknown ? L"Yes" : L"No") : L"-");
 
         std::wstring channelsInputField = (pInputFormat ? std::to_wstring(pInputFormat->Format.nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*pInputFormat)) + L")" : L"-");

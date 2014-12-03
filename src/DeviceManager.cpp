@@ -13,6 +13,7 @@ namespace SaneAudioRenderer
         enum
         {
             WM_CREATE_DEVICE = WM_USER + 100,
+            WM_CHECK_BITSTREAM_FORMAT,
         };
 
         template <class T>
@@ -73,6 +74,13 @@ namespace SaneAudioRenderer
         return ret;
     }
 
+    bool DeviceManager::BitstreamFormatSupported(const WAVEFORMATEXTENSIBLE& format)
+    {
+        m_checkBitstreamFormat = format;
+        m_queuedCheckBitstream = true;
+        return (SendMessage(m_hWindow, WM_CHECK_BITSTREAM_FORMAT, 0, 0) == 0);
+    }
+
     LRESULT DeviceManager::OnCreateDevice()
     {
         if (!m_queuedCreate)
@@ -103,8 +111,18 @@ namespace SaneAudioRenderer
 
             m_device.exclusive = m_exclusive;
 
-            if (m_device.exclusive)
+            if (DspFormatFromWaveFormat(m_format.Format) == DspFormat::Unknown)
             {
+                // Exclusive bitstreaming.
+                if (!m_device.exclusive)
+                    return 1;
+
+                m_device.dspFormat = DspFormat::Unknown;
+                m_device.format = m_format;
+            }
+            else if (m_device.exclusive)
+            {
+                // Exclusive.
                 auto priorities = make_array(
                     std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
                     std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
@@ -133,6 +151,7 @@ namespace SaneAudioRenderer
             }
             else
             {
+                // Shared.
                 m_device.dspFormat = DspFormat::Float;
                 m_device.format = mixFormat;
             }
@@ -150,6 +169,34 @@ namespace SaneAudioRenderer
         catch (HRESULT)
         {
             ReleaseDevice();
+            return 1;
+        }
+    }
+
+    LRESULT DeviceManager::OnCheckBitstreamFormat()
+    {
+        if (!m_queuedCheckBitstream)
+            return 1;
+
+        m_queuedCheckBitstream = false;
+
+        try
+        {
+            IMMDeviceEnumeratorPtr enumerator;
+            ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
+                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
+
+            IMMDevicePtr device;
+            ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
+            IAudioClientPtr audioClient;
+            ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
+                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&audioClient));
+
+            return SUCCEEDED(audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
+                                                            &m_checkBitstreamFormat.Format, nullptr)) ? 0 : 1;
+        }
+        catch (HRESULT)
+        {
             return 1;
         }
     }
@@ -216,6 +263,9 @@ namespace SaneAudioRenderer
 
             case WM_CREATE_DEVICE:
                 return OnCreateDevice();
+
+            case WM_CHECK_BITSTREAM_FORMAT:
+                return OnCheckBitstreamFormat();
 
             default:
                 return DefWindowProc(hWnd, msg, wParam, lParam);
