@@ -74,6 +74,30 @@ namespace SaneAudioRenderer
         return ret;
     }
 
+    void DeviceManager::ReleaseDevice()
+    {
+        auto areLastInstances = [this]
+        {
+            if (m_device.audioClock && !IsLastInstance(m_device.audioClock))
+                return false;
+
+            m_device.audioClock = nullptr;
+
+            if (m_device.audioRenderClient && !IsLastInstance(m_device.audioRenderClient))
+                return false;
+
+            m_device.audioRenderClient = nullptr;
+
+            if (m_device.audioClient && !IsLastInstance(m_device.audioClient))
+                return false;
+
+            return true;
+        };
+        assert(areLastInstances());
+
+        m_device = {};
+    }
+
     bool DeviceManager::BitstreamFormatSupported(const WAVEFORMATEXTENSIBLE& format)
     {
         m_checkBitstreamFormat = format;
@@ -199,30 +223,6 @@ namespace SaneAudioRenderer
         {
             return 1;
         }
-    }
-
-    void DeviceManager::ReleaseDevice()
-    {
-        auto areLastInstances = [this]
-        {
-            if (m_device.audioClock && !IsLastInstance(m_device.audioClock))
-                return false;
-
-            m_device.audioClock = nullptr;
-
-            if (m_device.audioRenderClient && !IsLastInstance(m_device.audioRenderClient))
-                return false;
-
-            m_device.audioRenderClient = nullptr;
-
-            if (m_device.audioClient && !IsLastInstance(m_device.audioClient))
-                return false;
-
-            return true;
-        };
-        assert(areLastInstances());
-
-        m_device = {};
     }
 
     DWORD DeviceManager::ThreadProc()
