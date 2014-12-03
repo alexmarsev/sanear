@@ -5,7 +5,7 @@ namespace SaneAudioRenderer
 {
     AudioRenderer::AudioRenderer(ISettings* pSettings, IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result)
         : m_deviceManager(result)
-        , m_graphClock(pClock)
+        , m_myClock(pClock)
         , m_flush(TRUE/*manual reset*/)
         , m_dspVolume(*this)
         , m_dspBalance(*this)
@@ -17,8 +17,10 @@ namespace SaneAudioRenderer
 
         try
         {
-            if (!m_settings || !m_graphClock)
+            if (!m_settings || !m_myClock)
                 throw E_UNEXPECTED;
+
+            ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_graphClock)));
 
             if (static_cast<HANDLE>(m_flush) == NULL ||
                 static_cast<HANDLE>(m_bufferFilled) == NULL)
@@ -37,6 +39,27 @@ namespace SaneAudioRenderer
         // Just in case.
         if (m_state != State_Stopped)
             Stop();
+    }
+
+    void AudioRenderer::SetClock(IReferenceClock* pClock)
+    {
+        CAutoLock objectLock(this);
+
+        ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_graphClock)));
+        m_externalClock = false;
+
+        if (pClock && m_graphClock != pClock)
+        {
+            m_graphClock = pClock;
+            m_externalClock = true;
+        }
+    }
+
+    bool AudioRenderer::OnExternalClock()
+    {
+        CAutoLock objectLock(this);
+
+        return m_externalClock;
     }
 
     bool AudioRenderer::Enqueue(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps)
@@ -138,7 +161,7 @@ namespace SaneAudioRenderer
         {
             TimePeriodHelper timePeriodHelper(1);
 
-            m_graphClock->UnslaveClockFromAudio();
+            m_myClock->UnslaveClockFromAudio();
 
             for (;;)
             {
@@ -262,7 +285,7 @@ namespace SaneAudioRenderer
 
         if (m_deviceInitialized)
         {
-            m_graphClock->UnslaveClockFromAudio();
+            m_myClock->UnslaveClockFromAudio();
             m_device.audioClient->Stop();
         }
     }
@@ -412,7 +435,7 @@ namespace SaneAudioRenderer
 
         if (m_deviceInitialized)
         {
-            m_graphClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_startOffset);
+            m_myClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_startOffset);
             m_startOffset = 0;
             m_device.audioClient->Start();
             //assert(m_bufferFilled.Check());
@@ -425,7 +448,7 @@ namespace SaneAudioRenderer
 
         if (m_deviceInitialized)
         {
-            m_graphClock->UnslaveClockFromAudio();
+            m_myClock->UnslaveClockFromAudio();
             m_device.audioClient->Stop();
             m_bufferFilled.Reset();
         }
@@ -519,8 +542,10 @@ namespace SaneAudioRenderer
             }
 
             assert(!m_deviceInitialized);
+            REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
-                m_graphClock->GetTime() + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
+                SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                graphTime + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
             {
                 break;
             }

@@ -24,6 +24,9 @@ namespace SaneAudioRenderer
         AudioRenderer& operator=(const AudioRenderer&) = delete;
         ~AudioRenderer();
 
+        void SetClock(IReferenceClock* pClock);
+        bool OnExternalClock();
+
         bool Enqueue(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps);
         bool Finish(bool blockUntilEnd);
 
@@ -65,7 +68,9 @@ namespace SaneAudioRenderer
 
         FILTER_STATE m_state = State_Stopped;
 
-        IMyClockPtr m_graphClock;
+        IMyClockPtr m_myClock;
+        IReferenceClockPtr m_graphClock;
+        bool m_externalClock = false;
 
         WAVEFORMATEXTENSIBLE m_inputFormat;
         bool m_inputFormatInitialized = false;

@@ -97,6 +97,22 @@ namespace SaneAudioRenderer
         return S_OK;
     }
 
+    STDMETHODIMP MyFilter::SetSyncSource(IReferenceClock* pClock)
+    {
+        CBaseFilter::SetSyncSource(pClock);
+
+        try
+        {
+            m_renderer->SetClock(pClock);
+        }
+        catch (HRESULT)
+        {
+            return E_UNEXPECTED;
+        }
+
+        return S_OK;
+    }
+
     STDMETHODIMP MyFilter::GetPages(CAUUID* pPages)
     {
         CheckPointer(pPages, E_POINTER);
@@ -121,9 +137,12 @@ namespace SaneAudioRenderer
         try
         {
             CAutoLock rendererLock(m_renderer.get());
+
             auto inputFormat = m_renderer->GetInputFormat();
             auto devicetFormat = m_renderer->GetDeviceFormat();
-            pPage = new MyPropertyPage(inputFormat.get(), devicetFormat.get(), m_renderer->GetActiveProcessors());
+
+            pPage = new MyPropertyPage(inputFormat.get(), devicetFormat.get(),
+                                       m_renderer->GetActiveProcessors(), m_renderer->OnExternalClock());
         }
         catch (std::bad_alloc&)
         {

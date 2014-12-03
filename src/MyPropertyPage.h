@@ -12,7 +12,7 @@ namespace SaneAudioRenderer
     public:
 
         MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat,
-                       std::vector<std::wstring> processors);
+                       std::vector<std::wstring> processors, bool externalClock);
         MyPropertyPage(const MyPropertyPage&) = delete;
         MyPropertyPage& operator=(const MyPropertyPage&) = delete;
 

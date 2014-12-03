@@ -32,6 +32,8 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP GetState(DWORD timeoutMilliseconds, FILTER_STATE* pState) override;
 
+        STDMETHODIMP SetSyncSource(IReferenceClock* pClock) override;
+
         STDMETHODIMP GetPages(CAUUID* pPages) override;
         STDMETHODIMP CreatePage(const GUID& guid, IPropertyPage** ppPage) override;
 
