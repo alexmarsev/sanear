@@ -110,6 +110,10 @@ namespace SaneAudioRenderer
                         // TODO: don't ignore first sample offset
                     }
                 }
+                else
+                {
+                    chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                }
 
                 m_lastSampleEnd = sampleProps.tStop;
             }
@@ -544,6 +548,7 @@ namespace SaneAudioRenderer
             }
 
             assert(!m_deviceInitialized);
+            m_bufferFilled.Set();
             REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
                 SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
