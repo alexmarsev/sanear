@@ -456,6 +456,8 @@ namespace SaneAudioRenderer
         m_deviceInitialized = false;
         m_device = {};
         m_deviceManager.ReleaseDevice();
+
+        m_pushedFrames = 0;
     }
 
     void AudioRenderer::InitializeProcessors()
