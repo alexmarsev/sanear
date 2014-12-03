@@ -67,13 +67,13 @@ namespace SaneAudioRenderer
             *(WORD*)(&out[8]) += 1;
         }
 
-        std::wstring GetFormatString(const WAVEFORMATEX& format)
+        std::wstring GetFormatString(const WAVEFORMATEXTENSIBLE& format)
         {
-            DspFormat dspFormat = DspFormatFromWaveFormat(format);
+            DspFormat dspFormat = DspFormatFromWaveFormat(format.Format);
 
             bool pcm24in32 = (dspFormat == DspFormat::Pcm32 &&
-                                 format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                                 ((const WAVEFORMATEXTENSIBLE&)format).Samples.wValidBitsPerSample == 24);
+                                 format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                                 format.Samples.wValidBitsPerSample == 24);
 
             switch (dspFormat)
             {
@@ -94,10 +94,26 @@ namespace SaneAudioRenderer
 
                 case DspFormat::Double:
                     return L"Double";
-
-                default:
-                    return L"Unknown";
             }
+
+            assert(dspFormat == DspFormat::Unknown);
+
+            if (format.Format.wFormatTag == WAVE_FORMAT_DOLBY_AC3_SPDIF)
+                return L"AC3/DTS";
+
+            if (format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            {
+                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DTS_HD)
+                    return L"DTS-HD";
+
+                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DOLBY_MLP)
+                    return L"TrueHD";
+
+                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_WMA_PRO)
+                    return L"WMA Pro";
+            }
+
+            return L"Unknown";
         }
     }
 
@@ -119,8 +135,8 @@ namespace SaneAudioRenderer
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
-        std::wstring formatInputField = (pInputFormat ? GetFormatString(pInputFormat->Format) : L"-");
-        std::wstring formatDeviceField = (pDeviceFormat ? GetFormatString(pDeviceFormat->format.Format) : L"-");
+        std::wstring formatInputField = (pInputFormat ? GetFormatString(*pInputFormat) : L"-");
+        std::wstring formatDeviceField = (pDeviceFormat ? GetFormatString(pDeviceFormat->format) : L"-");
         std::wstring formatField = (formatInputField == formatDeviceField) ?
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 
