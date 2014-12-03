@@ -99,6 +99,8 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyFilter::SetSyncSource(IReferenceClock* pClock)
     {
+        CAutoLock objectLock(this);
+
         CBaseFilter::SetSyncSource(pClock);
 
         try
