@@ -71,6 +71,7 @@ namespace SaneAudioRenderer
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_graphClock;
         bool m_externalClock = false;
+        REFERENCE_TIME m_corrected = 0;
 
         WAVEFORMATEXTENSIBLE m_inputFormat;
         bool m_inputFormatInitialized = false;

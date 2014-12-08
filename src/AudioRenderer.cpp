@@ -51,7 +51,12 @@ namespace SaneAudioRenderer
         if (pClock && m_graphClock != pClock)
         {
             m_graphClock = pClock;
-            m_externalClock = true;
+
+            if (!m_externalClock)
+            {
+                m_externalClock = true;
+                ClearDevice();
+            }
         }
     }
 
@@ -91,6 +96,25 @@ namespace SaneAudioRenderer
                     if (m_device.dspFormat != DspFormat::Unknown)
                     {
                         chunk = PreProcess(pSample, sampleProps);
+
+                        if (m_externalClock)
+                        {
+                            assert(m_dspRate.Active());
+                            REFERENCE_TIME graphTime, myTime, myStartTime;
+                            if (SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                                SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
+                                SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
+                                myTime > myStartTime)
+                            {
+                                REFERENCE_TIME offset = myTime - graphTime - m_corrected;
+                                if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
+                                {
+                                    DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());
+                                    m_dspRate.Adjust(offset);
+                                    m_corrected += offset;
+                                }
+                            }
+                        }
 
                         m_dspMatrix.Process(chunk);
                         m_dspRate.Process(chunk);
@@ -470,6 +494,8 @@ namespace SaneAudioRenderer
         assert(m_inputFormatInitialized);
         assert(m_deviceInitialized);
 
+        m_corrected = 0;
+
         if (m_device.dspFormat == DspFormat::Unknown)
             return;
 
@@ -481,7 +507,7 @@ namespace SaneAudioRenderer
         const auto outMask = DspMatrix::GetChannelMask(m_device.format);
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
-        m_dspRate.Initialize(inRate, outRate, outChannels);
+        m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(!!m_settings->UseStereoCrossfeed(), outRate, outChannels, outMask);
         m_dspVolume.Initialize(m_device.exclusive);

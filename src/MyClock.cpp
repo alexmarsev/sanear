@@ -5,6 +5,7 @@ namespace SaneAudioRenderer
 {
     MyClock::MyClock(HRESULT& result)
         : CBaseReferenceClock(TEXT("Audio Renderer Clock"), nullptr, &result)
+        , m_performanceFrequency(GetPerformanceFrequency())
     {
     }
 
@@ -20,23 +21,14 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        static const int64_t performanceFrequency = GetPerformanceFrequency();
-
-        if (m_audioClock)
+        REFERENCE_TIME audioClockTime, audioClockCounterTime;
+        if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &audioClockCounterTime)))
         {
-            uint64_t audioFrequency, audioPosition, audioTime;
-            if (SUCCEEDED(m_audioClock->GetFrequency(&audioFrequency)) &&
-                SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)))
-            {
-                int64_t counterTime = llMulDiv(GetPerformanceCounter(), OneSecond, performanceFrequency, 0);
-                int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) +
-                                    m_audioStart + (audioPosition > 0 ? counterTime - audioTime : 0);
-                m_counterOffset = clockTime - counterTime;
-                return clockTime;
-            }
+            m_counterOffset = audioClockTime - audioClockCounterTime;
+            return audioClockTime;
         }
 
-        return m_counterOffset + llMulDiv(GetPerformanceCounter(), OneSecond, performanceFrequency, 0);
+        return m_counterOffset + llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
     }
 
     STDMETHODIMP_(void) MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
@@ -50,5 +42,48 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
         m_audioClock = nullptr;
+    }
+
+    STDMETHODIMP MyClock::GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime)
+    {
+        CheckPointer(pAudioTime, E_POINTER);
+
+        CAutoLock lock(this);
+
+        if (m_audioClock)
+        {
+            uint64_t audioFrequency, audioPosition, audioTime;
+            if (SUCCEEDED(m_audioClock->GetFrequency(&audioFrequency)) &&
+                SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)))
+            {
+                int64_t counterTime = llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
+                int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) +
+                                    m_audioStart + (audioPosition > 0 ? counterTime - audioTime : 0);
+
+                *pAudioTime = clockTime;
+
+                if (pCounterTime)
+                    *pCounterTime = counterTime;
+
+                return S_OK;
+            }
+        }
+
+        return E_FAIL;
+    }
+
+    STDMETHODIMP MyClock::GetAudioClockStartTime(REFERENCE_TIME* pStartTime)
+    {
+        CheckPointer(pStartTime, E_POINTER);
+
+        CAutoLock lock(this);
+
+        if (m_audioClock)
+        {
+            *pStartTime = m_audioStart;
+            return S_OK;
+        }
+
+        return E_FAIL;
     }
 }

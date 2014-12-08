@@ -8,6 +8,8 @@ namespace SaneAudioRenderer
     {
         STDMETHOD_(void, SlaveClockToAudio)(IAudioClock* pAudioClock, int64_t audioStart) = 0;
         STDMETHOD_(void, UnslaveClockFromAudio)() = 0;
+        STDMETHOD(GetAudioClockTime)(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) = 0;
+        STDMETHOD(GetAudioClockStartTime)(REFERENCE_TIME* pStartTime) = 0;
     };
     _COM_SMARTPTR_TYPEDEF(IMyClock, __uuidof(IMyClock));
 
@@ -29,9 +31,12 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP_(void) SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart) override;
         STDMETHODIMP_(void) UnslaveClockFromAudio() override;
+        STDMETHODIMP GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) override;
+        STDMETHODIMP GetAudioClockStartTime(REFERENCE_TIME* pStartTime) override;
 
     private:
 
+        const int64_t m_performanceFrequency;
         IAudioClockPtr m_audioClock;
         int64_t m_audioStart;
         int64_t m_counterOffset = 0;

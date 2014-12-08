@@ -8,19 +8,21 @@ namespace SaneAudioRenderer
         DestroyBackend();
     }
 
-    void DspRate::Initialize(uint32_t inputRate, uint32_t outputRate, uint32_t channels)
+    void DspRate::Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels)
     {
         DestroyBackend();
 
+        m_variable = variable;
         m_inputRate = inputRate;
         m_outputRate = outputRate;
         m_channels = channels;
 
-        if (inputRate != outputRate)
+        if (variable || inputRate != outputRate)
         {
-            soxr_io_spec_t ioSpec{SOXR_FLOAT32_I, SOXR_FLOAT32_I, 1.0, nullptr, 0};
-            soxr_quality_spec_t quality = soxr_quality_spec(SOXR_VHQ, 0);
-            m_soxr = soxr_create(inputRate, outputRate, channels, nullptr, &ioSpec, &quality, nullptr);
+            auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
+            auto qualitySpec = variable ? soxr_quality_spec(SOXR_HQ, SOXR_VR) : soxr_quality_spec(SOXR_VHQ, 0);
+            m_soxr = soxr_create(variable ? inputRate * m_maxVariableRateMultiplier : inputRate, outputRate,
+                                 channels, nullptr, &ioSpec, &qualitySpec, nullptr);
         }
     }
 
@@ -34,12 +36,28 @@ namespace SaneAudioRenderer
         if (m_soxr && !chunk.IsEmpty())
         {
             DspChunk::ToFloat(chunk);
-
-            assert(chunk.GetFormat() == DspFormat::Float);
             assert(chunk.GetRate() == m_inputRate);
             assert(chunk.GetChannelCount() == m_channels);
 
             size_t outputFrames = 2 * chunk.GetFrameCount() * m_outputRate / m_inputRate;
+
+            if (m_variable)
+            {
+                double multiplier = 1.0;
+
+                if (m_delta != 0)
+                {
+                    REFERENCE_TIME chunkTime = OneSecond * chunk.GetFrameCount() / m_inputRate;
+                    multiplier += (double)m_delta / chunkTime;
+                    multiplier = std::max(1 / m_maxVariableRateMultiplier,
+                                          std::min(m_maxVariableRateMultiplier, multiplier));
+                    m_delta += (REFERENCE_TIME)(chunkTime * (1.0 - multiplier));
+                }
+
+                soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
+                outputFrames = (size_t)(outputFrames * multiplier);
+            }
+
             DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
 
             size_t inputDone = 0;
@@ -82,6 +100,11 @@ namespace SaneAudioRenderer
                     break;
             }
         }
+    }
+
+    void DspRate::Adjust(REFERENCE_TIME delta)
+    {
+        m_delta += delta;
     }
 
     void DspRate::DestroyBackend()
