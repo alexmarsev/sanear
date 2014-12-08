@@ -55,22 +55,32 @@ namespace SaneAudioRenderer
 
     void DspRate::Finish(DspChunk& chunk)
     {
-        Process(chunk);
-
-        size_t delay = (size_t)soxr_delay(m_soxr);
-
-        if (delay > 0)
+        if (m_soxr)
         {
-            DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + delay, m_outputRate);
+            Process(chunk);
 
-            if (!chunk.IsEmpty())
-                memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
+            for (;;)
+            {
+                DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_outputRate, m_outputRate);
 
-            size_t inputDone = 0;
-            size_t outputDone = 0;
-            soxr_process(m_soxr, nullptr, 0, &inputDone,
-                                 output.GetData() + chunk.GetSize(), output.GetFrameCount() - chunk.GetFrameCount(), &outputDone);
-            assert(outputDone == delay);
+                if (!chunk.IsEmpty())
+                {
+                    assert(output.GetFormat() == chunk.GetFormat());
+                    assert(output.GetFrameSize() == chunk.GetFrameSize());
+                    memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
+                }
+
+                size_t inputDone = 0;
+                size_t outputDo = output.GetFrameCount() - chunk.GetFrameCount();
+                size_t outputDone = 0;
+                soxr_process(m_soxr, nullptr, 0, &inputDone, output.GetData() + chunk.GetSize(), outputDo, &outputDone);
+                output.Shrink(outputDone);
+
+                chunk = std::move(output);
+
+                if (outputDone < outputDo)
+                    break;
+            }
         }
     }
 
