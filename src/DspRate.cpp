@@ -39,7 +39,7 @@ namespace SaneAudioRenderer
             assert(chunk.GetRate() == m_inputRate);
             assert(chunk.GetChannelCount() == m_channels);
 
-            size_t outputFrames = (size_t)((uint64_t)chunk.GetFrameCount() * 2 * m_outputRate / chunk.GetRate());
+            size_t outputFrames = 2 * chunk.GetFrameCount() * m_outputRate / m_inputRate;
             DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
 
             size_t inputDone = 0;
