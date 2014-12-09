@@ -71,6 +71,14 @@ namespace SaneAudioRenderer
         if (m_eosUp)
             return S_FALSE;
 
+        // Raise Receive() thread priority, once.
+        if (m_hReceiveThread != GetCurrentThread())
+        {
+            m_hReceiveThread = GetCurrentThread();
+            if (GetThreadPriority(m_hReceiveThread) < THREAD_PRIORITY_ABOVE_NORMAL)
+                SetThreadPriority(m_hReceiveThread, THREAD_PRIORITY_ABOVE_NORMAL);
+        }
+
         if (m_SampleProps.dwSampleFlags & AM_SAMPLE_TYPECHANGED)
         {
             m_renderer.Finish(false);
@@ -119,6 +127,7 @@ namespace SaneAudioRenderer
         CAutoLock receiveLock(&m_receiveMutex);
         m_eosUp = false;
         m_eosDown = false;
+        m_hReceiveThread = NULL;
         m_renderer.EndFlush();
 
         return S_OK;
@@ -189,6 +198,7 @@ namespace SaneAudioRenderer
         CAutoLock receiveLock(&m_receiveMutex);
         m_eosUp = false;
         m_eosDown = false;
+        m_hReceiveThread = NULL;
         m_renderer.Stop();
         m_renderer.EndFlush();
 

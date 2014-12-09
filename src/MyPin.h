@@ -40,6 +40,8 @@ namespace SaneAudioRenderer
         bool m_eosUp = false;
         bool m_eosDown = false;
 
+        HANDLE m_hReceiveThread = NULL;
+
         CCritSec m_receiveMutex;
 
         CAMEvent& m_bufferFilled;
