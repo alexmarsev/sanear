@@ -56,6 +56,9 @@
     <ClCompile Include="src\MyPropertyPage.cpp">
       <Filter>DirectShow</Filter>
     </ClCompile>
+    <ClCompile Include="src\MyTestClock.cpp">
+      <Filter>DirectShow</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -118,6 +121,9 @@
       <Filter>Processors</Filter>
     </ClInclude>
     <ClInclude Include="src\MyPropertyPage.h">
+      <Filter>DirectShow</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MyTestClock.h">
       <Filter>DirectShow</Filter>
     </ClInclude>
   </ItemGroup>

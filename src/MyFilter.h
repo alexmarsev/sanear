@@ -2,6 +2,7 @@
 
 #include "Interfaces.h"
 #include "MyClock.h"
+#include "MyTestClock.h"
 
 namespace SaneAudioRenderer
 {
@@ -43,6 +44,7 @@ namespace SaneAudioRenderer
         STDMETHODIMP ChangeState(PinFunction pinFunction);
 
         IMyClockPtr m_clock;
+        IReferenceClockPtr m_testClock;
         CAMEvent m_bufferFilled;
         std::unique_ptr<AudioRenderer> m_renderer;
         IBasicAudioPtr m_basicAudio;
