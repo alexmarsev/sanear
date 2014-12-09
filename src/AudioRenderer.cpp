@@ -219,7 +219,10 @@ namespace SaneAudioRenderer
                     actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
                     target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
 
-                    if (actual == target || actual == previous)
+                    if (actual == target)
+                        return true;
+
+                    if (actual == previous && m_state == State_Running)
                         return true;
                 }
 
