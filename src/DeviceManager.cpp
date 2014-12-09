@@ -7,8 +7,8 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        const auto WindowClass = TEXT("SaneAudioRenderer::DeviceManager");
-        const auto WindowTitle = TEXT("");
+        const auto WindowClass = L"SaneAudioRenderer::DeviceManager";
+        const auto WindowTitle = L"";
 
         enum
         {

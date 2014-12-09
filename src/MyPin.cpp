@@ -6,7 +6,7 @@
 namespace SaneAudioRenderer
 {
     MyPin::MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, CAMEvent& bufferFilled, HRESULT& result)
-        : CBaseInputPin(L"SaneAudioRenderer::MyPin", pFilter, this, &result, TEXT("Input0"))
+        : CBaseInputPin(L"SaneAudioRenderer::MyPin", pFilter, this, &result, L"Input0")
         , m_bufferFilled(bufferFilled)
         , m_renderer(renderer)
     {
