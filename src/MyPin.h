@@ -14,8 +14,6 @@ namespace SaneAudioRenderer
         MyPin(const MyPin&) = delete;
         MyPin& operator=(const MyPin&) = delete;
 
-        DECLARE_IUNKNOWN
-
         HRESULT CheckMediaType(const CMediaType* pmt) override;
         HRESULT SetMediaType(const CMediaType* pmt) override;
 
@@ -37,12 +35,10 @@ namespace SaneAudioRenderer
 
         FILTER_STATE m_state = State_Stopped;
 
+        CCritSec m_receiveMutex;
         bool m_eosUp = false;
         bool m_eosDown = false;
-
         HANDLE m_hReceiveThread = NULL;
-
-        CCritSec m_receiveMutex;
 
         CAMEvent& m_bufferFilled;
         AudioRenderer& m_renderer;

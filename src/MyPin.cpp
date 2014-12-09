@@ -52,8 +52,7 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        ReturnIfFailed(CBaseInputPin::NewSegment(startTime, stopTime, rate));
-
+        CBaseInputPin::NewSegment(startTime, stopTime, rate);
         m_renderer.NewSegment(rate);
 
         return S_OK;
