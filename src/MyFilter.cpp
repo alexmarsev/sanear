@@ -20,8 +20,8 @@ namespace SaneAudioRenderer
             if (SUCCEEDED(result))
                 m_clock = new MyClock(result);
 
-            if (SUCCEEDED(result))
-                m_testClock = new MyTestClock(result);
+            //if (SUCCEEDED(result))
+            //    m_testClock = new MyTestClock(result);
 
             if (SUCCEEDED(result))
                 m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, m_bufferFilled, result);
@@ -43,8 +43,11 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
     {
+        //if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
+        //    return m_testClock->QueryInterface(riid, ppv);
+
         if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
-            return m_testClock->QueryInterface(riid, ppv);
+            return m_clock->QueryInterface(riid, ppv);
 
         if (riid == IID_IBasicAudio)
             return m_basicAudio->QueryInterface(riid, ppv);
