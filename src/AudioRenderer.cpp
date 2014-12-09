@@ -106,7 +106,7 @@ namespace SaneAudioRenderer
                                 SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
                                 myTime > myStartTime)
                             {
-                                REFERENCE_TIME offset = myTime - graphTime - m_corrected;
+                                REFERENCE_TIME offset = graphTime - myTime - m_corrected;
                                 if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
                                 {
                                     DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());

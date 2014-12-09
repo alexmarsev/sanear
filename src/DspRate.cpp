@@ -48,10 +48,10 @@ namespace SaneAudioRenderer
                 if (m_delta != 0)
                 {
                     REFERENCE_TIME chunkTime = OneSecond * chunk.GetFrameCount() / m_inputRate;
-                    multiplier += (double)m_delta / chunkTime;
+                    multiplier = (double)chunkTime / (chunkTime - std::min(m_delta, chunkTime - 1));
                     multiplier = std::max(1 / m_maxVariableRateMultiplier,
                                           std::min(m_maxVariableRateMultiplier, multiplier));
-                    m_delta += (REFERENCE_TIME)(chunkTime * (1.0 - multiplier));
+                    m_delta -= (REFERENCE_TIME)(chunkTime - chunkTime / multiplier);
                 }
 
                 soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
