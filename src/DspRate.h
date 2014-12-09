@@ -36,6 +36,6 @@ namespace SaneAudioRenderer
         uint32_t m_channels;
         REFERENCE_TIME m_delta;
 
-        const double m_maxVariableRateMultiplier = 2;
+        const double m_maxVariableRateMultiplier = 1.003;
     };
 }
