@@ -119,7 +119,7 @@ namespace SaneAudioRenderer
 
     MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat,
                                    std::vector<std::wstring> processors, bool externalClock)
-        : CUnknown("Audio Renderer Property Page", nullptr)
+        : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {
         std::wstring adapterField = (pDeviceFormat && pDeviceFormat->adapterName) ? *pDeviceFormat->adapterName : L"-";
 

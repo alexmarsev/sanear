@@ -4,7 +4,7 @@
 namespace SaneAudioRenderer
 {
     MyClock::MyClock(HRESULT& result)
-        : CBaseReferenceClock(TEXT("Audio Renderer Clock"), nullptr, &result)
+        : CBaseReferenceClock(L"SaneAudioRenderer::MyClock", nullptr, &result)
         , m_performanceFrequency(GetPerformanceFrequency())
     {
     }
