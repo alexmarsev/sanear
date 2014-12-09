@@ -101,9 +101,9 @@ namespace SaneAudioRenderer
                         {
                             assert(m_dspRate.Active());
                             REFERENCE_TIME graphTime, myTime, myStartTime;
-                            if (SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                            if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
                                 SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
-                                SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
+                                SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
                                 myTime > myStartTime)
                             {
                                 REFERENCE_TIME offset = graphTime - myTime - m_corrected;
