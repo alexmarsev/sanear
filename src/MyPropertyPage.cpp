@@ -22,9 +22,9 @@ namespace SaneAudioRenderer
             Write(out, &t, sizeof(T));
         }
 
-        void WriteString(std::vector<char>& out, const std::wstring& string)
+        void WriteString(std::vector<char>& out, const std::wstring& str)
         {
-            Write(out, (void*)string.c_str(), sizeof(wchar_t) * (string.length() + 1));
+            Write(out, (void*)str.c_str(), sizeof(wchar_t) * (str.length() + 1));
         }
 
         void WriteDialogHeader(std::vector<char>& out, const std::wstring& font, WORD fontSize)
