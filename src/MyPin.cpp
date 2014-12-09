@@ -207,10 +207,17 @@ namespace SaneAudioRenderer
 
     bool MyPin::StateTransitionFinished(uint32_t timeoutMilliseconds)
     {
-        CAutoLock objectLock(this);
+        {
+            CAutoLock objectLock(this);
 
-        if (!IsConnected() || m_state == State_Stopped)
-            return true;
+            if (!IsConnected() || m_state == State_Stopped)
+                return true;
+        }
+
+        // Don't lock the object, we don't want to block Receive() method.
+
+        // There won't be any state transitions during the wait,
+        // because MyFilter always locks itself before calling this method.
 
         return !!m_bufferFilled.Wait(timeoutMilliseconds);
     }
