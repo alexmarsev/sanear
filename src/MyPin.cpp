@@ -103,8 +103,9 @@ namespace SaneAudioRenderer
         }
 
         m_eosUp = true;
+
         // We ask audio renderer to block until all samples are played.
-        // Returns 'false' in case of interruption.
+        // The method returns 'false' in case of interruption.
         m_eosDown = m_renderer.Finish(true);
 
         if (m_eosDown)
@@ -122,12 +123,15 @@ namespace SaneAudioRenderer
         CBaseInputPin::BeginFlush();
 
         m_renderer.BeginFlush();
+
         // Barrier for any present Receive() and EndOfStream() calls.
         // Subsequent ones will be rejected because m_bFlushing == TRUE.
         CAutoLock receiveLock(&m_receiveMutex);
+
         m_eosUp = false;
         m_eosDown = false;
         m_hReceiveThread = NULL;
+
         m_renderer.EndFlush();
 
         return S_OK;
@@ -173,8 +177,9 @@ namespace SaneAudioRenderer
         {
             m_pFilter->NotifyEvent(EC_COMPLETE, S_OK, (LONG_PTR)m_pFilter);
         }
-        else if (IsConnected())
+        else
         {
+            assert(IsConnected());
             m_renderer.Play(startTime);
         }
 
@@ -193,13 +198,16 @@ namespace SaneAudioRenderer
         }
 
         m_renderer.BeginFlush();
+
         // Barrier for any present Receive() and EndOfStream() calls.
         // Subsequent ones will be rejected because m_state == State_Stopped.
         CAutoLock receiveLock(&m_receiveMutex);
+
         m_eosUp = false;
         m_eosDown = false;
         m_hReceiveThread = NULL;
         m_renderer.Stop();
+
         m_renderer.EndFlush();
 
         return S_OK;
