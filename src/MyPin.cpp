@@ -38,6 +38,8 @@ namespace SaneAudioRenderer
 
     HRESULT MyPin::SetMediaType(const CMediaType* pmt)
     {
+        // Callers lock the object beforehand, all is good.
+
         ReturnIfFailed(CBaseInputPin::SetMediaType(pmt));
 
         WAVEFORMATEX* pFormat = (WAVEFORMATEX*)pmt->Format();
@@ -48,6 +50,8 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyPin::NewSegment(REFERENCE_TIME startTime, REFERENCE_TIME stopTime, double rate)
     {
+        CAutoLock objectLock(this);
+
         ReturnIfFailed(CBaseInputPin::NewSegment(startTime, stopTime, rate));
 
         m_renderer.NewSegment(rate);
