@@ -289,6 +289,10 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
+        // It makes things a lot easier when rate is within float precision,
+        // please add a cast to your player's code.
+        assert((double)(float)rate == rate);
+
         m_startOffset = 0;
         m_lastSampleEnd = 0;
         m_rate = rate;
