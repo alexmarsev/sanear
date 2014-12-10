@@ -20,7 +20,7 @@ namespace SaneAudioRenderer
         if (variable || inputRate != outputRate)
         {
             auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
-            auto qualitySpec = variable ? soxr_quality_spec(SOXR_HQ, SOXR_VR) : soxr_quality_spec(SOXR_VHQ, 0);
+            auto qualitySpec = variable ? soxr_quality_spec(SOXR_HQ, SOXR_VR) : soxr_quality_spec(SOXR_HQ, 0);
             m_soxr = soxr_create(variable ? inputRate * (m_maxVariableRateMultiplier + 0.1) : inputRate, outputRate,
                                  channels, nullptr, &ioSpec, &qualitySpec, nullptr);
         }
