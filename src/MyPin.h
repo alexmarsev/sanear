@@ -34,10 +34,10 @@ namespace SaneAudioRenderer
     private:
 
         FILTER_STATE m_state = State_Stopped;
-
-        CCritSec m_receiveMutex;
         bool m_eosUp = false;
         bool m_eosDown = false;
+
+        CCritSec m_receiveMutex;
         HANDLE m_hReceiveThread = NULL;
 
         CAMEvent& m_bufferFilled;
