@@ -109,7 +109,7 @@ namespace SaneAudioRenderer
                                 REFERENCE_TIME offset = graphTime - myTime - m_corrected;
                                 if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
                                 {
-                                    DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());
+                                    //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());
                                     m_dspRate.Adjust(offset);
                                     m_corrected += offset;
                                 }
@@ -262,7 +262,6 @@ namespace SaneAudioRenderer
 
         if (!m_settings->UseExclusiveMode())
             return false;
-
 
         WAVEFORMATEXTENSIBLE format = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
                                           reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
