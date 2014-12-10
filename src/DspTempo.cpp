@@ -19,9 +19,9 @@ namespace SaneAudioRenderer
 
             m_stouch.setTempo(tempo);
 
-            m_stouch.setSetting(SETTING_SEQUENCE_MS, 40);
-            m_stouch.setSetting(SETTING_SEEKWINDOW_MS, 15);
-            m_stouch.setSetting(SETTING_OVERLAP_MS, 8);
+            //m_stouch.setSetting(SETTING_SEQUENCE_MS, 40);
+            //m_stouch.setSetting(SETTING_SEEKWINDOW_MS, 15);
+            //m_stouch.setSetting(SETTING_OVERLAP_MS, 8);
 
             m_active = true;
         }
