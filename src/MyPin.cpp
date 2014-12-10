@@ -142,8 +142,7 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyPin::EndFlush()
     {
-        CAutoLock objectLock(this);
-
+        // Parent method locks the object before modifying it, all is good.
         CBaseInputPin::EndFlush();
 
         return S_OK;
