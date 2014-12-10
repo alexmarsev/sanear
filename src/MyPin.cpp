@@ -139,6 +139,7 @@ namespace SaneAudioRenderer
 
         {
             CAutoLock objectLock(this);
+
             m_eosUp = false;
             m_eosDown = false;
         }
@@ -217,6 +218,7 @@ namespace SaneAudioRenderer
 
         {
             CAutoLock objectLock(this);
+
             m_eosUp = false;
             m_eosDown = false;
         }

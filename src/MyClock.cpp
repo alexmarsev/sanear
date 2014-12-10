@@ -34,6 +34,7 @@ namespace SaneAudioRenderer
     STDMETHODIMP_(void) MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
     {
         CAutoLock lock(this);
+
         m_audioClock = pAudioClock;
         m_audioStart = audioStart;
     }
@@ -41,6 +42,7 @@ namespace SaneAudioRenderer
     STDMETHODIMP_(void) MyClock::UnslaveClockFromAudio()
     {
         CAutoLock lock(this);
+
         m_audioClock = nullptr;
     }
 
