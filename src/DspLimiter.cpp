@@ -123,7 +123,7 @@ namespace SaneAudioRenderer
 
     void DspLimiter::AnalyzeLastChunk()
     {
-        assert(m_limit > 0);
+        assert(m_limit > 0.0f);
 
         const DspChunk& chunk = m_buffer.back();
         assert(chunk.GetFormat() == DspFormat::Float);

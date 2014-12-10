@@ -43,7 +43,7 @@ namespace SaneAudioRenderer
 
             if (m_variable)
             {
-                double multiplier = 1;
+                double multiplier = 1.0;
 
                 if (m_delta != 0)
                 {
@@ -54,9 +54,9 @@ namespace SaneAudioRenderer
                     m_delta -= (REFERENCE_TIME)(chunkTime - chunkTime / multiplier);
                 }
 
-                assert(multiplier > 0);
+                assert(multiplier > 0.0);
                 soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
-                if (multiplier < 1)
+                if (multiplier < 1.0)
                     outputFrames = (size_t)(outputFrames / multiplier);
             }
 

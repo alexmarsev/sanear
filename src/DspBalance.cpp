@@ -21,7 +21,7 @@ namespace SaneAudioRenderer
 
             auto data = reinterpret_cast<float*>(chunk.GetData());
             float gain = abs(balance);
-            for (size_t i = (balance < 0 ? 1 : 0), n = chunk.GetSampleCount(); i < n; i += 2)
+            for (size_t i = (balance < 0.0f ? 1 : 0), n = chunk.GetSampleCount(); i < n; i += 2)
                 data[i] *= gain;
         }
     }
