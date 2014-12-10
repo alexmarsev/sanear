@@ -44,7 +44,7 @@ namespace SaneAudioRenderer
 
         HANDLE m_hThread = NULL;
         HWND m_hWindow = NULL;
-        std::promise<bool> m_windowInitialized;;
+        std::promise<bool> m_windowInitialized;
 
         AudioDevice m_device = {};
         WAVEFORMATEXTENSIBLE m_format;

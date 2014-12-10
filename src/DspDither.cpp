@@ -32,9 +32,9 @@ namespace SaneAudioRenderer
             {
                 for (size_t channel = 0; channel < channels; channel++)
                 {
-                    float inputSample = inputData[frame * channels + channel] * (INT16_MAX - 4) +
-                                        0.5f * m_error1[channel] - m_error2[channel];
-                    float noise = (float)m_rand() / m_rand.max();
+                    // Rectangular dither with simple second-order noise shaping.
+                    float inputSample = inputData[frame * channels + channel] * (INT16_MAX - 4);
+                    float noise = (float)m_rand() / m_rand.max() + 0.5f * m_error1[channel] - m_error2[channel];
                     float outputSample = round(inputSample + noise);
                     m_error2[channel] = m_error1[channel];
                     m_error1[channel] = outputSample - inputSample;
