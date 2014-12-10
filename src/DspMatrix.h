@@ -26,7 +26,7 @@ namespace SaneAudioRenderer
     private:
 
         std::unique_ptr<float[]> m_matrix;
-        uint32_t m_inputChannels;
-        uint32_t m_outputChannels;
+        uint32_t m_inputChannels = 0;
+        uint32_t m_outputChannels = 0;
     };
 }

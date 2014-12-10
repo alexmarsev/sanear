@@ -38,7 +38,7 @@ namespace SaneAudioRenderer
 
         const int64_t m_performanceFrequency;
         IAudioClockPtr m_audioClock;
-        int64_t m_audioStart;
+        int64_t m_audioStart = 0;
         int64_t m_counterOffset = 0;
     };
 }

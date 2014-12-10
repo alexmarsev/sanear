@@ -25,6 +25,6 @@ namespace SaneAudioRenderer
     private:
 
         const AudioRenderer& m_renderer;
-        bool m_exclusive;
+        bool m_exclusive = false;
     };
 }

@@ -28,7 +28,7 @@ namespace SaneAudioRenderer
 
         bool m_active = false;
 
-        uint32_t m_rate;
-        uint32_t m_channels;
+        uint32_t m_rate = 0;
+        uint32_t m_channels = 0;
     };
 }

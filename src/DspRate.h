@@ -31,10 +31,10 @@ namespace SaneAudioRenderer
 
         soxr_t m_soxr = nullptr;
         bool m_variable = false;
-        uint32_t m_inputRate;
-        uint32_t m_outputRate;
-        uint32_t m_channels;
-        REFERENCE_TIME m_delta;
+        uint32_t m_inputRate = 0;
+        uint32_t m_outputRate = 0;
+        uint32_t m_channels = 0;
+        REFERENCE_TIME m_delta = 0;
 
         const double m_maxVariableRateMultiplier = 1.003;
     };

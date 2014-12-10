@@ -42,13 +42,13 @@ namespace SaneAudioRenderer
         bool m_queuedCreate = false;
         bool m_queuedCheckBitstream = false;
 
-        HANDLE m_hThread;
+        HANDLE m_hThread = NULL;
         HWND m_hWindow = NULL;
         std::promise<bool> m_windowInitialized;;
 
-        AudioDevice m_device;
+        AudioDevice m_device = {};
         WAVEFORMATEXTENSIBLE m_format;
-        bool m_exclusive;
+        bool m_exclusive = false;
         WAVEFORMATEXTENSIBLE m_checkBitstreamFormat;
     };
 }
