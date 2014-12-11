@@ -120,7 +120,7 @@ namespace SaneAudioRenderer
                 {
                     chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
 
-                    assert(m_receivedFrames > 0);
+                    assert(m_receivedFrames > 0 || m_receivedFramesTimeInPreviousFormats > 0);
                     m_receivedFrames += chunk.GetFrameCount();
                 }
                 else
