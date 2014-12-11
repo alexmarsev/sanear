@@ -130,6 +130,18 @@ namespace SaneAudioRenderer
 
                 if (m_deviceInitialized && m_state == State_Running)
                 {
+                    {
+                        REFERENCE_TIME offset = sampleProps.tStart - m_myClock->GetSlavedClockOffset() -
+                                                (REFERENCE_TIME)(m_receivedFramesTimeInPreviousFormats +
+                                                                 llMulDiv(m_receivedFrames - chunk.GetFrameCount(), OneSecond,
+                                                                          m_inputFormat.Format.nSamplesPerSec, 0) / m_rate);
+                        if (std::abs(offset) > 1000)
+                        {
+                            m_myClock->OffsetSlavedClock(offset);
+                            //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(sampleProps.tStop - sampleProps.tStart) + L"\n").c_str());
+                        }
+                    }
+
                     if (m_externalClock && m_device.dspFormat != DspFormat::Unknown)
                     {
                         assert(m_dspRate.Active());
@@ -146,18 +158,6 @@ namespace SaneAudioRenderer
                                 m_dspRate.Adjust(offset);
                                 m_correctedWithRateDsp += offset;
                             }
-                        }
-                    }
-                    else if (!m_externalClock)
-                    {
-                        REFERENCE_TIME offset = sampleProps.tStart - m_myClock->GetSlavedClockOffset() -
-                                                (REFERENCE_TIME)(m_receivedFramesTimeInPreviousFormats +
-                                                                 llMulDiv(m_receivedFrames - chunk.GetFrameCount(), OneSecond,
-                                                                          m_inputFormat.Format.nSamplesPerSec, 0) / m_rate);
-                        if (std::abs(offset) > 1000)
-                        {
-                            m_myClock->OffsetSlavedClock(offset);
-                            //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(sampleProps.tStop - sampleProps.tStart) + L"\n").c_str());
                         }
                     }
                 }
