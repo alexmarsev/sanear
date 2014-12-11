@@ -139,12 +139,12 @@ namespace SaneAudioRenderer
                             SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
                             myTime > myStartTime)
                         {
-                            REFERENCE_TIME offset = graphTime - myTime - m_corrected;
+                            REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
                             if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
                             {
                                 //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());
                                 m_dspRate.Adjust(offset);
-                                m_corrected += offset;
+                                m_correctedWithRateDsp += offset;
                             }
                         }
                     }
@@ -569,7 +569,7 @@ namespace SaneAudioRenderer
         assert(m_inputFormatInitialized);
         assert(m_deviceInitialized);
 
-        m_corrected = 0;
+        m_correctedWithRateDsp = 0;
 
         if (m_device.dspFormat == DspFormat::Unknown)
             return;
