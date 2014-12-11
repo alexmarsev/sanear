@@ -181,9 +181,9 @@ namespace SaneAudioRenderer
                 ClearDevice();
                 chunk = DspChunk();
             }
-        }
 
-        m_lastSampleEnd = sampleProps.tStop;
+            m_lastSampleEnd = sampleProps.tStop;
+        }
 
         return Push(chunk);
     }
