@@ -37,6 +37,7 @@ namespace SaneAudioRenderer
 
         m_audioClock = pAudioClock;
         m_audioStart = audioStart;
+        m_audioOffset = 0;
     }
 
     STDMETHODIMP_(void) MyClock::UnslaveClockFromAudio()
@@ -44,6 +45,20 @@ namespace SaneAudioRenderer
         CAutoLock lock(this);
 
         m_audioClock = nullptr;
+    }
+
+    STDMETHODIMP_(void) MyClock::OffsetSlavedClock(REFERENCE_TIME offsetTime)
+    {
+        CAutoLock lock(this);
+
+        m_audioOffset += offsetTime;
+    }
+
+    STDMETHODIMP_(REFERENCE_TIME) MyClock::GetSlavedClockOffset()
+    {
+        CAutoLock lock(this);
+
+        return m_audioOffset;
     }
 
     STDMETHODIMP MyClock::GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime)
@@ -59,7 +74,7 @@ namespace SaneAudioRenderer
                 SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)))
             {
                 int64_t counterTime = llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
-                int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) +
+                int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) + m_audioOffset +
                                     m_audioStart + (audioPosition > 0 ? counterTime - audioTime : 0);
 
                 *pAudioTime = clockTime;

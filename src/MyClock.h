@@ -8,8 +8,11 @@ namespace SaneAudioRenderer
     {
         STDMETHOD_(void, SlaveClockToAudio)(IAudioClock* pAudioClock, int64_t audioStart) = 0;
         STDMETHOD_(void, UnslaveClockFromAudio)() = 0;
+        STDMETHOD_(void, OffsetSlavedClock)(REFERENCE_TIME offsetTime) = 0;
+        STDMETHOD_(REFERENCE_TIME, GetSlavedClockOffset)() = 0;
         STDMETHOD(GetAudioClockTime)(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) = 0;
         STDMETHOD(GetAudioClockStartTime)(REFERENCE_TIME* pStartTime) = 0;
+
     };
     _COM_SMARTPTR_TYPEDEF(IMyClock, __uuidof(IMyClock));
 
@@ -31,6 +34,8 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP_(void) SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart) override;
         STDMETHODIMP_(void) UnslaveClockFromAudio() override;
+        STDMETHODIMP_(void) OffsetSlavedClock(REFERENCE_TIME offsetTime) override;
+        STDMETHODIMP_(REFERENCE_TIME) GetSlavedClockOffset() override;
         STDMETHODIMP GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) override;
         STDMETHODIMP GetAudioClockStartTime(REFERENCE_TIME* pStartTime) override;
 
@@ -39,6 +44,7 @@ namespace SaneAudioRenderer
         const int64_t m_performanceFrequency;
         IAudioClockPtr m_audioClock;
         int64_t m_audioStart = 0;
+        int64_t m_audioOffset = 0;
         int64_t m_counterOffset = 0;
     };
 }

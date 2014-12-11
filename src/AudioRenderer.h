@@ -27,7 +27,7 @@ namespace SaneAudioRenderer
         void SetClock(IReferenceClock* pClock);
         bool OnExternalClock();
 
-        bool Enqueue(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps);
+        bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
         bool Finish(bool blockUntilEnd);
 
         void BeginFlush();
@@ -53,7 +53,7 @@ namespace SaneAudioRenderer
 
     private:
 
-        DspChunk PreProcess(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps);
+        DspChunk PreProcessFirstSamples(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
 
         void StartDevice();
         void ClearDevice();
@@ -79,6 +79,9 @@ namespace SaneAudioRenderer
         REFERENCE_TIME m_startOffset = 0;
         REFERENCE_TIME m_startTime = 0;
 
+        REFERENCE_TIME m_receivedFramesTimeInPreviousFormats = 0;
+        uint64_t m_receivedFrames = 0;
+        REFERENCE_TIME m_firstSampleStart = 0;
         REFERENCE_TIME m_lastSampleEnd = 0;
 
         CAMEvent m_flush;
