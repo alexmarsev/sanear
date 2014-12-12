@@ -18,7 +18,7 @@ namespace SaneAudioRenderer
 
         inline float f(const std::pair<uint32_t, float>& left, float x, uint32_t pos)
         {
-            return left.second + x * (pos - left.first);
+            return x * (pos - left.first) + left.second;
         }
 
         inline float f(const std::pair<uint32_t, float>& left, const std::pair<uint32_t, float>& right, uint32_t pos)
@@ -140,7 +140,7 @@ namespace SaneAudioRenderer
         {
             float sample = 0.0f;
             for (size_t i = 0; i < channels; i++)
-                sample = std::max(std::fabs(data[frame * channels + i]), sample);
+                sample = std::max(sample, std::fabs(data[frame * channels + i]));
 
             if (sample > m_limit)
             {
@@ -179,6 +179,7 @@ namespace SaneAudioRenderer
                             }
                             break;
                         }
+
                         {
                             //DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
                             //                                      std::to_wstring(sample) + L"\n").c_str());
@@ -206,13 +207,13 @@ namespace SaneAudioRenderer
             const uint32_t chunkFirstFrame32 = (uint32_t)m_bufferFirstFrame;
             const uint32_t channels = chunk.GetChannelCount();
 
-            const size_t firstFrameOffset = OverflowingLess(m_peaks.front().first, chunkFirstFrame32) ?
-                                                0 : (size_t)(m_peaks.front().first - chunkFirstFrame32);
-
             assert(m_peaks.size() > 1);
             auto left = m_peaks[0];
             auto right = m_peaks[1];
             float x = f_x(left, right);
+
+            const size_t firstFrameOffset = OverflowingLess(left.first, chunkFirstFrame32) ?
+                                                0 : (left.first - chunkFirstFrame32);
 
             auto data = reinterpret_cast<float*>(chunk.GetData());
             for (size_t i = firstFrameOffset, frameCount = chunk.GetFrameCount(); i < frameCount; i++)
