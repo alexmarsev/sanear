@@ -26,14 +26,14 @@ namespace SaneAudioRenderer
         void ModifyFirstChunk();
 
         float m_limit = 0.0f;
-        int32_t m_attackFrames = 0;
-        int32_t m_releaseFrames = 0;
+        uint32_t m_attackFrames = 0;
+        uint32_t m_releaseFrames = 0;
         size_t m_windowFrames = 0;
 
         std::deque<DspChunk> m_buffer;
         size_t m_bufferFrameCount = 0;
         uint64_t m_bufferFirstFrame = 0;
 
-        std::deque<std::pair<uint64_t, float>> m_peaks;
+        std::deque<std::pair<uint32_t, float>> m_peaks;
     };
 }

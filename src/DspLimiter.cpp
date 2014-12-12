@@ -5,20 +5,24 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        inline float f_x(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right)
+        inline bool OverflowingLess(uint32_t a, uint32_t b)
         {
-            assert(right.first > left.first);
+            return a - b > UINT32_MAX / 2;
+        }
+
+        inline float f_x(const std::pair<uint32_t, float>& left, const std::pair<uint32_t, float>& right)
+        {
+            assert(OverflowingLess(left.first, right.first));
             return (right.second - left.second) / (right.first - left.first);
         }
 
-        inline float f(const std::pair<uint64_t, float>& left, float x, uint64_t pos)
+        inline float f(const std::pair<uint32_t, float>& left, float x, uint32_t pos)
         {
             return left.second + x * (pos - left.first);
         }
 
-        inline float f(const std::pair<uint64_t, float>& left, const std::pair<uint64_t, float>& right, uint64_t pos)
+        inline float f(const std::pair<uint32_t, float>& left, const std::pair<uint32_t, float>& right, uint32_t pos)
         {
-            assert(pos >= left.first && pos <= right.first);
             return f(left, f_x(left, right), pos);
         }
     }
@@ -140,12 +144,12 @@ namespace SaneAudioRenderer
 
             if (sample > m_limit)
             {
-                const uint64_t peakFrame = chunkFirstFrame + frame;
+                const uint32_t peakFrame32 = (uint32_t)(chunkFirstFrame + frame);
                 if (m_peaks.empty())
                 {
-                    m_peaks.emplace_back(peakFrame > m_attackFrames ? peakFrame - m_attackFrames : 0, m_limit);
-                    m_peaks.emplace_back(peakFrame, sample);
-                    m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
+                    m_peaks.emplace_back(chunkFirstFrame + frame > m_attackFrames ? peakFrame32 - m_attackFrames : 0, m_limit);
+                    m_peaks.emplace_back(peakFrame32, sample);
+                    m_peaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                     //DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
                     //                                        std::to_wstring(sample) + L"\n").c_str());
                 }
@@ -155,7 +159,7 @@ namespace SaneAudioRenderer
                     assert(m_peaks.back().second == m_limit);
                     auto back = m_peaks.rbegin();
                     auto nextToBack = back + 1;
-                    if (peakFrame > back->first || f(*nextToBack, *back, peakFrame) < sample)
+                    if (OverflowingLess(back->first, peakFrame32) || f(*nextToBack, *back, peakFrame32) < sample)
                     {
                         m_peaks.pop_back();
                         back = m_peaks.rbegin();
@@ -164,7 +168,7 @@ namespace SaneAudioRenderer
                         while (nextToBack != m_peaks.rend())
                         {
                             if (sample >= back->second &&
-                                f(*nextToBack, {peakFrame, sample}, back->first) > back->second)
+                                f(*nextToBack, {peakFrame32, sample}, back->first) > back->second)
                             {
                                 //DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
                                 //                                       std::to_wstring(back->second) + L"\n").c_str());
@@ -178,8 +182,8 @@ namespace SaneAudioRenderer
                         {
                             //DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
                             //                                      std::to_wstring(sample) + L"\n").c_str());
-                            m_peaks.emplace_back(peakFrame, sample);
-                            m_peaks.emplace_back(peakFrame + m_releaseFrames, m_limit);
+                            m_peaks.emplace_back(peakFrame32, sample);
+                            m_peaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                         }
                     }
                     else
@@ -199,12 +203,11 @@ namespace SaneAudioRenderer
             DspChunk& chunk = m_buffer.front();
             assert(chunk.GetFormat() == DspFormat::Float);
 
-            const uint64_t chunkFirstFrame = m_bufferFirstFrame;
-            const size_t chunkFrameCount = chunk.GetFrameCount();
+            const uint32_t chunkFirstFrame32 = (uint32_t)m_bufferFirstFrame;
             const uint32_t channels = chunk.GetChannelCount();
 
-            const size_t firstFrameOffset = chunkFirstFrame > m_peaks.front().first ?
-                                                0 : (size_t)(m_peaks.front().first - chunkFirstFrame);
+            const size_t firstFrameOffset = OverflowingLess(m_peaks.front().first, chunkFirstFrame32) ?
+                                                0 : (size_t)(m_peaks.front().first - chunkFirstFrame32);
 
             assert(m_peaks.size() > 1);
             auto left = m_peaks[0];
@@ -212,10 +215,10 @@ namespace SaneAudioRenderer
             float x = f_x(left, right);
 
             auto data = reinterpret_cast<float*>(chunk.GetData());
-            for (size_t i = firstFrameOffset; i < chunkFrameCount; i++)
+            for (size_t i = firstFrameOffset, frameCount = chunk.GetFrameCount(); i < frameCount; i++)
             {
-                const uint64_t frame = chunkFirstFrame + i;
-                const float divisor = f(left, x, frame);
+                const uint32_t frame32 = (uint32_t)(chunkFirstFrame32 + i);
+                const float divisor = f(left, x, frame32);
 
                 for (size_t channel = 0; channel < channels; channel++)
                 {
@@ -224,9 +227,9 @@ namespace SaneAudioRenderer
                     assert(std::fabs(sample) <= m_limit);
                 }
 
-                if (right.first <= frame)
+                if (!OverflowingLess(frame32, right.first))
                 {
-                    assert(right.first == frame);
+                    assert(right.first == frame32);
                     m_peaks.pop_front();
                     if (m_peaks.size() == 1)
                     {
