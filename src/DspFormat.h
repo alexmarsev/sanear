@@ -69,15 +69,26 @@ namespace SaneAudioRenderer
 
     inline DspFormat DspFormatFromWaveFormat(const WAVEFORMATEX& format)
     {
+        if (format.nSamplesPerSec == 0)
+            return DspFormat::Unknown;
+
         if (format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
         {
-            return (format.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
+            switch (format.wBitsPerSample)
+            {
+                case 32: return DspFormat::Float;
+                case 64: return DspFormat::Double;
+            }
         }
         else if (format.wFormatTag == WAVE_FORMAT_PCM)
         {
-            return (format.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                   (format.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                   (format.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+            switch (format.wBitsPerSample)
+            {
+                case 8:  return DspFormat::Pcm8;
+                case 16: return DspFormat::Pcm16;
+                case 24: return DspFormat::Pcm24;
+                case 32: return DspFormat::Pcm32;
+            }
         }
         else if (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
@@ -85,13 +96,21 @@ namespace SaneAudioRenderer
 
             if (formatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
             {
-                return (format.wBitsPerSample == 32) ? DspFormat::Float : DspFormat::Double;
+                switch (format.wBitsPerSample)
+                {
+                    case 32: return DspFormat::Float;
+                    case 64: return DspFormat::Double;
+                }
             }
             else if (formatExtensible.SubFormat == KSDATAFORMAT_SUBTYPE_PCM)
             {
-                return (format.wBitsPerSample == 8) ? DspFormat::Pcm8 :
-                       (format.wBitsPerSample == 16) ? DspFormat::Pcm16 :
-                       (format.wBitsPerSample == 24) ? DspFormat::Pcm24 : DspFormat::Pcm32;
+                switch (format.wBitsPerSample)
+                {
+                    case 8:  return DspFormat::Pcm8;
+                    case 16: return DspFormat::Pcm16;
+                    case 24: return DspFormat::Pcm24;
+                    case 32: return DspFormat::Pcm32;
+                }
             }
         }
 
