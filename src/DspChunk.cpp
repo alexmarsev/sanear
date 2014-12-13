@@ -337,6 +337,9 @@ namespace SaneAudioRenderer
         assert(m_formatSize == sampleFormat.wBitsPerSample / 8);
         assert(m_mediaSample);
         assert(m_constData);
+
+        assert(m_dataSize % GetFrameSize() == 0);
+        m_dataSize = m_dataSize - m_dataSize % GetFrameSize();
     }
 
     DspChunk::DspChunk(DspChunk&& other)
