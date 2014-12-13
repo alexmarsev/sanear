@@ -33,7 +33,7 @@ namespace SaneAudioRenderer
         void BeginFlush();
         void EndFlush();
 
-        bool CheckBitstreamFormat(const WAVEFORMATEX& inputFormat);
+        bool CheckFormat(const WAVEFORMATEX& inputFormat);
         void SetFormat(const WAVEFORMATEX& inputFormat);
 
         void NewSegment(double rate);

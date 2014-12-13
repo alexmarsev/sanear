@@ -292,7 +292,7 @@ namespace SaneAudioRenderer
         m_pushedFrames = 0;
     }
 
-    bool AudioRenderer::CheckBitstreamFormat(const WAVEFORMATEX& inputFormat)
+    bool AudioRenderer::CheckFormat(const WAVEFORMATEX& inputFormat)
     {
         if (DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown)
             return true;
