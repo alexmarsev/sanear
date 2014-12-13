@@ -25,7 +25,8 @@ namespace SaneAudioRenderer
         void AnalyzeLastChunk();
         void ModifyFirstChunk();
 
-        float m_limit = 0.0f;
+        bool m_exclusive = false;
+        const float m_limit = 1.0f;
         uint32_t m_attackFrames = 0;
         uint32_t m_releaseFrames = 0;
         size_t m_windowFrames = 0;

@@ -29,7 +29,8 @@ namespace SaneAudioRenderer
 
     void DspLimiter::Initialize(uint32_t rate, bool exclusive)
     {
-        m_limit = (exclusive ? 1.0f : 0.98f);
+        m_exclusive = exclusive;
+
         m_attackFrames = rate / 1700;
         m_releaseFrames = rate / 70;
         m_windowFrames = m_attackFrames + m_releaseFrames;
@@ -51,7 +52,7 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty())
             return;
 
-        if (m_limit != 1.0f || chunk.GetFormat() == DspFormat::Float)
+        if (m_exclusive && chunk.GetFormat() == DspFormat::Float)
         {
             DspChunk::ToFloat(chunk);
 
@@ -127,8 +128,6 @@ namespace SaneAudioRenderer
 
     void DspLimiter::AnalyzeLastChunk()
     {
-        assert(m_limit > 0.0f);
-
         const DspChunk& chunk = m_buffer.back();
         assert(chunk.GetFormat() == DspFormat::Float);
 
