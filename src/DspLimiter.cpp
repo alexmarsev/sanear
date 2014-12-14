@@ -31,15 +31,15 @@ namespace SaneAudioRenderer
     {
         m_exclusive = exclusive;
 
-        m_attackFrames = rate / 1700;
-        m_releaseFrames = rate / 70;
+        m_attackFrames = (uint32_t)std::round(rate / 7777.0f);
+        m_releaseFrames = (uint32_t)std::round(rate / 500.0f);
         m_windowFrames = m_attackFrames + m_releaseFrames;
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
         m_bufferFirstFrame = 0;
 
-        m_peaks.clear();
+        m_peaks = {};
     }
 
     bool DspLimiter::Active()
@@ -135,44 +135,46 @@ namespace SaneAudioRenderer
         const uint32_t channels = chunk.GetChannelCount();
 
         auto data = reinterpret_cast<const float*>(chunk.GetConstData());
-        for (size_t frame = 0, frameCount = chunk.GetFrameCount(); frame < frameCount; frame++)
+        for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
         {
-            float sample = 0.0f;
-            for (size_t i = 0; i < channels; i++)
-                sample = std::max(sample, std::fabs(data[frame * channels + i]));
+            const float sample = std::fabs(data[i]);
 
             if (sample > m_limit)
             {
-                const uint32_t peakFrame32 = (uint32_t)(chunkFirstFrame + frame);
-                if (m_peaks.empty())
+                const uint32_t channel = (uint32_t)(i % channels);
+                const uint32_t peakFrame32 = (uint32_t)(chunkFirstFrame + i / channels);
+                auto& channelPeaks = m_peaks[channel];
+
+                if (channelPeaks.empty())
                 {
-                    m_peaks.emplace_back(chunkFirstFrame + frame > m_attackFrames ? peakFrame32 - m_attackFrames : 0, m_limit);
-                    m_peaks.emplace_back(peakFrame32, sample);
-                    m_peaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                     //DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
                     //                                        std::to_wstring(sample) + L"\n").c_str());
+                    channelPeaks.emplace_back(chunkFirstFrame + peakFrame32 > m_attackFrames ?
+                                                  peakFrame32 - m_attackFrames : 0, m_limit);
+                    channelPeaks.emplace_back(peakFrame32, sample);
+                    channelPeaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                 }
                 else
                 {
-                    assert(m_peaks.size() > 1);
-                    assert(m_peaks.back().second == m_limit);
-                    auto back = m_peaks.rbegin();
+                    assert(channelPeaks.size() > 1);
+                    assert(channelPeaks.back().second == m_limit);
+                    auto back = channelPeaks.rbegin();
                     auto nextToBack = back + 1;
                     if (OverflowingLess(back->first, peakFrame32) || f(*nextToBack, *back, peakFrame32) < sample)
                     {
-                        m_peaks.pop_back();
-                        back = m_peaks.rbegin();
+                        channelPeaks.pop_back();
+                        back = channelPeaks.rbegin();
                         nextToBack = back + 1;
 
-                        while (nextToBack != m_peaks.rend())
+                        while (nextToBack != channelPeaks.rend())
                         {
                             if (sample >= back->second &&
                                 f(*nextToBack, {peakFrame32, sample}, back->first) > back->second)
                             {
                                 //DbgOutString((std::wstring(L"drop ") + std::to_wstring(back->first) + L" " +
                                 //                                       std::to_wstring(back->second) + L"\n").c_str());
-                                m_peaks.pop_back();
-                                back = m_peaks.rbegin();
+                                channelPeaks.pop_back();
+                                back = channelPeaks.rbegin();
                                 nextToBack = back + 1;
                                 continue;
                             }
@@ -182,8 +184,8 @@ namespace SaneAudioRenderer
                         {
                             //DbgOutString((std::wstring(L"add ") + std::to_wstring(peakFrame) + L" " +
                             //                                      std::to_wstring(sample) + L"\n").c_str());
-                            m_peaks.emplace_back(peakFrame32, sample);
-                            m_peaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
+                            channelPeaks.emplace_back(peakFrame32, sample);
+                            channelPeaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                         }
                     }
                     else
@@ -198,50 +200,48 @@ namespace SaneAudioRenderer
 
     void DspLimiter::ModifyFirstChunk()
     {
-        if (!m_peaks.empty())
+        DspChunk& chunk = m_buffer.front();
+        const uint32_t chunkFirstFrame32 = (uint32_t)m_bufferFirstFrame;
+
+        for (size_t channel = 0, channels = chunk.GetChannelCount(); channel < channels; channel++)
         {
-            DspChunk& chunk = m_buffer.front();
-            assert(chunk.GetFormat() == DspFormat::Float);
+            auto& channelPeaks = m_peaks[channel];
 
-            const uint32_t chunkFirstFrame32 = (uint32_t)m_bufferFirstFrame;
-            const uint32_t channels = chunk.GetChannelCount();
-
-            assert(m_peaks.size() > 1);
-            auto left = m_peaks[0];
-            auto right = m_peaks[1];
-            float x = f_x(left, right);
-
-            const size_t firstFrameOffset = OverflowingLess(left.first, chunkFirstFrame32) ?
-                                                0 : (left.first - chunkFirstFrame32);
-
-            auto data = reinterpret_cast<float*>(chunk.GetData());
-            for (size_t i = firstFrameOffset, frameCount = chunk.GetFrameCount(); i < frameCount; i++)
+            if (!channelPeaks.empty())
             {
-                const uint32_t frame32 = (uint32_t)(chunkFirstFrame32 + i);
-                const float divisor = f(left, x, frame32);
+                assert(channelPeaks.size() > 1);
+                auto left = channelPeaks[0];
+                auto right = channelPeaks[1];
+                float x = f_x(left, right);
 
-                for (size_t channel = 0; channel < channels; channel++)
+                const size_t frameOffset = OverflowingLess(left.first, chunkFirstFrame32) ?
+                                               0 : (left.first - chunkFirstFrame32);
+
+                auto data = reinterpret_cast<float*>(chunk.GetData());
+                for (size_t i = frameOffset * channels + channel, n = chunk.GetSampleCount(); i < n; i += channels)
                 {
-                    float& sample = data[i * channels + channel];
-                    sample = sample / divisor * m_limit;
+                    const uint32_t frame32 = (uint32_t)(chunkFirstFrame32 + i / channels);
+
+                    float& sample = data[i];
+                    sample = sample / f(left, x, frame32) * m_limit;
                     assert(std::fabs(sample) <= m_limit);
-                }
 
-                if (!OverflowingLess(frame32, right.first))
-                {
-                    assert(right.first == frame32);
-                    m_peaks.pop_front();
-                    if (m_peaks.size() == 1)
+                    if (!OverflowingLess(frame32, right.first))
                     {
-                        //DbgOutString(L"clear\n");
-                        m_peaks.clear();
-                        break;
-                    }
-                    else
-                    {
-                        left = m_peaks[0];
-                        right = m_peaks[1];
-                        x = f_x(left, right);
+                        assert(right.first == frame32);
+                        channelPeaks.pop_front();
+                        if (channelPeaks.size() == 1)
+                        {
+                            //DbgOutString(L"clear\n");
+                            channelPeaks.clear();
+                            break;
+                        }
+                        else
+                        {
+                            left = channelPeaks[0];
+                            right = channelPeaks[1];
+                            x = f_x(left, right);
+                        }
                     }
                 }
             }

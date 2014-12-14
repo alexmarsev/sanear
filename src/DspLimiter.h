@@ -35,6 +35,6 @@ namespace SaneAudioRenderer
         size_t m_bufferFrameCount = 0;
         uint64_t m_bufferFirstFrame = 0;
 
-        std::deque<std::pair<uint32_t, float>> m_peaks;
+        std::array<std::deque<std::pair<uint32_t, float>>, 18> m_peaks;
     };
 }
