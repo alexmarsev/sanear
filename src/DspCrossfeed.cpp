@@ -3,16 +3,21 @@
 
 namespace SaneAudioRenderer
 {
-    void DspCrossfeed::Initialize(bool enabled, uint32_t rate, uint32_t channels, DWORD mask)
+    void DspCrossfeed::Initialize(ISettings* pSettings, uint32_t rate, uint32_t channels, DWORD mask)
     {
-        m_active = false;
+        assert(pSettings);
+        m_settings = pSettings;
 
-        if (enabled && channels == 2 && mask == KSAUDIO_SPEAKER_STEREO)
+        m_possible = (channels == 2 &&
+                      mask == KSAUDIO_SPEAKER_STEREO &&
+                      rate >= BS2B_MINSRATE &&
+                      rate <= BS2B_MAXSRATE);
+
+        if (m_possible)
         {
-            m_bs2b.set_level(BS2B_CMOY_CLEVEL);
+            m_bs2b.clear();
             m_bs2b.set_srate(rate);
-
-            m_active = true;
+            UpdateSettings();
         }
     }
 
@@ -23,6 +28,9 @@ namespace SaneAudioRenderer
 
     void DspCrossfeed::Process(DspChunk& chunk)
     {
+        if (m_possible && m_settingsSerial != m_settings->GetSerial())
+            UpdateSettings();
+
         if (m_active && !chunk.IsEmpty())
         {
             DspChunk::ToFloat(chunk);
@@ -35,5 +43,27 @@ namespace SaneAudioRenderer
     void DspCrossfeed::Finish(DspChunk& chunk)
     {
         Process(chunk);
+    }
+
+    void DspCrossfeed::UpdateSettings()
+    {
+        assert(m_possible);
+
+        m_settingsSerial = m_settings->GetSerial();
+
+        UINT32 cutoffFrequency;
+        UINT32 crossfeedLevel;
+        m_settings->GetCrossfeedSettings(&cutoffFrequency, &crossfeedLevel);
+
+        BOOL enabled;
+        m_settings->GetCrossfeedEnabled(&enabled);
+
+        m_active = !!enabled;
+
+        if (m_active)
+        {
+            m_bs2b.set_level_fcut(cutoffFrequency);
+            m_bs2b.set_level_feed(crossfeedLevel);
+        }
     }
 }

@@ -77,7 +77,7 @@ namespace SaneAudioRenderer
             assert(m_state != State_Stopped);
 
             if (!m_deviceInitialized &&
-                m_deviceManager.CreateDevice(m_device, m_inputFormat, !!m_settings->UseExclusiveMode()))
+                m_deviceManager.CreateDevice(m_device, m_inputFormat, m_settings))
             {
                 m_deviceInitialized = true;
 
@@ -297,7 +297,12 @@ namespace SaneAudioRenderer
         if (DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown)
             return true;
 
-        if (!m_settings->UseExclusiveMode())
+        BOOL exclusive;
+        m_settings->GetOuputDevice(nullptr, &exclusive);
+        BOOL bitstreamingAllowed;
+        m_settings->GetAllowBitstreaming(&bitstreamingAllowed);
+
+        if (!exclusive || !bitstreamingAllowed)
             return false;
 
         WAVEFORMATEXTENSIBLE format = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
@@ -584,7 +589,7 @@ namespace SaneAudioRenderer
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
-        m_dspCrossfeed.Initialize(!!m_settings->UseStereoCrossfeed(), outRate, outChannels, outMask);
+        m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspVolume.Initialize(m_device.exclusive);
         m_dspLimiter.Initialize(outRate, m_device.exclusive);
         m_dspDither.Initialize(m_device.dspFormat);

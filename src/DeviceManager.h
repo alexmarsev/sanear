@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DspFormat.h"
+#include "Interfaces.h"
 
 namespace SaneAudioRenderer
 {
@@ -26,7 +27,7 @@ namespace SaneAudioRenderer
         DeviceManager& operator=(const DeviceManager&) = delete;
         ~DeviceManager();
 
-        bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive);
+        bool CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, ISettings* pSettings);
         void ReleaseDevice();
         bool BitstreamFormatSupported(const WAVEFORMATEXTENSIBLE& format);
 

@@ -8,11 +8,33 @@ namespace SaneAudioRenderer
     struct __declspec(uuid("AFA2A9DB-16FC-4B63-86CB-E38803D8BE7A"))
     ISettings : IUnknown
     {
-        STDMETHOD_(BOOL, UseExclusiveMode)() = 0;
-        STDMETHOD_(void, SetUseExclusiveMode)(BOOL) = 0;
+        STDMETHOD_(UINT32, GetSerial)() = 0;
 
-        STDMETHOD_(BOOL, UseStereoCrossfeed)() = 0;
-        STDMETHOD_(void, SetUseStereoCrossfeed)(BOOL) = 0;
+        STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceName, BOOL bExclusive) = 0;
+        STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceName, BOOL* pbExclusive) = 0;
+
+        STDMETHOD_(void, SetAllowBitstreaming)(BOOL bAllowBitstreaming) = 0;
+        STDMETHOD_(void, GetAllowBitstreaming)(BOOL* pbAllowBitstreaming) = 0;
+
+        STDMETHOD_(void, SetSharedModePeakLimiterEnabled)(BOOL bEnable) = 0;
+        STDMETHOD_(void, GetSharedModePeakLimiterEnabled)(BOOL* pbEnabled) = 0;
+
+        STDMETHOD_(void, SetCrossfeedEnabled)(BOOL bEnable) = 0;
+        STDMETHOD_(void, GetCrossfeedEnabled)(BOOL* pbEnabled) = 0;
+
+        enum
+        {
+            CROSSFEED_CUTOFF_FREQ_MIN = 300,
+            CROSSFEED_CUTOFF_FREQ_MAX = 2000,
+            CROSSFEED_CUTOFF_FREQ_CMOY = 700,
+            CROSSFEED_CUTOFF_FREQ_JMEIER = 650,
+            CROSSFEED_LEVEL_MIN = 10,
+            CROSSFEED_LEVEL_MAX = 150,
+            CROSSFEED_LEVEL_CMOY = 60,
+            CROSSFEED_LEVEL_JMEIER = 95,
+        };
+        STDMETHOD(SetCrossfeedSettings)(UINT32 uCutoffFrequency, UINT32 uCrossfeedLevel) = 0;
+        STDMETHOD_(void, GetCrossfeedSettings)(UINT32* puCutoffFrequency, UINT32* puCrossfeedLevel) = 0;
     };
     _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
 

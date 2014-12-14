@@ -62,11 +62,16 @@ namespace SaneAudioRenderer
         UnregisterClass(WindowClass, GetModuleHandle(nullptr));
     }
 
-    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, bool exclusive)
+    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, ISettings* pSettings)
     {
+        assert(pSettings);
+
+        BOOL exclusive;
+        pSettings->GetOuputDevice(nullptr, &exclusive);
+
         device = {};
         m_format = format;
-        m_exclusive = exclusive;
+        m_exclusive = !!exclusive;
         m_queuedCreate = true;
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
         device = m_device;
