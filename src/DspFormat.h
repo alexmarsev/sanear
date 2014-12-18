@@ -58,6 +58,9 @@ namespace SaneAudioRenderer
         typedef double SampleType;
     };
 
+    static_assert(sizeof(float) == 4, "Floats are not IEEE compliant");
+    static_assert(sizeof(double) == 8, "Floats are not IEEE compliant");
+
     inline uint32_t DspFormatSize(DspFormat format)
     {
         return (format == DspFormat::Unknown) ? 0 :
