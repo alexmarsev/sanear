@@ -149,8 +149,7 @@ namespace SaneAudioRenderer
                 {
                     //DbgOutString((std::wstring(L"start ") + std::to_wstring(peakFrame) + L" " +
                     //                                        std::to_wstring(sample) + L"\n").c_str());
-                    channelPeaks.emplace_back(chunkFirstFrame + peakFrame32 > m_attackFrames ?
-                                                  peakFrame32 - m_attackFrames : 0, m_limit);
+                    channelPeaks.emplace_back(peakFrame32 - m_attackFrames, m_limit);
                     channelPeaks.emplace_back(peakFrame32, sample);
                     channelPeaks.emplace_back(peakFrame32 + m_releaseFrames, m_limit);
                 }
