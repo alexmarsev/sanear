@@ -7,15 +7,15 @@ namespace SaneAudioRenderer
 {
     struct AudioDevice final
     {
-        std::shared_ptr<std::wstring> adapterName;
-        std::shared_ptr<std::wstring> endpointName;
-        IAudioClientPtr               audioClient;
-        WAVEFORMATEXTENSIBLE          format; // TODO: move all WAVEFORMATEX variables to pointers
-        uint32_t                      bufferDuration;
-        IAudioRenderClientPtr         audioRenderClient;
-        IAudioClockPtr                audioClock;
-        DspFormat                     dspFormat;
-        bool                          exclusive;
+        std::shared_ptr<const std::wstring> adapterName;
+        std::shared_ptr<const std::wstring> endpointName;
+        IAudioClientPtr                     audioClient;
+        WAVEFORMATEXTENSIBLE                format; // TODO: move all WAVEFORMATEX variables to pointers
+        uint32_t                            bufferDuration;
+        IAudioRenderClientPtr               audioRenderClient;
+        IAudioClockPtr                      audioClock;
+        DspFormat                           dspFormat;
+        bool                                exclusive;
     };
 
     class DeviceManager final
