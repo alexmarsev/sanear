@@ -24,9 +24,12 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        m_exclusive = bExclusive;
+        if (m_exclusive != bExclusive)
+        {
+            m_exclusive = bExclusive;
+            m_serial++;
+        }
 
-        m_serial++;
         return S_OK;
     }
 
@@ -47,9 +50,11 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        m_allowBitstreaming = bAllowBitstreaming;
-
-        m_serial++;
+        if (m_allowBitstreaming != bAllowBitstreaming)
+        {
+            m_allowBitstreaming = bAllowBitstreaming;
+            m_serial++;
+        }
     }
 
     STDMETHODIMP_(void) Settings::GetAllowBitstreaming(BOOL* pbAllowBitstreaming)
@@ -64,9 +69,11 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        m_sharedModePeakLimiterEnabled = bEnable;
-
-        m_serial++;
+        if (m_sharedModePeakLimiterEnabled != bEnable)
+        {
+            m_sharedModePeakLimiterEnabled = bEnable;
+            m_serial++;
+        }
     }
 
     STDMETHODIMP_(void) Settings::GetSharedModePeakLimiterEnabled(BOOL* pbEnabled)
@@ -81,9 +88,11 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        m_crossfeedEnabled = bEnable;
-
-        m_serial++;
+        if (m_crossfeedEnabled != bEnable)
+        {
+            m_crossfeedEnabled = bEnable;
+            m_serial++;
+        }
     }
 
     STDMETHODIMP_(void) Settings::GetCrossfeedEnabled(BOOL* pbEnabled)
@@ -106,10 +115,14 @@ namespace SaneAudioRenderer
 
         CAutoLock lock(this);
 
-        m_crossfeedCutoffFrequency = uCutoffFrequency;
-        m_crossfeedLevel = uCrossfeedLevel;
+        if (m_crossfeedCutoffFrequency != uCutoffFrequency ||
+            m_crossfeedLevel != uCrossfeedLevel)
+        {
+            m_crossfeedCutoffFrequency = uCutoffFrequency;
+            m_crossfeedLevel = uCrossfeedLevel;
+            m_serial++;
+        }
 
-        m_serial++;
         return S_OK;
     }
 
