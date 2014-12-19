@@ -9,6 +9,7 @@ namespace SaneAudioRenderer
     {
         std::shared_ptr<const std::wstring> adapterName;
         std::shared_ptr<const std::wstring> endpointName;
+        std::shared_ptr<const std::wstring> friendlyName;
         IAudioClientPtr                     audioClient;
         WAVEFORMATEXTENSIBLE                format; // TODO: move all WAVEFORMATEX variables to pointers
         uint32_t                            bufferDuration;

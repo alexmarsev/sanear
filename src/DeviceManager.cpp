@@ -141,6 +141,12 @@ namespace SaneAudioRenderer
             m_device.endpointName = std::make_shared<std::wstring>(endpointName.pwszVal);
             PropVariantClear(&endpointName);
 
+            PROPVARIANT friendlyName;
+            PropVariantInit(&friendlyName);
+            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_Device_FriendlyName, &friendlyName));
+            m_device.friendlyName = std::make_shared<std::wstring>(friendlyName.pwszVal);
+            PropVariantClear(&friendlyName);
+
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&m_device.audioClient));
 
