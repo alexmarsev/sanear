@@ -40,6 +40,19 @@ namespace SaneAudioRenderer
             ret.SubFormat = formatGuid;
             return ret;
         }
+
+        std::shared_ptr<std::wstring> GetDevicePropertyString(IPropertyStore* pStore, REFPROPERTYKEY key)
+        {
+            assert(pStore);
+
+            PROPVARIANT prop;
+            PropVariantInit(&prop);
+            ThrowIfFailed(pStore->GetValue(key, &prop));
+            auto ret = std::make_shared<std::wstring>(prop.pwszVal);
+            PropVariantClear(&prop);
+
+            return ret;
+        }
     }
 
     DeviceManager::DeviceManager(HRESULT& result)
@@ -129,23 +142,9 @@ namespace SaneAudioRenderer
             IPropertyStorePtr devicePropertyStore;
             ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
 
-            PROPVARIANT adapterName;
-            PropVariantInit(&adapterName);
-            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_DeviceInterface_FriendlyName, &adapterName));
-            m_device.adapterName = std::make_shared<std::wstring>(adapterName.pwszVal);
-            PropVariantClear(&adapterName);
-
-            PROPVARIANT endpointName;
-            PropVariantInit(&endpointName);
-            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_Device_DeviceDesc, &endpointName));
-            m_device.endpointName = std::make_shared<std::wstring>(endpointName.pwszVal);
-            PropVariantClear(&endpointName);
-
-            PROPVARIANT friendlyName;
-            PropVariantInit(&friendlyName);
-            ThrowIfFailed(devicePropertyStore->GetValue(PKEY_Device_FriendlyName, &friendlyName));
-            m_device.friendlyName = std::make_shared<std::wstring>(friendlyName.pwszVal);
-            PropVariantClear(&friendlyName);
+            m_device.adapterName  = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
+            m_device.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
+            m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
 
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&m_device.audioClient));
