@@ -40,6 +40,7 @@ namespace SaneAudioRenderer
 
         std::atomic<UINT32> m_serial = 0;
 
+        std::wstring m_device;
         BOOL m_exclusive = FALSE;
 
         BOOL m_allowBitstreaming = TRUE;

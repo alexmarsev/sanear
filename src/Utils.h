@@ -36,6 +36,14 @@ namespace SaneAudioRenderer
         }
     };
 
+    struct CoTaskMemFreeDeleter
+    {
+        void operator()(void* p)
+        {
+            CoTaskMemFree(p);
+        }
+    };
+
     template <class T, DWORD(T::*ThreadProc)() = &T::ThreadProc>
     unsigned CALLBACK StaticThreadProc(LPVOID p)
     {

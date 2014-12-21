@@ -76,6 +76,8 @@ namespace SaneAudioRenderer
             assert(m_inputFormatInitialized);
             assert(m_state != State_Stopped);
 
+            CheckDeviceSettings();
+
             if (!m_deviceInitialized &&
                 m_deviceManager.CreateDevice(m_device, m_inputFormat, m_settings))
             {
@@ -534,6 +536,35 @@ namespace SaneAudioRenderer
         }
 
         return chunk;
+    }
+
+    void AudioRenderer::CheckDeviceSettings()
+    {
+        CAutoLock objectLock(this);
+
+        UINT32 serial = m_settings->GetSerial();
+
+        if (m_deviceInitialized &&
+            m_device.settingsSerial != serial)
+        {
+            LPWSTR pDeviceName = nullptr;
+            BOOL exclusive;
+            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceName, &exclusive)))
+            {
+                if (m_device.exclusive != !!exclusive ||
+                    (pDeviceName && *pDeviceName && wcscmp(pDeviceName, m_device.friendlyName->c_str())) ||
+                    ((!pDeviceName || !*pDeviceName) && !m_device.default))
+                {
+                    ClearDevice();
+                    assert(!m_deviceInitialized);
+                }
+                else
+                {
+                    m_device.settingsSerial = serial;
+                }
+                CoTaskMemFree(pDeviceName);
+            }
+        }
     }
 
     void AudioRenderer::StartDevice()

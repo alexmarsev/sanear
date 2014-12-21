@@ -79,14 +79,12 @@ namespace SaneAudioRenderer
     {
         assert(pSettings);
 
-        BOOL exclusive;
-        pSettings->GetOuputDevice(nullptr, &exclusive);
-
         device = {};
         m_format = format;
-        m_exclusive = !!exclusive;
+        m_pSettings = pSettings;
         m_queuedCreate = true;
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
+        m_pSettings = nullptr;
         device = m_device;
         return ret;
     }
@@ -127,24 +125,69 @@ namespace SaneAudioRenderer
         if (!m_queuedCreate)
             return 1;
 
+        assert(m_pSettings);
         m_queuedCreate = false;
 
         ReleaseDevice();
         try
         {
+            std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
+
+            {
+                m_device.settingsSerial = m_pSettings->GetSerial();
+
+                LPWSTR pDeviceName = nullptr;
+                BOOL exclusive;
+                ThrowIfFailed(m_pSettings->GetOuputDevice(&pDeviceName, &exclusive));
+
+                deviceName.reset(pDeviceName);
+                m_device.exclusive = !!exclusive;
+            }
+
             IMMDeviceEnumeratorPtr enumerator;
             ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
                                            CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
 
             IMMDevicePtr device;
-            ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
-
             IPropertyStorePtr devicePropertyStore;
-            ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+
+            if (!deviceName || !*deviceName)
+            {
+                m_device.default = true;
+                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
+                ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+                m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+            }
+            else
+            {
+                m_device.default = false;
+
+                IMMDeviceCollectionPtr collection;
+                ThrowIfFailed(enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
+
+                UINT count = 0;
+                ThrowIfFailed(collection->GetCount(&count));
+
+                for (UINT i = 0; i < count; i++)
+                {
+                    ThrowIfFailed(collection->Item(i, &device));
+                    ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+                    m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+
+                    if (wcscmp(deviceName.get(), m_device.friendlyName->c_str()))
+                    {
+                        device = nullptr;
+                        devicePropertyStore = nullptr;
+                        m_device.friendlyName = nullptr;
+                    }
+                }
+            }
+
+            if (!device || !devicePropertyStore || !m_device.friendlyName)
+                return 1;
 
             m_device.adapterName  = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
             m_device.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
-            m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
 
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&m_device.audioClient));
@@ -157,8 +200,6 @@ namespace SaneAudioRenderer
             CoTaskMemFree(pFormat);
 
             m_device.bufferDuration = 200;
-
-            m_device.exclusive = m_exclusive;
 
             if (DspFormatFromWaveFormat(m_format.Format) == DspFormat::Unknown)
             {

@@ -55,6 +55,7 @@ namespace SaneAudioRenderer
 
         DspChunk PreProcessFirstSamples(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
 
+        void CheckDeviceSettings();
         void StartDevice();
         void ClearDevice();
 

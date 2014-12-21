@@ -24,10 +24,20 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        if (m_exclusive != bExclusive)
+        if (m_exclusive != bExclusive ||
+            (pDeviceName && wcscmp(pDeviceName, m_device.c_str())) ||
+            (!pDeviceName && !m_device.empty()))
         {
-            m_exclusive = bExclusive;
-            m_serial++;
+            try
+            {
+                m_device = pDeviceName ? pDeviceName : L"";
+                m_exclusive = bExclusive;
+                m_serial++;
+            }
+            catch (std::bad_alloc&)
+            {
+                return E_OUTOFMEMORY;
+            }
         }
 
         return S_OK;
@@ -37,11 +47,20 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
-        if (ppDeviceName)
-            *ppDeviceName = nullptr;
-
         if (pbExclusive)
             *pbExclusive = m_exclusive;
+
+        if (ppDeviceName)
+        {
+            size_t size = sizeof(wchar_t) * (m_device.length() + 1);
+
+            *ppDeviceName = static_cast<LPWSTR>(CoTaskMemAlloc(size));
+
+            if (!*ppDeviceName)
+                return E_OUTOFMEMORY;
+
+            memcpy(*ppDeviceName, m_device.c_str(), size);
+        }
 
         return S_OK;
     }
