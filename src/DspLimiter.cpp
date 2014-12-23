@@ -35,9 +35,9 @@ namespace SaneAudioRenderer
 
         m_exclusive = exclusive;
 
-        m_attackFrames = (uint32_t)std::round(rate / 7777.0f);
-        m_releaseFrames = (uint32_t)std::round(rate / 500.0f);
-        m_windowFrames = m_attackFrames + m_releaseFrames;
+        m_attackFrames  = (uint32_t)std::round(rate / 2000.0f);
+        m_releaseFrames = (uint32_t)std::round(rate / 2000.0f);
+        m_windowFrames  = (uint32_t)std::round(rate / 100.0f);
 
         m_buffer.clear();
         m_bufferFrameCount = 0;
