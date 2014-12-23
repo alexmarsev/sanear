@@ -622,7 +622,7 @@ namespace SaneAudioRenderer
         m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspVolume.Initialize(m_device.exclusive);
-        m_dspLimiter.Initialize(outRate, m_device.exclusive);
+        m_dspLimiter.Initialize(m_settings, outRate, m_device.exclusive);
         m_dspDither.Initialize(m_device.dspFormat);
     }
 

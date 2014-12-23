@@ -27,8 +27,12 @@ namespace SaneAudioRenderer
         }
     }
 
-    void DspLimiter::Initialize(uint32_t rate, bool exclusive)
+    void DspLimiter::Initialize(ISettings* pSettings, uint32_t rate, bool exclusive)
     {
+        assert(pSettings);
+        m_settings = pSettings;
+        UpdateSettings();
+
         m_exclusive = exclusive;
 
         m_attackFrames = (uint32_t)std::round(rate / 7777.0f);
@@ -52,7 +56,11 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty())
             return;
 
-        if (m_exclusive && chunk.GetFormat() == DspFormat::Float)
+        if (m_settingsSerial != m_settings->GetSerial())
+            UpdateSettings();
+
+        if (chunk.GetFormat() == DspFormat::Float &&
+            (m_exclusive || m_enabledShared))
         {
             DspChunk::ToFloat(chunk);
 
@@ -245,5 +253,14 @@ namespace SaneAudioRenderer
                 }
             }
         }
+    }
+
+    void DspLimiter::UpdateSettings()
+    {
+        m_settingsSerial = m_settings->GetSerial();
+
+        BOOL enabledShared;
+        m_settings->GetSharedModePeakLimiterEnabled(&enabledShared);
+        m_enabledShared = !!enabledShared;
     }
 }

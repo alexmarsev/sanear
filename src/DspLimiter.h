@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DspChunk.h"
+#include "Interfaces.h"
 
 namespace SaneAudioRenderer
 {
@@ -14,7 +15,7 @@ namespace SaneAudioRenderer
 
         std::wstring Name() { return L"Limiter"; }
 
-        void Initialize(uint32_t rate, bool exclusive);
+        void Initialize(ISettings* pSettings, uint32_t rate, bool exclusive);
         bool Active();
 
         void Process(DspChunk& chunk);
@@ -25,7 +26,14 @@ namespace SaneAudioRenderer
         void AnalyzeLastChunk();
         void ModifyFirstChunk();
 
+        void UpdateSettings();
+
+        ISettingsPtr m_settings;
+        UINT32 m_settingsSerial = 0;
+
         bool m_exclusive = false;
+        bool m_enabledShared = false;
+
         const float m_limit = 1.0f;
         uint32_t m_attackFrames = 0;
         uint32_t m_releaseFrames = 0;
