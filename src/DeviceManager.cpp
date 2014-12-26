@@ -24,20 +24,31 @@ namespace SaneAudioRenderer
             return ret;
         }
 
+        WAVEFORMATEX BuildWaveFormat(WORD formatTag, uint32_t formatBits, uint32_t rate, uint32_t channelCount)
+        {
+            WAVEFORMATEX ret;
+
+            ret.wFormatTag      = formatTag;
+            ret.nChannels       = channelCount;
+            ret.nSamplesPerSec  = rate;
+            ret.nAvgBytesPerSec = formatBits / 8 * channelCount * rate;
+            ret.nBlockAlign     = formatBits / 8 * channelCount;
+            ret.wBitsPerSample  = formatBits;
+            ret.cbSize          = (formatTag == WAVE_FORMAT_EXTENSIBLE) ? 22 : 0;
+
+            return ret;
+        }
+
         WAVEFORMATEXTENSIBLE BuildWaveFormatExt(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
                                                 uint32_t rate, uint32_t channelCount, DWORD channelMask)
         {
             WAVEFORMATEXTENSIBLE ret;
-            ret.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-            ret.Format.nChannels = channelCount;
-            ret.Format.nSamplesPerSec = rate;
-            ret.Format.nAvgBytesPerSec = formatBits / 8 * rate * channelCount;
-            ret.Format.nBlockAlign = formatBits / 8 * channelCount;
-            ret.Format.wBitsPerSample = formatBits;
-            ret.Format.cbSize = 22;
+
+            ret.Format                      = BuildWaveFormat(WAVE_FORMAT_EXTENSIBLE, formatBits, rate, channelCount);
             ret.Samples.wValidBitsPerSample = formatExtProps;
-            ret.dwChannelMask = channelMask;
-            ret.SubFormat = formatGuid;
+            ret.dwChannelMask               = channelMask;
+            ret.SubFormat                   = formatGuid;
+
             return ret;
         }
 
@@ -281,7 +292,10 @@ namespace SaneAudioRenderer
                     BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixRate, mixChannels, mixMask),
                     BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixRate, mixChannels, mixMask),
                     BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixRate, mixChannels, mixMask),
-                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixRate, mixChannels, mixMask)
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixRate, mixChannels, mixMask),
+
+                    WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, inputRate, mixChannels)},
+                    WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, mixRate,   mixChannels)}
                 );
 
                 for (const auto& f : priorities)
