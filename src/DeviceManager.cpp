@@ -24,8 +24,8 @@ namespace SaneAudioRenderer
             return ret;
         }
 
-        WAVEFORMATEXTENSIBLE BuildFormat(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
-                                         uint32_t rate, uint32_t channelCount, DWORD channelMask)
+        WAVEFORMATEXTENSIBLE BuildWaveFormatExt(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
+                                                uint32_t rate, uint32_t channelCount, DWORD channelMask)
         {
             WAVEFORMATEXTENSIBLE ret;
             ret.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
@@ -260,7 +260,7 @@ namespace SaneAudioRenderer
                     return 1;
 
                 m_device.dspFormat = DspFormat::Unknown;
-                m_device.format = m_createDeviceFormat;
+                m_device.waveFormat = m_createDeviceFormat;
             }
             else if (m_device.exclusive)
             {
@@ -271,17 +271,17 @@ namespace SaneAudioRenderer
                 auto mixMask = DspMatrix::GetChannelMask(*mixFormat);
 
                 auto priorities = make_array(
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, inputRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, inputRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, inputRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, inputRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, inputRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, inputRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, inputRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, inputRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, inputRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, inputRate, mixChannels, mixMask),
 
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixRate, mixChannels, mixMask),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixRate, mixChannels, mixMask)
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixRate, mixChannels, mixMask),
+                    BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixRate, mixChannels, mixMask)
                 );
 
                 for (const auto& f : priorities)
@@ -291,7 +291,7 @@ namespace SaneAudioRenderer
                     if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.Format, nullptr)))
                     {
                         m_device.dspFormat = DspFormatFromWaveFormat(f.Format);
-                        m_device.format = CopyWaveFormat(f.Format);
+                        m_device.waveFormat = CopyWaveFormat(f.Format);
                         break;
                     }
                 }
@@ -300,12 +300,12 @@ namespace SaneAudioRenderer
             {
                 // Shared.
                 m_device.dspFormat = DspFormat::Float;
-                m_device.format = mixFormat;
+                m_device.waveFormat = mixFormat;
             }
 
             ThrowIfFailed(m_device.audioClient->Initialize(m_device.exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
                                                            0, MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
-                                                           0, &(*m_device.format), nullptr));
+                                                           0, &(*m_device.waveFormat), nullptr));
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));
 

@@ -12,7 +12,7 @@ namespace SaneAudioRenderer
         std::shared_ptr<const std::wstring> endpointName;
         UINT32                              settingsSerial;
         IAudioClientPtr                     audioClient;
-        SharedWaveFormat                    format;
+        SharedWaveFormat                    waveFormat;
         uint32_t                            bufferDuration;
         IAudioRenderClientPtr               audioRenderClient;
         IAudioClockPtr                      audioClock;

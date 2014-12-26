@@ -256,7 +256,7 @@ namespace SaneAudioRenderer
 
                     const auto previous = actual;
                     actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
-                    target = llMulDiv(m_pushedFrames, OneSecond, m_device.format->nSamplesPerSec, 0);
+                    target = llMulDiv(m_pushedFrames, OneSecond, m_device.waveFormat->nSamplesPerSec, 0);
 
                     if (actual == target)
                         return true;
@@ -603,9 +603,9 @@ namespace SaneAudioRenderer
         const auto inRate = m_inputFormat->nSamplesPerSec;
         const auto inChannels = m_inputFormat->nChannels;
         const auto inMask = DspMatrix::GetChannelMask(*m_inputFormat);
-        const auto outRate = m_device.format->nSamplesPerSec;
-        const auto outChannels = m_device.format->nChannels;
-        const auto outMask = DspMatrix::GetChannelMask(*m_device.format);
+        const auto outRate = m_device.waveFormat->nSamplesPerSec;
+        const auto outChannels = m_device.waveFormat->nChannels;
+        const auto outMask = DspMatrix::GetChannelMask(*m_device.waveFormat);
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
@@ -656,7 +656,7 @@ namespace SaneAudioRenderer
                     // Write frames to the device buffer.
                     BYTE* deviceBuffer;
                     ThrowIfFailed(m_device.audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
-                    assert(frameSize == (m_device.format->wBitsPerSample / 8 * m_device.format->nChannels));
+                    assert(frameSize == (m_device.waveFormat->wBitsPerSample / 8 * m_device.waveFormat->nChannels));
                     memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
                     ThrowIfFailed(m_device.audioRenderClient->ReleaseBuffer(doFrames, 0));
 
