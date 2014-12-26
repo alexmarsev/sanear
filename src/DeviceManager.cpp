@@ -266,25 +266,27 @@ namespace SaneAudioRenderer
             {
                 // Exclusive.
                 auto priorities = make_array(
-                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
 
-                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
-                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)))
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))
                 );
 
                 for (const auto& f : priorities)
                 {
-                    if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.second.Format, nullptr)))
+                    assert(DspFormatFromWaveFormat(f.Format) != DspFormat::Unknown);
+
+                    if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.Format, nullptr)))
                     {
-                        m_device.dspFormat = f.first;
-                        m_device.format = CopyWaveFormat(f.second.Format);
+                        m_device.dspFormat = DspFormatFromWaveFormat(f.Format);
+                        m_device.format = CopyWaveFormat(f.Format);
                         break;
                     }
                 }
