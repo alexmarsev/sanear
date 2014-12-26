@@ -12,8 +12,8 @@ namespace SaneAudioRenderer
 
         enum
         {
-            WM_CREATE_DEVICE = WM_USER + 100,
-            WM_CHECK_BITSTREAM_FORMAT,
+            WM_CHECK_BITSTREAM_FORMAT = WM_USER + 100,
+            WM_CREATE_DEVICE,
         };
 
         template <class T>
@@ -53,6 +53,72 @@ namespace SaneAudioRenderer
 
             return ret;
         }
+
+        void CreateAudioClient(AudioDevice& output, ISettings* pSettings)
+        {
+            assert(pSettings);
+
+            std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
+
+            {
+                output.settingsSerial = pSettings->GetSerial();
+
+                LPWSTR pDeviceName = nullptr;
+                BOOL exclusive;
+                ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceName, &exclusive));
+
+                deviceName.reset(pDeviceName);
+                output.exclusive = !!exclusive;
+            }
+
+            IMMDeviceEnumeratorPtr enumerator;
+            ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
+                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
+
+            IMMDevicePtr device;
+            IPropertyStorePtr devicePropertyStore;
+
+            if (!deviceName || !*deviceName)
+            {
+                output.default = true;
+                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
+                ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+                output.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+            }
+            else
+            {
+                output.default = false;
+
+                IMMDeviceCollectionPtr collection;
+                ThrowIfFailed(enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
+
+                UINT count = 0;
+                ThrowIfFailed(collection->GetCount(&count));
+
+                for (UINT i = 0; i < count; i++)
+                {
+                    ThrowIfFailed(collection->Item(i, &device));
+                    ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+                    output.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+
+                    if (wcscmp(deviceName.get(), output.friendlyName->c_str()))
+                    {
+                        device = nullptr;
+                        devicePropertyStore = nullptr;
+                        output.friendlyName = nullptr;
+                    }
+                }
+            }
+
+            if (!device)
+                return;
+
+            output.adapterName = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
+            output.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
+
+            ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
+                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&output.audioClient));
+        }
     }
 
     DeviceManager::DeviceManager(HRESULT& result)
@@ -75,17 +141,41 @@ namespace SaneAudioRenderer
         UnregisterClass(WindowClass, GetModuleHandle(nullptr));
     }
 
-    bool DeviceManager::CreateDevice(AudioDevice& device, const WAVEFORMATEXTENSIBLE& format, ISettings* pSettings)
+    bool DeviceManager::BitstreamFormatSupported(SharedWaveFormat format, ISettings* pSettings)
     {
+        assert(format);
         assert(pSettings);
 
-        device = {};
-        m_format = format;
-        m_pSettings = pSettings;
-        m_queuedCreate = true;
+        m_checkBitstreamFormat = format;
+        m_checkBitstreamSettings = pSettings;
+        m_queuedCheckBitstream = true;
+
+        bool ret = (SendMessage(m_hWindow, WM_CHECK_BITSTREAM_FORMAT, 0, 0) == 0);
+
+        m_checkBitstreamFormat = nullptr;
+        m_checkBitstreamSettings = nullptr;
+        assert(m_queuedCheckBitstream == false);
+
+        return ret;
+    }
+
+    bool DeviceManager::CreateDevice(AudioDevice& device, SharedWaveFormat format, ISettings* pSettings)
+    {
+        assert(format);
+        assert(pSettings);
+
+        m_createDeviceFormat = format;
+        m_createDeviceSettings = pSettings;
+        m_queuedCreateDevice = true;
+
         bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
-        m_pSettings = nullptr;
+
+        m_createDeviceFormat = nullptr;
+        m_createDeviceSettings = nullptr;
+        assert(m_queuedCreateDevice == false);
+
         device = m_device;
+
         return ret;
     }
 
@@ -113,120 +203,80 @@ namespace SaneAudioRenderer
         m_device = {};
     }
 
-    bool DeviceManager::BitstreamFormatSupported(const WAVEFORMATEXTENSIBLE& format)
+    LRESULT DeviceManager::OnCheckBitstreamFormat()
     {
-        m_checkBitstreamFormat = format;
-        m_queuedCheckBitstream = true;
-        return (SendMessage(m_hWindow, WM_CHECK_BITSTREAM_FORMAT, 0, 0) == 0);
+        if (!m_queuedCheckBitstream)
+            return 1;
+
+        assert(m_checkBitstreamFormat);
+        assert(m_checkBitstreamSettings);
+        m_queuedCheckBitstream = false;
+
+        try
+        {
+            AudioDevice device = {};
+
+            CreateAudioClient(device, m_checkBitstreamSettings);
+
+            if (!m_device.audioClient)
+                return 1;
+
+            return SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
+                                                                     &(*m_checkBitstreamFormat), nullptr)) ? 0 : 1;
+        }
+        catch (HRESULT)
+        {
+            return 1;
+        }
     }
 
     LRESULT DeviceManager::OnCreateDevice()
     {
-        if (!m_queuedCreate)
+        if (!m_queuedCreateDevice)
             return 1;
 
-        assert(m_pSettings);
-        m_queuedCreate = false;
+        assert(m_createDeviceFormat);
+        assert(m_createDeviceSettings);
+        m_queuedCreateDevice = false;
 
         ReleaseDevice();
         try
         {
-            std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
+            CreateAudioClient(m_device, m_createDeviceSettings);
 
-            {
-                m_device.settingsSerial = m_pSettings->GetSerial();
-
-                LPWSTR pDeviceName = nullptr;
-                BOOL exclusive;
-                ThrowIfFailed(m_pSettings->GetOuputDevice(&pDeviceName, &exclusive));
-
-                deviceName.reset(pDeviceName);
-                m_device.exclusive = !!exclusive;
-            }
-
-            IMMDeviceEnumeratorPtr enumerator;
-            ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
-                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
-
-            IMMDevicePtr device;
-            IPropertyStorePtr devicePropertyStore;
-
-            if (!deviceName || !*deviceName)
-            {
-                m_device.default = true;
-                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
-                ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
-            }
-            else
-            {
-                m_device.default = false;
-
-                IMMDeviceCollectionPtr collection;
-                ThrowIfFailed(enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
-
-                UINT count = 0;
-                ThrowIfFailed(collection->GetCount(&count));
-
-                for (UINT i = 0; i < count; i++)
-                {
-                    ThrowIfFailed(collection->Item(i, &device));
-                    ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                    m_device.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
-
-                    if (wcscmp(deviceName.get(), m_device.friendlyName->c_str()))
-                    {
-                        device = nullptr;
-                        devicePropertyStore = nullptr;
-                        m_device.friendlyName = nullptr;
-                    }
-                }
-            }
-
-            if (!device || !devicePropertyStore || !m_device.friendlyName)
+            if (!m_device.audioClient)
                 return 1;
-
-            m_device.adapterName  = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
-            m_device.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
-
-            ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
-                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&m_device.audioClient));
 
             WAVEFORMATEX* pFormat;
             ThrowIfFailed(m_device.audioClient->GetMixFormat(&pFormat));
-            WAVEFORMATEXTENSIBLE mixFormat = pFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                                                 *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pFormat) :
-                                                 WAVEFORMATEXTENSIBLE{*pFormat};
-            CoTaskMemFree(pFormat);
+            SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
 
             m_device.bufferDuration = 200;
 
-            if (DspFormatFromWaveFormat(m_format.Format) == DspFormat::Unknown)
+            if (DspFormatFromWaveFormat(*m_createDeviceFormat) == DspFormat::Unknown)
             {
                 // Exclusive bitstreaming.
                 if (!m_device.exclusive)
                     return 1;
 
                 m_device.dspFormat = DspFormat::Unknown;
-                m_device.format = m_format;
+                m_device.format = m_createDeviceFormat;
             }
             else if (m_device.exclusive)
             {
                 // Exclusive.
                 auto priorities = make_array(
-                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_format.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
+                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
 
-                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat.Format.nSamplesPerSec, mixFormat.Format.nChannels, DspMatrix::GetChannelMask(mixFormat))),
-
-                    std::make_pair(DspFormat::Float, mixFormat)
+                    std::make_pair(DspFormat::Float, BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm24, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm32, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))),
+                    std::make_pair(DspFormat::Pcm16, BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)))
                 );
 
                 for (const auto& f : priorities)
@@ -234,7 +284,7 @@ namespace SaneAudioRenderer
                     if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.second.Format, nullptr)))
                     {
                         m_device.dspFormat = f.first;
-                        m_device.format = f.second;
+                        m_device.format = CopyWaveFormat(f.second.Format);
                         break;
                     }
                 }
@@ -248,7 +298,7 @@ namespace SaneAudioRenderer
 
             ThrowIfFailed(m_device.audioClient->Initialize(m_device.exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
                                                            0, MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
-                                                           0, &m_device.format.Format, nullptr));
+                                                           0, &(*m_device.format), nullptr));
 
             ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));
 
@@ -264,34 +314,6 @@ namespace SaneAudioRenderer
         catch (HRESULT)
         {
             ReleaseDevice();
-            return 1;
-        }
-    }
-
-    LRESULT DeviceManager::OnCheckBitstreamFormat()
-    {
-        if (!m_queuedCheckBitstream)
-            return 1;
-
-        m_queuedCheckBitstream = false;
-
-        try
-        {
-            IMMDeviceEnumeratorPtr enumerator;
-            ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
-                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
-
-            IMMDevicePtr device;
-            ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
-            IAudioClientPtr audioClient;
-            ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
-                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&audioClient));
-
-            return SUCCEEDED(audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
-                                                            &m_checkBitstreamFormat.Format, nullptr)) ? 0 : 1;
-        }
-        catch (HRESULT)
-        {
             return 1;
         }
     }
@@ -332,11 +354,11 @@ namespace SaneAudioRenderer
                     PostQuitMessage(0);
                 return 0;
 
-            case WM_CREATE_DEVICE:
-                return OnCreateDevice();
-
             case WM_CHECK_BITSTREAM_FORMAT:
                 return OnCheckBitstreamFormat();
+
+            case WM_CREATE_DEVICE:
+                return OnCreateDevice();
 
             default:
                 return DefWindowProc(hWnd, msg, wParam, lParam);

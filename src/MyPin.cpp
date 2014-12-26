@@ -29,8 +29,15 @@ namespace SaneAudioRenderer
             pFormatType && *pFormatType == FORMAT_WaveFormatEx &&
             pFormat)
         {
-            if (m_renderer.CheckFormat(*(WAVEFORMATEX*)pFormat))
-                return S_OK;
+            try
+            {
+                if (m_renderer.CheckFormat(CopyWaveFormat(*reinterpret_cast<WAVEFORMATEX*>(pFormat))))
+                    return S_OK;
+            }
+            catch (std::bad_alloc&)
+            {
+                return E_OUTOFMEMORY;
+            }
         }
 
         return S_FALSE;
@@ -43,7 +50,15 @@ namespace SaneAudioRenderer
         ReturnIfFailed(CBaseInputPin::SetMediaType(pmt));
 
         WAVEFORMATEX* pFormat = (WAVEFORMATEX*)pmt->Format();
-        m_renderer.SetFormat(*pFormat);
+
+        try
+        {
+            m_renderer.SetFormat(CopyWaveFormat(*pFormat));
+        }
+        catch (std::bad_alloc&)
+        {
+            return E_OUTOFMEMORY;
+        }
 
         return S_OK;
     }

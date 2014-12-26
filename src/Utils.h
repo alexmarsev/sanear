@@ -8,6 +8,8 @@ namespace SaneAudioRenderer
     // One second in 100ns units.
     const int64_t OneSecond = 10000000;
 
+    typedef std::shared_ptr<const WAVEFORMATEX> SharedWaveFormat;
+
     inline void ThrowIfFailed(HRESULT result)
     {
         if (FAILED(result))
@@ -109,5 +111,14 @@ namespace SaneAudioRenderer
     {
         std::array<wchar_t, 11> temp;
         return swprintf(temp.data(), temp.size(), L"0x%X", number) > 0 ? temp.data() : L"";
+    }
+
+    inline SharedWaveFormat CopyWaveFormat(const WAVEFORMATEX& format)
+    {
+        size_t size = sizeof(WAVEFORMATEX) + format.cbSize;
+        void* pBuffer = _aligned_malloc(size, 4);
+        if (!pBuffer) throw std::bad_alloc();
+        memcpy(pBuffer, &format, size);
+        return SharedWaveFormat(reinterpret_cast<WAVEFORMATEX*>(pBuffer), AlignedFreeDeleter());
     }
 }

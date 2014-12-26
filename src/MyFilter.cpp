@@ -147,9 +147,9 @@ namespace SaneAudioRenderer
             CAutoLock rendererLock(m_renderer.get());
 
             auto inputFormat = m_renderer->GetInputFormat();
-            auto devicetFormat = m_renderer->GetDeviceFormat();
+            auto deviceFormat = m_renderer->GetDeviceFormat();
 
-            pPage = new MyPropertyPage(inputFormat.get(), devicetFormat.get(),
+            pPage = new MyPropertyPage(inputFormat, deviceFormat.get(),
                                        m_renderer->GetActiveProcessors(), m_renderer->OnExternalClock());
         }
         catch (std::bad_alloc&)

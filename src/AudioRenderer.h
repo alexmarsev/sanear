@@ -33,8 +33,8 @@ namespace SaneAudioRenderer
         void BeginFlush();
         void EndFlush();
 
-        bool CheckFormat(const WAVEFORMATEX& inputFormat);
-        void SetFormat(const WAVEFORMATEX& inputFormat);
+        bool CheckFormat(SharedWaveFormat inputFormat);
+        void SetFormat(SharedWaveFormat inputFormat);
 
         void NewSegment(double rate);
 
@@ -47,7 +47,7 @@ namespace SaneAudioRenderer
         float GetBalance() const { return m_balance; }
         void SetBalance(float balance) { m_balance = balance; }
 
-        std::unique_ptr<WAVEFORMATEXTENSIBLE> GetInputFormat();
+        SharedWaveFormat GetInputFormat();
         std::unique_ptr<AudioDevice> GetDeviceFormat();
         std::vector<std::wstring> GetActiveProcessors();
 
@@ -74,8 +74,7 @@ namespace SaneAudioRenderer
         bool m_externalClock = false;
         REFERENCE_TIME m_correctedWithRateDsp = 0;
 
-        WAVEFORMATEXTENSIBLE m_inputFormat;
-        bool m_inputFormatInitialized = false;
+        SharedWaveFormat m_inputFormat;
 
         REFERENCE_TIME m_startOffset = 0;
         REFERENCE_TIME m_startTime = 0;

@@ -73,7 +73,7 @@ namespace SaneAudioRenderer
 
         {
             CAutoLock objectLock(this);
-            assert(m_inputFormatInitialized);
+            assert(m_inputFormat);
             assert(m_state != State_Stopped);
 
             CheckDeviceSettings();
@@ -96,14 +96,14 @@ namespace SaneAudioRenderer
                 sampleProps.tStart = m_firstSampleStart;
                 sampleProps.tStart += (REFERENCE_TIME)((m_receivedFramesTimeInPreviousFormats +
                                                         llMulDiv(m_receivedFrames, OneSecond,
-                                                                 m_inputFormat.Format.nSamplesPerSec, 0)) / m_rate);
+                                                                 m_inputFormat->nSamplesPerSec, 0)) / m_rate);
                 sampleProps.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
             }
 
             if (!(sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID))
             {
-                REFERENCE_TIME duration = sampleProps.lActual * 8 / m_inputFormat.Format.wBitsPerSample /
-                                          m_inputFormat.Format.nChannels * OneSecond / m_inputFormat.Format.nSamplesPerSec;
+                REFERENCE_TIME duration = sampleProps.lActual * 8 / m_inputFormat->wBitsPerSample /
+                                          m_inputFormat->nChannels * OneSecond / m_inputFormat->nSamplesPerSec;
                 sampleProps.tStop = sampleProps.tStart + (REFERENCE_TIME)(duration / m_rate);
                 sampleProps.dwSampleFlags |= AM_SAMPLE_STOPVALID;
             }
@@ -112,7 +112,7 @@ namespace SaneAudioRenderer
             {
                 if (m_device.dspFormat == DspFormat::Unknown)
                 {
-                    chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                    chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
 
                     if (m_receivedFrames == 0)
                         m_firstSampleStart = sampleProps.tStart;
@@ -120,7 +120,7 @@ namespace SaneAudioRenderer
                 }
                 else if (m_lastSampleEnd > 0)
                 {
-                    chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                    chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
 
                     assert(m_receivedFrames > 0 || m_receivedFramesTimeInPreviousFormats > 0);
                     m_receivedFrames += chunk.GetFrameCount();
@@ -136,7 +136,7 @@ namespace SaneAudioRenderer
                         REFERENCE_TIME offset = sampleProps.tStart - m_myClock->GetSlavedClockOffset() -
                                                 (REFERENCE_TIME)(m_receivedFramesTimeInPreviousFormats +
                                                                  llMulDiv(m_receivedFrames - chunk.GetFrameCount(), OneSecond,
-                                                                          m_inputFormat.Format.nSamplesPerSec, 0) / m_rate);
+                                                                          m_inputFormat->nSamplesPerSec, 0) / m_rate);
                         if (std::abs(offset) > 1000)
                         {
                             m_myClock->OffsetSlavedClock(offset);
@@ -256,7 +256,7 @@ namespace SaneAudioRenderer
 
                     const auto previous = actual;
                     actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
-                    target = llMulDiv(m_pushedFrames, OneSecond, m_device.format.Format.nSamplesPerSec, 0);
+                    target = llMulDiv(m_pushedFrames, OneSecond, m_device.format->nSamplesPerSec, 0);
 
                     if (actual == target)
                         return true;
@@ -294,9 +294,11 @@ namespace SaneAudioRenderer
         m_pushedFrames = 0;
     }
 
-    bool AudioRenderer::CheckFormat(const WAVEFORMATEX& inputFormat)
+    bool AudioRenderer::CheckFormat(SharedWaveFormat inputFormat)
     {
-        if (DspFormatFromWaveFormat(inputFormat) != DspFormat::Unknown)
+        assert(inputFormat);
+
+        if (DspFormatFromWaveFormat(*inputFormat) != DspFormat::Unknown)
             return true;
 
         BOOL exclusive;
@@ -307,31 +309,23 @@ namespace SaneAudioRenderer
         if (!exclusive || !bitstreamingAllowed)
             return false;
 
-        WAVEFORMATEXTENSIBLE format = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                                          reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
-                                          WAVEFORMATEXTENSIBLE{inputFormat};
-
         CAutoLock objectLock(this);
 
-        return m_deviceManager.BitstreamFormatSupported(format);
+        return m_deviceManager.BitstreamFormatSupported(inputFormat, m_settings);
     }
 
-    void AudioRenderer::SetFormat(const WAVEFORMATEX& inputFormat)
+    void AudioRenderer::SetFormat(SharedWaveFormat inputFormat)
     {
         CAutoLock objectLock(this);
 
-        if (m_inputFormatInitialized && m_state != State_Stopped)
+        if (m_inputFormat && m_state != State_Stopped)
         {
             m_receivedFramesTimeInPreviousFormats += llMulDiv(m_receivedFrames, OneSecond,
-                                                              m_inputFormat.Format.nSamplesPerSec, 0);
+                                                              m_inputFormat->nSamplesPerSec, 0);
             m_receivedFrames = 0;
         }
 
-        m_inputFormat = inputFormat.wFormatTag == WAVE_FORMAT_EXTENSIBLE ?
-                            reinterpret_cast<const WAVEFORMATEXTENSIBLE&>(inputFormat) :
-                            WAVEFORMATEXTENSIBLE{inputFormat};
-
-        m_inputFormatInitialized = true;
+        m_inputFormat = inputFormat;
 
         ClearDevice();
     }
@@ -351,7 +345,7 @@ namespace SaneAudioRenderer
         m_lastSampleEnd = 0;
         m_rate = rate;
 
-        assert(m_inputFormatInitialized);
+        assert(m_inputFormat);
         if (m_deviceInitialized)
             InitializeProcessors();
     }
@@ -386,14 +380,11 @@ namespace SaneAudioRenderer
         ClearDevice();
     }
 
-    std::unique_ptr<WAVEFORMATEXTENSIBLE> AudioRenderer::GetInputFormat()
+    SharedWaveFormat AudioRenderer::GetInputFormat()
     {
         CAutoLock objectLock(this);
 
-        if (!m_inputFormatInitialized)
-            return nullptr;
-
-        return std::make_unique<WAVEFORMATEXTENSIBLE>(m_inputFormat);
+        return m_inputFormat;
     }
 
     std::unique_ptr<AudioDevice> AudioRenderer::GetDeviceFormat()
@@ -412,7 +403,7 @@ namespace SaneAudioRenderer
 
         std::vector<std::wstring> ret;
 
-        if (m_inputFormatInitialized && m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
+        if (m_inputFormat && m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
         {
             if (m_dspMatrix.Active())
                 ret.emplace_back(m_dspMatrix.Name());
@@ -446,18 +437,18 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        assert(m_inputFormatInitialized);
+        assert(m_inputFormat);
 
         DspChunk chunk;
 
         auto timeToFrames = [&](REFERENCE_TIME time)
         {
-            return (size_t)(time * m_inputFormat.Format.nSamplesPerSec / OneSecond * m_rate);
+            return (size_t)(time * m_inputFormat->nSamplesPerSec / OneSecond * m_rate);
         };
 
         auto framesToTime = [&](size_t frames)
         {
-            return (REFERENCE_TIME)(frames * OneSecond / m_inputFormat.Format.nSamplesPerSec / m_rate);
+            return (REFERENCE_TIME)(frames * OneSecond / m_inputFormat->nSamplesPerSec / m_rate);
         };
 
         if (sampleProps.tStop <= m_lastSampleEnd)
@@ -472,19 +463,18 @@ namespace SaneAudioRenderer
 
             if (cropFrames > 0)
             {
-                size_t cropBytes = cropFrames * m_inputFormat.Format.nChannels *
-                                   m_inputFormat.Format.wBitsPerSample / 8;
+                size_t cropBytes = cropFrames * m_inputFormat->nChannels * m_inputFormat->wBitsPerSample / 8;
 
                 assert((int32_t)cropBytes < sampleProps.lActual);
                 sampleProps.pbBuffer += cropBytes;
                 sampleProps.lActual -= (int32_t)cropBytes;
                 sampleProps.tStart += framesToTime(cropFrames);
 
-                chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
             }
             else
             {
-                chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
             }
 
             if (m_receivedFrames == 0)
@@ -498,7 +488,7 @@ namespace SaneAudioRenderer
 
             if (extendFrames > 0)
             {
-                DspChunk tempChunk(pSample, sampleProps, m_inputFormat.Format);
+                DspChunk tempChunk(pSample, sampleProps, *m_inputFormat);
 
                 size_t extendBytes = extendFrames * tempChunk.GetFrameSize();
                 sampleProps.pbBuffer = nullptr;
@@ -518,7 +508,7 @@ namespace SaneAudioRenderer
             }
             else
             {
-                chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
 
                 if (m_receivedFrames == 0)
                     m_firstSampleStart = sampleProps.tStart;
@@ -528,7 +518,7 @@ namespace SaneAudioRenderer
         else
         {
             // Leave the sample untouched.
-            chunk = DspChunk(pSample, sampleProps, m_inputFormat.Format);
+            chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
 
             if (m_receivedFrames == 0)
                 m_firstSampleStart = sampleProps.tStart;
@@ -602,7 +592,7 @@ namespace SaneAudioRenderer
     void AudioRenderer::InitializeProcessors()
     {
         CAutoLock objectLock(this);
-        assert(m_inputFormatInitialized);
+        assert(m_inputFormat);
         assert(m_deviceInitialized);
 
         m_correctedWithRateDsp = 0;
@@ -610,12 +600,12 @@ namespace SaneAudioRenderer
         if (m_device.dspFormat == DspFormat::Unknown)
             return;
 
-        const auto inRate = m_inputFormat.Format.nSamplesPerSec;
-        const auto inChannels = m_inputFormat.Format.nChannels;
-        const auto inMask = DspMatrix::GetChannelMask(m_inputFormat);
-        const auto outRate = m_device.format.Format.nSamplesPerSec;
-        const auto outChannels = m_device.format.Format.nChannels;
-        const auto outMask = DspMatrix::GetChannelMask(m_device.format);
+        const auto inRate = m_inputFormat->nSamplesPerSec;
+        const auto inChannels = m_inputFormat->nChannels;
+        const auto inMask = DspMatrix::GetChannelMask(*m_inputFormat);
+        const auto outRate = m_device.format->nSamplesPerSec;
+        const auto outChannels = m_device.format->nChannels;
+        const auto outMask = DspMatrix::GetChannelMask(*m_device.format);
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
@@ -666,7 +656,7 @@ namespace SaneAudioRenderer
                     // Write frames to the device buffer.
                     BYTE* deviceBuffer;
                     ThrowIfFailed(m_device.audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
-                    assert(frameSize == (m_device.format.Format.wBitsPerSample / 8 * m_device.format.Format.nChannels));
+                    assert(frameSize == (m_device.format->wBitsPerSample / 8 * m_device.format->nChannels));
                     memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
                     ThrowIfFailed(m_device.audioRenderClient->ReleaseBuffer(doFrames, 0));
 

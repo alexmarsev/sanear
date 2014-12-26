@@ -67,13 +67,16 @@ namespace SaneAudioRenderer
             *(WORD*)(&out[8]) += 1;
         }
 
-        std::wstring GetFormatString(const WAVEFORMATEXTENSIBLE& format)
+        std::wstring GetFormatString(const WAVEFORMATEX& format)
         {
-            DspFormat dspFormat = DspFormatFromWaveFormat(format.Format);
+            DspFormat dspFormat = DspFormatFromWaveFormat(format);
+
+            const WAVEFORMATEXTENSIBLE* pFormatExt =
+                (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) ?
+                    reinterpret_cast<const WAVEFORMATEXTENSIBLE*>(&format) : nullptr;
 
             bool pcm24in32 = (dspFormat == DspFormat::Pcm32 &&
-                                 format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                                 format.Samples.wValidBitsPerSample == 24);
+                              pFormatExt && pFormatExt->Samples.wValidBitsPerSample == 24);
 
             switch (dspFormat)
             {
@@ -98,18 +101,18 @@ namespace SaneAudioRenderer
 
             assert(dspFormat == DspFormat::Unknown);
 
-            if (format.Format.wFormatTag == WAVE_FORMAT_DOLBY_AC3_SPDIF)
+            if (format.wFormatTag == WAVE_FORMAT_DOLBY_AC3_SPDIF)
                 return L"AC3/DTS";
 
-            if (format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            if (pFormatExt)
             {
-                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DTS_HD)
+                if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DTS_HD)
                     return L"DTS-HD";
 
-                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DOLBY_MLP)
+                if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DOLBY_MLP)
                     return L"TrueHD";
 
-                if (format.SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_WMA_PRO)
+                if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_WMA_PRO)
                     return L"WMA Pro";
             }
 
@@ -117,7 +120,7 @@ namespace SaneAudioRenderer
         }
     }
 
-    MyPropertyPage::MyPropertyPage(const WAVEFORMATEXTENSIBLE* pInputFormat, const AudioDevice* pDeviceFormat,
+    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, const AudioDevice* pDeviceFormat,
                                    std::vector<std::wstring> processors, bool externalClock)
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {
@@ -129,25 +132,25 @@ namespace SaneAudioRenderer
 
         std::wstring bufferField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->bufferDuration) + L"ms" : L"-");
 
-        std::wstring bitstreamingField = (pInputFormat ? (DspFormatFromWaveFormat(pInputFormat->Format) ==
-                                                          DspFormat::Unknown ? L"Yes" : L"No") : L"-");
+        std::wstring bitstreamingField = (inputFormat ? (DspFormatFromWaveFormat(*inputFormat) ==
+                                                         DspFormat::Unknown ? L"Yes" : L"No") : L"-");
 
         std::wstring externalClockField = (externalClock ? L"Yes" : L"No");
 
-        std::wstring channelsInputField = (pInputFormat ? std::to_wstring(pInputFormat->Format.nChannels) +
-                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pInputFormat)) + L")" : L"-");
-        std::wstring channelsDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format.Format.nChannels) +
-                                              L" (" + GetHexString(DspMatrix::GetChannelMask(pDeviceFormat->format)) + L")" : L"-");
+        std::wstring channelsInputField = (inputFormat ? std::to_wstring(inputFormat->nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-");
+        std::wstring channelsDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format->nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pDeviceFormat->format)) + L")" : L"-");
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
-        std::wstring formatInputField = (pInputFormat ? GetFormatString(*pInputFormat) : L"-");
-        std::wstring formatDeviceField = (pDeviceFormat ? GetFormatString(pDeviceFormat->format) : L"-");
+        std::wstring formatInputField = (inputFormat ? GetFormatString(*inputFormat) : L"-");
+        std::wstring formatDeviceField = (pDeviceFormat ? GetFormatString(*pDeviceFormat->format) : L"-");
         std::wstring formatField = (formatInputField == formatDeviceField) ?
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 
-        std::wstring rateInputField = (pInputFormat ? std::to_wstring(pInputFormat->Format.nSamplesPerSec) : L"-");
-        std::wstring rateDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format.Format.nSamplesPerSec) : L"-");
+        std::wstring rateInputField = (inputFormat ? std::to_wstring(inputFormat->nSamplesPerSec) : L"-");
+        std::wstring rateDeviceField = (pDeviceFormat ? std::to_wstring(pDeviceFormat->format->nSamplesPerSec) : L"-");
         std::wstring rateField = (rateInputField == rateDeviceField) ?
                                       rateInputField : rateInputField + L" -> " + rateDeviceField;
 

@@ -21,7 +21,7 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk);
         void Finish(DspChunk& chunk);
 
-        static DWORD GetChannelMask(const WAVEFORMATEXTENSIBLE& format);
+        static DWORD GetChannelMask(const WAVEFORMATEX& format);
 
     private:
 
