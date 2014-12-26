@@ -265,18 +265,23 @@ namespace SaneAudioRenderer
             else if (m_device.exclusive)
             {
                 // Exclusive.
-                auto priorities = make_array(
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, m_createDeviceFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
+                auto inputRate = m_createDeviceFormat->nSamplesPerSec;
+                auto mixRate = mixFormat->nSamplesPerSec;
+                auto mixChannels = mixFormat->nChannels;
+                auto mixMask = DspMatrix::GetChannelMask(*mixFormat);
 
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat)),
-                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixFormat->nSamplesPerSec, mixFormat->nChannels, DspMatrix::GetChannelMask(*mixFormat))
+                auto priorities = make_array(
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, inputRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, inputRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, inputRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, inputRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, inputRate, mixChannels, mixMask),
+
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 32, mixRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        24, 24, mixRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        32, 24, mixRate, mixChannels, mixMask),
+                    BuildFormat(KSDATAFORMAT_SUBTYPE_PCM,        16, 16, mixRate, mixChannels, mixMask)
                 );
 
                 for (const auto& f : priorities)
