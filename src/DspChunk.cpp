@@ -4,7 +4,7 @@
 namespace SaneAudioRenderer
 {
     static_assert((int32_t{-1} >> 31) == -1 && (int64_t{-1} >> 63) == -1, "Code relies on right signed shift UB");
-    static_assert((int64_t)(float)((int64_t)INT32_MAX + 1) == ((int64_t)INT32_MAX + 1), "Rounding error");
+    static_assert((int64_t)(float)((uint32_t)INT32_MAX + 1) == ((uint32_t)INT32_MAX + 1), "Rounding error");
     static_assert((int32_t)(float)(INT32_MAX - 127) == (INT32_MAX - 127), "Rounding error");
     static_assert((int32_t)(double)INT32_MAX == INT32_MAX, "Rounding error");
 
@@ -116,13 +116,13 @@ namespace SaneAudioRenderer
         template <>
         inline void ConvertSample<DspFormat::Pcm24, DspFormat::Float>(const int24_t& input, float& output)
         {
-            output = (float)UnpackPcm24(input) / ((int64_t)INT32_MAX + 1);
+            output = (float)UnpackPcm24(input) / ((uint32_t)INT32_MAX + 1);
         }
 
         template <>
         inline void ConvertSample<DspFormat::Pcm24, DspFormat::Double>(const int24_t& input, double& output)
         {
-            output = (double)UnpackPcm24(input) / ((int64_t)INT32_MAX + 1);
+            output = (double)UnpackPcm24(input) / ((uint32_t)INT32_MAX + 1);
         }
 
         template <>
@@ -146,13 +146,13 @@ namespace SaneAudioRenderer
         template <>
         inline void ConvertSample<DspFormat::Pcm32, DspFormat::Float>(const int32_t& input, float& output)
         {
-            output = (float)input / ((int64_t)INT32_MAX + 1);
+            output = (float)input / ((uint32_t)INT32_MAX + 1);
         }
 
         template <>
         inline void ConvertSample<DspFormat::Pcm32, DspFormat::Double>(const int32_t& input, double& output)
         {
-            output = (double)input / ((int64_t)INT32_MAX + 1);
+            output = (double)input / ((uint32_t)INT32_MAX + 1);
         }
 
         template <>
