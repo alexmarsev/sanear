@@ -219,8 +219,7 @@ namespace SaneAudioRenderer
         template <DspFormat InputFormat, DspFormat OutputFormat>
         void ConvertSamples(const char* input, typename DspFormatTraits<OutputFormat>::SampleType* output, size_t samples)
         {
-            const DspFormatTraits<InputFormat>::SampleType* inputData;
-            inputData = (decltype(inputData))input;
+            auto inputData = reinterpret_cast<const DspFormatTraits<InputFormat>::SampleType*>(input);
 
             for (size_t i = 0; i < samples; i++)
                 ConvertSample<InputFormat, OutputFormat>(inputData[i], output[i]);
@@ -233,8 +232,8 @@ namespace SaneAudioRenderer
 
             assert(!chunk.IsEmpty() && OutputFormat != inputFormat);
 
-            DspChunk output(OutputFormat, chunk.GetChannelCount(), chunk.GetFrameCount(), chunk.GetRate());
-            auto outputData = (DspFormatTraits<OutputFormat>::SampleType*)output.GetData();
+            DspChunk outputChunk(OutputFormat, chunk.GetChannelCount(), chunk.GetFrameCount(), chunk.GetRate());
+            auto outputData = reinterpret_cast<DspFormatTraits<OutputFormat>::SampleType*>(outputChunk.GetData());
 
             switch (inputFormat)
             {
@@ -263,7 +262,7 @@ namespace SaneAudioRenderer
                     break;
             }
 
-            chunk = std::move(output);
+            chunk = std::move(outputChunk);
         }
     }
 
