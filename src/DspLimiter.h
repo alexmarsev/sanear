@@ -1,11 +1,12 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 #include "Interfaces.h"
 
 namespace SaneAudioRenderer
 {
     class DspLimiter final
+        : public DspBase
     {
     public:
 
@@ -13,13 +14,14 @@ namespace SaneAudioRenderer
         DspLimiter(const DspLimiter&) = delete;
         DspLimiter& operator=(const DspLimiter&) = delete;
 
-        std::wstring Name() { return L"Limiter"; }
-
         void Initialize(ISettings* pSettings, uint32_t rate, bool exclusive);
-        bool Active();
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        std::wstring Name() override { return L"Limiter"; }
+
+        bool Active() override;
+
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
     private:
 

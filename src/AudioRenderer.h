@@ -60,6 +60,19 @@ namespace SaneAudioRenderer
 
         void InitializeProcessors();
 
+        template <typename F>
+        void EnumerateProcessors(F f)
+        {
+            f(&m_dspMatrix);
+            f(&m_dspRate);
+            f(&m_dspTempo);
+            f(&m_dspCrossfeed);
+            f(&m_dspVolume);
+            f(&m_dspBalance);
+            f(&m_dspLimiter);
+            f(&m_dspDither);
+        }
+
         bool Push(DspChunk& chunk);
 
         DeviceManager m_deviceManager;

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 
 namespace SaneAudioRenderer
 {
     class DspDither final
+        : public DspBase
     {
     public:
 
@@ -12,13 +13,14 @@ namespace SaneAudioRenderer
         DspDither(const DspDither&) = delete;
         DspDither& operator=(const DspDither&) = delete;
 
-        std::wstring Name() { return L"Dither"; }
-
         void Initialize(DspFormat outputFormat);
-        bool Active();
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        std::wstring Name() override { return L"Dither"; }
+
+        bool Active() override;
+
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
     private:
 

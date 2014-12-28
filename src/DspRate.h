@@ -1,12 +1,13 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 
 #include <soxr.h>
 
 namespace SaneAudioRenderer
 {
     class DspRate final
+        : public DspBase
     {
     public:
 
@@ -15,13 +16,14 @@ namespace SaneAudioRenderer
         DspRate& operator=(const DspRate&) = delete;
         ~DspRate();
 
-        std::wstring Name() { return L"Rate"; }
-
         void Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels);
-        bool Active();
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        std::wstring Name() override { return L"Rate"; }
+
+        bool Active() override;
+
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
         void Adjust(REFERENCE_TIME delta);
 

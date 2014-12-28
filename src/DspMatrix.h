@@ -1,10 +1,11 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 
 namespace SaneAudioRenderer
 {
     class DspMatrix final
+        : public DspBase
     {
     public:
 
@@ -12,14 +13,15 @@ namespace SaneAudioRenderer
         DspMatrix(const DspMatrix&) = delete;
         DspMatrix& operator=(const DspMatrix&) = delete;
 
-        std::wstring Name() { return L"Matrix"; }
-
         void Initialize(uint32_t inputChannels, DWORD inputMask,
                         uint32_t outputChannels, DWORD outputMask);
-        bool Active();
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        std::wstring Name() override { return L"Matrix"; }
+
+        bool Active() override;
+
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
         static DWORD GetChannelMask(const WAVEFORMATEX& format);
 

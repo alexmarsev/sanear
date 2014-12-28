@@ -1,12 +1,13 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 
 namespace SaneAudioRenderer
 {
     class AudioRenderer;
 
     class DspBalance final
+        : public DspBase
     {
     public:
 
@@ -14,12 +15,12 @@ namespace SaneAudioRenderer
         DspBalance(const DspBalance&) = delete;
         DspBalance& operator=(const DspBalance&) = delete;
 
-        std::wstring Name() { return L"Balance"; }
+        bool Active() override;
 
-        bool Active();
+        std::wstring Name() override { return L"Balance"; }
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
     private:
 

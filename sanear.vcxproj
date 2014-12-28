@@ -73,6 +73,7 @@
   <ItemGroup>
     <ClInclude Include="src\DeviceManager.h" />
     <ClInclude Include="src\DspBalance.h" />
+    <ClInclude Include="src\DspBase.h" />
     <ClInclude Include="src\DspCrossfeed.h" />
     <ClInclude Include="src\DspDither.h" />
     <ClInclude Include="src\DspFormat.h" />

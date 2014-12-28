@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DspChunk.h"
+#include "DspBase.h"
 #include "Interfaces.h"
 
 #include <bs2bclass.h>
@@ -8,6 +8,7 @@
 namespace SaneAudioRenderer
 {
     class DspCrossfeed final
+        : public DspBase
     {
     public:
 
@@ -15,13 +16,14 @@ namespace SaneAudioRenderer
         DspCrossfeed(const DspCrossfeed&) = delete;
         DspCrossfeed& operator=(const DspCrossfeed&) = delete;
 
-        std::wstring Name() { return L"Crossfeed"; }
-
         void Initialize(ISettings* pSettings, uint32_t rate, uint32_t channels, DWORD mask);
-        bool Active();
 
-        void Process(DspChunk& chunk);
-        void Finish(DspChunk& chunk);
+        std::wstring Name() override { return L"Crossfeed"; }
+
+        bool Active() override;
+
+        void Process(DspChunk& chunk) override;
+        void Finish(DspChunk& chunk) override;
 
     private:
 

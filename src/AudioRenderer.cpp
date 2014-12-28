@@ -128,14 +128,12 @@ namespace SaneAudioRenderer
 
                 if (m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
                 {
-                    m_dspMatrix.Process(chunk);
-                    m_dspRate.Process(chunk);
-                    m_dspTempo.Process(chunk);
-                    m_dspCrossfeed.Process(chunk);
-                    m_dspVolume.Process(chunk);
-                    m_dspBalance.Process(chunk);
-                    m_dspLimiter.Process(chunk);
-                    m_dspDither.Process(chunk);
+                    auto f = [&](DspBase* pDsp)
+                    {
+                        pDsp->Process(chunk);
+                    };
+
+                    EnumerateProcessors(f);
 
                     DspChunk::ToFormat(m_device.dspFormat, chunk);
                 }
@@ -165,14 +163,12 @@ namespace SaneAudioRenderer
             {
                 if (m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
                 {
-                    m_dspMatrix.Finish(chunk);
-                    m_dspRate.Finish(chunk);
-                    m_dspTempo.Finish(chunk);
-                    m_dspCrossfeed.Finish(chunk);
-                    m_dspVolume.Finish(chunk);
-                    m_dspBalance.Finish(chunk);
-                    m_dspLimiter.Finish(chunk);
-                    m_dspDither.Finish(chunk);
+                    auto f = [&](DspBase* pDsp)
+                    {
+                        pDsp->Finish(chunk);
+                    };
+
+                    EnumerateProcessors(f);
 
                     DspChunk::ToFormat(m_device.dspFormat, chunk);
                 }
@@ -358,29 +354,13 @@ namespace SaneAudioRenderer
 
         if (m_inputFormat && m_deviceInitialized && m_device.dspFormat != DspFormat::Unknown)
         {
-            if (m_dspMatrix.Active())
-                ret.emplace_back(m_dspMatrix.Name());
+            auto f = [&](DspBase* pDsp)
+            {
+                if (pDsp->Active())
+                    ret.emplace_back(pDsp->Name());
+            };
 
-            if (m_dspRate.Active())
-                ret.emplace_back(m_dspRate.Name());
-
-            if (m_dspTempo.Active())
-                ret.emplace_back(m_dspTempo.Name());
-
-            if (m_dspCrossfeed.Active())
-                ret.emplace_back(m_dspCrossfeed.Name());
-
-            if (m_dspVolume.Active())
-                ret.emplace_back(m_dspVolume.Name());
-
-            if (m_dspBalance.Active())
-                ret.emplace_back(m_dspBalance.Name());
-
-            if (m_dspLimiter.Active())
-                ret.emplace_back(m_dspLimiter.Name());
-
-            if (m_dspDither.Active())
-                ret.emplace_back(m_dspDither.Name());
+            EnumerateProcessors(f);
         }
 
         return ret;

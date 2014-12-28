@@ -132,6 +132,9 @@
     <ClInclude Include="src\TimingsCorrection.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\DspBase.h">
+      <Filter>Processors\Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectShow">
