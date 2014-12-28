@@ -1,9 +1,9 @@
 #pragma once
 
+#include "DeviceManager.h"
+
 namespace SaneAudioRenderer
 {
-    struct AudioDevice;
-
     class _declspec(uuid("7EEEDEC8-8B8E-4220-AF12-08BC0CE844F0"))
     MyPropertyPage final
         : public CUnknown
@@ -11,7 +11,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyPropertyPage(SharedWaveFormat inputFormat, const AudioDevice* pAudioDevice,
+        MyPropertyPage(SharedWaveFormat inputFormat, SharedAudioDevice audioDevice,
                        std::vector<std::wstring> processors, bool externalClock);
         MyPropertyPage(const MyPropertyPage&) = delete;
         MyPropertyPage& operator=(const MyPropertyPage&) = delete;

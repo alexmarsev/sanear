@@ -170,7 +170,7 @@ namespace SaneAudioRenderer
         return ret;
     }
 
-    bool DeviceManager::CreateDevice(AudioDevice& device, SharedWaveFormat format, ISettings* pSettings)
+    SharedAudioDevice DeviceManager::CreateDevice(SharedWaveFormat format, ISettings* pSettings)
     {
         assert(format);
         assert(pSettings);
@@ -179,39 +179,43 @@ namespace SaneAudioRenderer
         m_createDeviceSettings = pSettings;
         m_queuedCreateDevice = true;
 
-        bool ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0);
+        SharedAudioDevice ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0) ? m_device : nullptr;
 
         m_createDeviceFormat = nullptr;
         m_createDeviceSettings = nullptr;
         assert(m_queuedCreateDevice == false);
-
-        device = m_device;
 
         return ret;
     }
 
     void DeviceManager::ReleaseDevice()
     {
+        if (!m_device)
+            return;
+
         auto areLastInstances = [this]
         {
-            if (m_device.audioClock && !IsLastInstance(m_device.audioClock))
+            if (!m_device.unique())
                 return false;
 
-            m_device.audioClock = nullptr;
-
-            if (m_device.audioRenderClient && !IsLastInstance(m_device.audioRenderClient))
+            if (m_device->audioClock && !IsLastInstance(m_device->audioClock))
                 return false;
 
-            m_device.audioRenderClient = nullptr;
+            m_device->audioClock = nullptr;
 
-            if (m_device.audioClient && !IsLastInstance(m_device.audioClient))
+            if (m_device->audioRenderClient && !IsLastInstance(m_device->audioRenderClient))
+                return false;
+
+            m_device->audioRenderClient = nullptr;
+
+            if (m_device->audioClient && !IsLastInstance(m_device->audioClient))
                 return false;
 
             return true;
         };
         assert(areLastInstances());
 
-        m_device = {};
+        m_device = nullptr;
     }
 
     LRESULT DeviceManager::OnCheckBitstreamFormat()
@@ -229,11 +233,11 @@ namespace SaneAudioRenderer
 
             CreateAudioClient(device, m_checkBitstreamSettings);
 
-            if (!m_device.audioClient)
+            if (!device.audioClient)
                 return 1;
 
-            return SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
-                                                                     &(*m_checkBitstreamFormat), nullptr)) ? 0 : 1;
+            return SUCCEEDED(device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
+                                                                   &(*m_checkBitstreamFormat), nullptr)) ? 0 : 1;
         }
         catch (HRESULT)
         {
@@ -253,27 +257,32 @@ namespace SaneAudioRenderer
         ReleaseDevice();
         try
         {
-            CreateAudioClient(m_device, m_createDeviceSettings);
+            assert(!m_device);
+            m_device = std::make_shared<AudioDevice>();
 
-            if (!m_device.audioClient)
+            CreateAudioClient(*m_device, m_createDeviceSettings);
+
+            if (!m_device->audioClient)
                 return 1;
 
             WAVEFORMATEX* pFormat;
-            ThrowIfFailed(m_device.audioClient->GetMixFormat(&pFormat));
+            ThrowIfFailed(m_device->audioClient->GetMixFormat(&pFormat));
             SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
 
-            m_device.bufferDuration = 200;
+            m_device->bufferDuration = 200;
 
-            if (DspFormatFromWaveFormat(*m_createDeviceFormat) == DspFormat::Unknown)
+            m_device->bitstream = (DspFormatFromWaveFormat(*m_createDeviceFormat) == DspFormat::Unknown);
+
+            if (m_device->bitstream)
             {
                 // Exclusive bitstreaming.
-                if (!m_device.exclusive)
+                if (!m_device->exclusive)
                     return 1;
 
-                m_device.dspFormat = DspFormat::Unknown;
-                m_device.waveFormat = m_createDeviceFormat;
+                m_device->dspFormat = DspFormat::Unknown;
+                m_device->waveFormat = m_createDeviceFormat;
             }
-            else if (m_device.exclusive)
+            else if (m_device->exclusive)
             {
                 // Exclusive.
                 auto inputRate = m_createDeviceFormat->nSamplesPerSec;
@@ -302,10 +311,10 @@ namespace SaneAudioRenderer
                 {
                     assert(DspFormatFromWaveFormat(f.Format) != DspFormat::Unknown);
 
-                    if (SUCCEEDED(m_device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.Format, nullptr)))
+                    if (SUCCEEDED(m_device->audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.Format, nullptr)))
                     {
-                        m_device.dspFormat = DspFormatFromWaveFormat(f.Format);
-                        m_device.waveFormat = CopyWaveFormat(f.Format);
+                        m_device->dspFormat = DspFormatFromWaveFormat(f.Format);
+                        m_device->waveFormat = CopyWaveFormat(f.Format);
                         break;
                     }
                 }
@@ -313,17 +322,17 @@ namespace SaneAudioRenderer
             else
             {
                 // Shared.
-                m_device.dspFormat = DspFormat::Float;
-                m_device.waveFormat = mixFormat;
+                m_device->dspFormat = DspFormat::Float;
+                m_device->waveFormat = mixFormat;
             }
 
-            ThrowIfFailed(m_device.audioClient->Initialize(m_device.exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
-                                                           0, MILLISECONDS_TO_100NS_UNITS(m_device.bufferDuration),
-                                                           0, &(*m_device.waveFormat), nullptr));
+            ThrowIfFailed(m_device->audioClient->Initialize(m_device->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
+                                                           0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
+                                                           0, &(*m_device->waveFormat), nullptr));
 
-            ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioRenderClient)));
+            ThrowIfFailed(m_device->audioClient->GetService(IID_PPV_ARGS(&m_device->audioRenderClient)));
 
-            ThrowIfFailed(m_device.audioClient->GetService(IID_PPV_ARGS(&m_device.audioClock)));
+            ThrowIfFailed(m_device->audioClient->GetService(IID_PPV_ARGS(&m_device->audioClock)));
 
             return 0;
         }

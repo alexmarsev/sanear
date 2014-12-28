@@ -18,8 +18,12 @@ namespace SaneAudioRenderer
         IAudioClockPtr                      audioClock;
         DspFormat                           dspFormat;
         bool                                exclusive;
+        bool                                bitstream;
         bool                                default;
     };
+
+    // TODO: make it const
+    typedef std::shared_ptr<AudioDevice> SharedAudioDevice;
 
     class DeviceManager final
     {
@@ -31,7 +35,7 @@ namespace SaneAudioRenderer
         ~DeviceManager();
 
         bool BitstreamFormatSupported(SharedWaveFormat format, ISettings* pSettings);
-        bool CreateDevice(AudioDevice& device, SharedWaveFormat format, ISettings* pSettings);
+        SharedAudioDevice CreateDevice(SharedWaveFormat format, ISettings* pSettings);
         void ReleaseDevice();
 
     private:
@@ -50,7 +54,7 @@ namespace SaneAudioRenderer
         HWND m_hWindow = NULL;
         std::promise<bool> m_windowInitialized;
 
-        AudioDevice m_device = {};
+        SharedAudioDevice m_device;
 
         SharedWaveFormat m_checkBitstreamFormat;
         ISettings* m_checkBitstreamSettings = nullptr;

@@ -49,13 +49,14 @@ namespace SaneAudioRenderer
         void SetBalance(float balance) { m_balance = balance; }
 
         SharedWaveFormat GetInputFormat();
-        std::unique_ptr<AudioDevice> GetDeviceFormat();
+        SharedAudioDevice GetAudioDevice();
         std::vector<std::wstring> GetActiveProcessors();
 
     private:
 
         void CheckDeviceSettings();
         void StartDevice();
+        void CreateDevice();
         void ClearDevice();
 
         void InitializeProcessors();
@@ -76,8 +77,7 @@ namespace SaneAudioRenderer
         bool Push(DspChunk& chunk);
 
         DeviceManager m_deviceManager;
-        AudioDevice m_device;
-        bool m_deviceInitialized = false;
+        SharedAudioDevice m_device;
 
         FILTER_STATE m_state = State_Stopped;
 
