@@ -5,33 +5,36 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        const std::map<DWORD, size_t> ChannelMap =
+        std::map<DWORD, size_t> ChannelMap()
         {
-            {SPEAKER_FRONT_LEFT, 0},
-            {SPEAKER_FRONT_RIGHT, 1},
-            {SPEAKER_FRONT_CENTER, 2},
-            {SPEAKER_LOW_FREQUENCY, 3},
-            {SPEAKER_BACK_LEFT, 4},
-            {SPEAKER_BACK_RIGHT, 5},
-            {SPEAKER_FRONT_LEFT_OF_CENTER, 6},
-            {SPEAKER_FRONT_RIGHT_OF_CENTER, 7},
-            {SPEAKER_BACK_CENTER, 8},
-            {SPEAKER_SIDE_LEFT, 9},
-            {SPEAKER_SIDE_RIGHT, 10},
-            {SPEAKER_TOP_CENTER, 11},
-            {SPEAKER_TOP_FRONT_LEFT, 12},
-            {SPEAKER_TOP_FRONT_CENTER, 13},
-            {SPEAKER_TOP_FRONT_RIGHT, 14},
-            {SPEAKER_TOP_BACK_LEFT, 15},
-            {SPEAKER_TOP_BACK_CENTER, 16},
-            {SPEAKER_TOP_BACK_RIGHT, 17},
+            return {
+                {SPEAKER_FRONT_LEFT, 0},
+                {SPEAKER_FRONT_RIGHT, 1},
+                {SPEAKER_FRONT_CENTER, 2},
+                {SPEAKER_LOW_FREQUENCY, 3},
+                {SPEAKER_BACK_LEFT, 4},
+                {SPEAKER_BACK_RIGHT, 5},
+                {SPEAKER_FRONT_LEFT_OF_CENTER, 6},
+                {SPEAKER_FRONT_RIGHT_OF_CENTER, 7},
+                {SPEAKER_BACK_CENTER, 8},
+                {SPEAKER_SIDE_LEFT, 9},
+                {SPEAKER_SIDE_RIGHT, 10},
+                {SPEAKER_TOP_CENTER, 11},
+                {SPEAKER_TOP_FRONT_LEFT, 12},
+                {SPEAKER_TOP_FRONT_CENTER, 13},
+                {SPEAKER_TOP_FRONT_RIGHT, 14},
+                {SPEAKER_TOP_BACK_LEFT, 15},
+                {SPEAKER_TOP_BACK_CENTER, 16},
+                {SPEAKER_TOP_BACK_RIGHT, 17},
+            };
         };
 
         std::array<float, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
         {
+            const auto channelMap = ChannelMap();
             std::array<float, 18 * 18> matrix{};
 
-            for (auto& p : ChannelMap)
+            for (auto& p : channelMap)
             {
                 if (inputMask & p.first)
                     matrix[18 * p.second + p.second] = 1.0f;
@@ -39,15 +42,15 @@ namespace SaneAudioRenderer
 
             auto feed = [&](DWORD sourceChannel, DWORD targetChannel, float multiplier)
             {
-                float* source = matrix.data() + 18 * ChannelMap.at(sourceChannel);
-                float* target = matrix.data() + 18 * ChannelMap.at(targetChannel);
+                float* source = matrix.data() + 18 * channelMap.at(sourceChannel);
+                float* target = matrix.data() + 18 * channelMap.at(targetChannel);
                 for (int i = 0; i < 18; i++)
                     target[i] += source[i] * multiplier;
             };
 
             auto clear = [&](DWORD targetChannel)
             {
-                float* target = matrix.data() + 18 * ChannelMap.at(targetChannel);
+                float* target = matrix.data() + 18 * channelMap.at(targetChannel);
                 for (int i = 0; i < 18; i++)
                     target[i] = 0.0f;
             };
@@ -141,17 +144,18 @@ namespace SaneAudioRenderer
         std::unique_ptr<float[]> BuildMatrix(size_t inputChannels, DWORD inputMask,
                                              size_t outputChannels, DWORD outputMask)
         {
+            const auto channelMap = ChannelMap();
             const auto fullMatrix = BuildFullMatrix(inputMask, outputMask);
             auto matrix = std::make_unique<float[]>(inputChannels * outputChannels);
             ZeroMemory(matrix.get(), sizeof(float) * inputChannels * outputChannels);
 
             size_t y = 0;
-            for (auto& yp : ChannelMap)
+            for (auto& yp : channelMap)
             {
                 if (outputMask & yp.first)
                 {
                     size_t x = 0;
-                    for (auto& xp : ChannelMap)
+                    for (auto& xp : channelMap)
                     {
                         if (inputMask & xp.first)
                         {
