@@ -358,8 +358,11 @@ namespace SaneAudioRenderer
                                NULL, NULL, NULL, nullptr, WindowClass, NULL};
 
         m_hWindow = NULL;
-        if (coInitializeHelper.Initialized() && RegisterClassEx(&windowClass))
+        if (coInitializeHelper.Initialized())
+        {
+            RegisterClassEx(&windowClass);
             m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, hInstance, this);
+        }
 
         if (m_hWindow != NULL)
         {
