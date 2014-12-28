@@ -85,58 +85,20 @@ namespace SaneAudioRenderer
 
                 InitializeProcessors();
 
-                m_startOffset = m_lastSampleEnd;
+                m_startClockOffset = m_timingsCorrection.GetLastSampleEnd();
 
                 if (m_state == State_Running)
                     StartDevice();
             }
 
-            if (!(sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID))
-            {
-                sampleProps.tStart = m_firstSampleStart;
-                sampleProps.tStart += (REFERENCE_TIME)((m_receivedFramesTimeInPreviousFormats +
-                                                        llMulDiv(m_receivedFrames, OneSecond,
-                                                                 m_inputFormat->nSamplesPerSec, 0)) / m_rate);
-                sampleProps.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
-            }
-
-            if (!(sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID))
-            {
-                REFERENCE_TIME duration = sampleProps.lActual * 8 / m_inputFormat->wBitsPerSample /
-                                          m_inputFormat->nChannels * OneSecond / m_inputFormat->nSamplesPerSec;
-                sampleProps.tStop = sampleProps.tStart + (REFERENCE_TIME)(duration / m_rate);
-                sampleProps.dwSampleFlags |= AM_SAMPLE_STOPVALID;
-            }
-
             try
             {
-                if (m_device.dspFormat == DspFormat::Unknown)
-                {
-                    chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-
-                    if (m_receivedFrames == 0)
-                        m_firstSampleStart = sampleProps.tStart;
-                    m_receivedFrames += chunk.GetFrameCount();
-                }
-                else if (m_lastSampleEnd > 0)
-                {
-                    chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-
-                    assert(m_receivedFrames > 0 || m_receivedFramesTimeInPreviousFormats > 0);
-                    m_receivedFrames += chunk.GetFrameCount();
-                }
-                else
-                {
-                    chunk = PreProcessFirstSamples(pSample, sampleProps);
-                }
+                chunk = m_timingsCorrection.ProcessSample(pSample, sampleProps);
 
                 if (m_deviceInitialized && m_state == State_Running)
                 {
                     {
-                        REFERENCE_TIME offset = sampleProps.tStart - m_myClock->GetSlavedClockOffset() -
-                                                (REFERENCE_TIME)(m_receivedFramesTimeInPreviousFormats +
-                                                                 llMulDiv(m_receivedFrames - chunk.GetFrameCount(), OneSecond,
-                                                                          m_inputFormat->nSamplesPerSec, 0) / m_rate);
+                        REFERENCE_TIME offset = m_timingsCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
                         if (std::abs(offset) > 1000)
                         {
                             m_myClock->OffsetSlavedClock(offset);
@@ -183,8 +145,6 @@ namespace SaneAudioRenderer
                 ClearDevice();
                 chunk = DspChunk();
             }
-
-            m_lastSampleEnd = sampleProps.tStop;
         }
 
         return Push(chunk);
@@ -318,14 +278,9 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        if (m_inputFormat && m_state != State_Stopped)
-        {
-            m_receivedFramesTimeInPreviousFormats += llMulDiv(m_receivedFrames, OneSecond,
-                                                              m_inputFormat->nSamplesPerSec, 0);
-            m_receivedFrames = 0;
-        }
-
         m_inputFormat = inputFormat;
+
+        m_timingsCorrection.SetFormat(inputFormat);
 
         ClearDevice();
     }
@@ -338,12 +293,10 @@ namespace SaneAudioRenderer
         // please add a cast to your player's code.
         assert((double)(float)rate == rate);
 
-        m_startOffset = 0;
-        m_receivedFramesTimeInPreviousFormats = 0;
-        m_receivedFrames = 0;
-        m_firstSampleStart = 0;
-        m_lastSampleEnd = 0;
+        m_startClockOffset = 0;
         m_rate = rate;
+
+        m_timingsCorrection.NewSegment(m_rate);
 
         assert(m_inputFormat);
         if (m_deviceInitialized)
@@ -433,101 +386,6 @@ namespace SaneAudioRenderer
         return ret;
     }
 
-    DspChunk AudioRenderer::PreProcessFirstSamples(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
-    {
-        CAutoLock objectLock(this);
-
-        assert(m_inputFormat);
-
-        DspChunk chunk;
-
-        auto timeToFrames = [&](REFERENCE_TIME time)
-        {
-            return (size_t)(time * m_inputFormat->nSamplesPerSec / OneSecond * m_rate);
-        };
-
-        auto framesToTime = [&](size_t frames)
-        {
-            return (REFERENCE_TIME)(frames * OneSecond / m_inputFormat->nSamplesPerSec / m_rate);
-        };
-
-        if (sampleProps.tStop <= m_lastSampleEnd)
-        {
-            // Drop the sample.
-            assert(chunk.IsEmpty());
-        }
-        else if (sampleProps.tStart < m_lastSampleEnd)
-        {
-            // Crop the sample.
-            size_t cropFrames = timeToFrames(m_lastSampleEnd - sampleProps.tStart);
-
-            if (cropFrames > 0)
-            {
-                size_t cropBytes = cropFrames * m_inputFormat->nChannels * m_inputFormat->wBitsPerSample / 8;
-
-                assert((int32_t)cropBytes < sampleProps.lActual);
-                sampleProps.pbBuffer += cropBytes;
-                sampleProps.lActual -= (int32_t)cropBytes;
-                sampleProps.tStart += framesToTime(cropFrames);
-
-                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-            }
-            else
-            {
-                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-            }
-
-            if (m_receivedFrames == 0)
-                m_firstSampleStart = sampleProps.tStart;
-            m_receivedFrames += chunk.GetFrameCount();
-        }
-        else if (sampleProps.tStart > m_lastSampleEnd)
-        {
-            // Zero-pad the sample.
-            size_t extendFrames = timeToFrames(sampleProps.tStart - m_lastSampleEnd);
-
-            if (extendFrames > 0)
-            {
-                DspChunk tempChunk(pSample, sampleProps, *m_inputFormat);
-
-                size_t extendBytes = extendFrames * tempChunk.GetFrameSize();
-                sampleProps.pbBuffer = nullptr;
-                sampleProps.lActual += extendBytes;
-                sampleProps.tStart -= framesToTime(extendFrames);
-
-                if (m_receivedFrames == 0)
-                    m_firstSampleStart = sampleProps.tStart;
-                m_receivedFrames += tempChunk.GetFrameCount() + extendFrames;
-
-                chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
-                                 tempChunk.GetFrameCount() + extendFrames, tempChunk.GetRate());
-
-                assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
-                ZeroMemory(chunk.GetData(), extendBytes);
-                memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
-            }
-            else
-            {
-                chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-
-                if (m_receivedFrames == 0)
-                    m_firstSampleStart = sampleProps.tStart;
-                m_receivedFrames += chunk.GetFrameCount();
-            }
-        }
-        else
-        {
-            // Leave the sample untouched.
-            chunk = DspChunk(pSample, sampleProps, *m_inputFormat);
-
-            if (m_receivedFrames == 0)
-                m_firstSampleStart = sampleProps.tStart;
-            m_receivedFrames += chunk.GetFrameCount();
-        }
-
-        return chunk;
-    }
-
     void AudioRenderer::CheckDeviceSettings()
     {
         CAutoLock objectLock(this);
@@ -564,8 +422,8 @@ namespace SaneAudioRenderer
 
         if (m_deviceInitialized)
         {
-            m_myClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_startOffset);
-            m_startOffset = 0;
+            m_myClock->SlaveClockToAudio(m_device.audioClock, m_startTime + m_startClockOffset);
+            m_startClockOffset = 0;
             m_device.audioClient->Start();
             //assert(m_bufferFilled.Check());
         }
@@ -679,7 +537,7 @@ namespace SaneAudioRenderer
             REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
                 SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                graphTime + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_lastSampleEnd)
+                graphTime + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_timingsCorrection.GetLastSampleEnd())
             {
                 break;
             }

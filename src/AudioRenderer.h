@@ -11,6 +11,7 @@
 #include "DspVolume.h"
 #include "Interfaces.h"
 #include "MyClock.h"
+#include "TimingsCorrection.h"
 
 namespace SaneAudioRenderer
 {
@@ -53,8 +54,6 @@ namespace SaneAudioRenderer
 
     private:
 
-        DspChunk PreProcessFirstSamples(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
-
         void CheckDeviceSettings();
         void StartDevice();
         void ClearDevice();
@@ -69,6 +68,8 @@ namespace SaneAudioRenderer
 
         FILTER_STATE m_state = State_Stopped;
 
+        TimingsCorrection m_timingsCorrection;
+
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_graphClock;
         bool m_externalClock = false;
@@ -76,13 +77,8 @@ namespace SaneAudioRenderer
 
         SharedWaveFormat m_inputFormat;
 
-        REFERENCE_TIME m_startOffset = 0;
+        REFERENCE_TIME m_startClockOffset = 0;
         REFERENCE_TIME m_startTime = 0;
-
-        REFERENCE_TIME m_receivedFramesTimeInPreviousFormats = 0;
-        uint64_t m_receivedFrames = 0;
-        REFERENCE_TIME m_firstSampleStart = 0;
-        REFERENCE_TIME m_lastSampleEnd = 0;
 
         CAMEvent m_flush;
 
