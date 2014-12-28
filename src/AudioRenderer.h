@@ -109,6 +109,7 @@ namespace SaneAudioRenderer
         CAMEvent& m_bufferFilled;
 
         ISettingsPtr m_settings;
+        UINT32 m_deviceSettingsSerial = 0;
 
         std::atomic<float> m_volume = 1.0f;
         std::atomic<float> m_balance = 0.0f;

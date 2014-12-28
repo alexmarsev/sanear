@@ -359,7 +359,7 @@ namespace SaneAudioRenderer
 
         UINT32 serial = m_settings->GetSerial();
 
-        if (m_device && m_device->settingsSerial != serial)
+        if (m_device && m_deviceSettingsSerial != serial)
         {
             LPWSTR pDeviceName = nullptr;
             BOOL exclusive;
@@ -374,7 +374,7 @@ namespace SaneAudioRenderer
                 }
                 else
                 {
-                    m_device->settingsSerial = serial;
+                    m_deviceSettingsSerial = serial;
                 }
                 CoTaskMemFree(pDeviceName);
             }
@@ -402,6 +402,7 @@ namespace SaneAudioRenderer
         assert(!m_device);
         assert(m_inputFormat);
 
+        m_deviceSettingsSerial = m_settings->GetSerial();
         m_device = m_deviceManager.CreateDevice(m_inputFormat, m_settings);
 
         if (m_device)

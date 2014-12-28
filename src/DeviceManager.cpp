@@ -72,8 +72,6 @@ namespace SaneAudioRenderer
             std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
 
             {
-                output.settingsSerial = pSettings->GetSerial();
-
                 LPWSTR pDeviceName = nullptr;
                 BOOL exclusive;
                 ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceName, &exclusive));

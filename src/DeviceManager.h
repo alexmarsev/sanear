@@ -10,7 +10,6 @@ namespace SaneAudioRenderer
         std::shared_ptr<const std::wstring> friendlyName;
         std::shared_ptr<const std::wstring> adapterName;
         std::shared_ptr<const std::wstring> endpointName;
-        UINT32                              settingsSerial;
         IAudioClientPtr                     audioClient;
         SharedWaveFormat                    waveFormat;
         uint32_t                            bufferDuration;
@@ -22,8 +21,7 @@ namespace SaneAudioRenderer
         bool                                default;
     };
 
-    // TODO: make it const
-    typedef std::shared_ptr<AudioDevice> SharedAudioDevice;
+    typedef std::shared_ptr<const AudioDevice> SharedAudioDevice;
 
     class DeviceManager final
     {
@@ -54,7 +52,7 @@ namespace SaneAudioRenderer
         HWND m_hWindow = NULL;
         std::promise<bool> m_windowInitialized;
 
-        SharedAudioDevice m_device;
+        std::shared_ptr<AudioDevice> m_device;
 
         SharedWaveFormat m_checkBitstreamFormat;
         ISettings* m_checkBitstreamSettings = nullptr;
