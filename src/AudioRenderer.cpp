@@ -468,12 +468,13 @@ namespace SaneAudioRenderer
         const uint32_t frameSize = chunk.GetFrameSize();
         const size_t chunkFrames = chunk.GetFrameCount();
 
+        uint32_t sleepDuration = 0;
         bool firstIteration = true;
         for (size_t doneFrames = 0; doneFrames < chunkFrames;)
         {
             // The device buffer is full or almost full at the beginning of the second and subsequent iterations.
             // Sleep until the buffer may have significant amount of free space. Unless interrupted.
-            if (!firstIteration && m_flush.Wait(50))
+            if (!firstIteration && m_flush.Wait(sleepDuration))
                 return false;
 
             firstIteration = false;
@@ -504,11 +505,18 @@ namespace SaneAudioRenderer
                     memcpy(deviceBuffer, chunk.GetConstData() + doneFrames * frameSize, doFrames * frameSize);
                     ThrowIfFailed(m_device->audioRenderClient->ReleaseBuffer(doFrames, 0));
 
-                    // If the buffer is fully filled, set the corresponding event.
-                    (bufferPadding + doFrames == bufferFrames) ? m_bufferFilled.Set() : m_bufferFilled.Reset();
+                    // If the buffer is fully filled, set the corresponding event
+                    // and stop delaying Paused->Running transition.
+                    if (bufferPadding + doFrames == bufferFrames &&
+                        !m_bufferFilled.Check())
+                    {
+                        m_bufferFilled.Set();
+                    }
 
                     doneFrames += doFrames;
                     m_pushedFrames += doFrames;
+
+                    sleepDuration = m_device->bufferDuration / 4;
 
                     continue;
                 }
@@ -518,12 +526,19 @@ namespace SaneAudioRenderer
                 }
             }
 
+            // The following code emulates null audio device.
             assert(!m_device);
+
+            // Don't delay Paused->Running transition, because we don't have a buffer to fill anyway.
             m_bufferFilled.Set();
+
+            sleepDuration = 1;
+
+            // Loop until the graph time passes the current sample end.
             REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
                 SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                graphTime + MILLISECONDS_TO_100NS_UNITS(20) > m_startTime + m_timingsCorrection.GetLastSampleEnd())
+                graphTime > m_startTime + m_timingsCorrection.GetLastSampleEnd())
             {
                 break;
             }
