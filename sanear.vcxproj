@@ -88,7 +88,7 @@
     <ClInclude Include="src\MyPropertyPage.h" />
     <ClInclude Include="src\MyTestClock.h" />
     <ClInclude Include="src\Settings.h" />
-    <ClInclude Include="src\TimingsCorrection.h" />
+    <ClInclude Include="src\SampleCorrection.h" />
     <ClInclude Include="src\Utils.h" />
     <ClInclude Include="src\MyFilter.h" />
     <ClInclude Include="src\MyClock.h" />
@@ -120,7 +120,7 @@
     <ClCompile Include="src\DspRate.cpp" />
     <ClCompile Include="src\AudioRenderer.cpp" />
     <ClCompile Include="src\Settings.cpp" />
-    <ClCompile Include="src\TimingsCorrection.cpp" />
+    <ClCompile Include="src\SampleCorrection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\sanear.props" />

@@ -59,7 +59,7 @@
     <ClCompile Include="src\MyTestClock.cpp">
       <Filter>DirectShow</Filter>
     </ClCompile>
-    <ClCompile Include="src\TimingsCorrection.cpp">
+    <ClCompile Include="src\SampleCorrection.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -129,11 +129,11 @@
     <ClInclude Include="src\MyTestClock.h">
       <Filter>DirectShow</Filter>
     </ClInclude>
-    <ClInclude Include="src\TimingsCorrection.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="src\DspBase.h">
       <Filter>Processors\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SampleCorrection.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "TimingsCorrection.h"
+#include "SampleCorrection.h"
 
 namespace SaneAudioRenderer
 {
-    void TimingsCorrection::SetFormat(SharedWaveFormat format)
+    void SampleCorrection::SetFormat(SharedWaveFormat format)
     {
         assert(format);
 
@@ -17,7 +17,7 @@ namespace SaneAudioRenderer
         m_bitstream = (DspFormatFromWaveFormat(*m_format) == DspFormat::Unknown);
     }
 
-    void TimingsCorrection::NewSegment(double rate)
+    void SampleCorrection::NewSegment(double rate)
     {
         m_rate = rate;
 
@@ -27,7 +27,7 @@ namespace SaneAudioRenderer
         m_lastSampleEnd = 0;
     }
 
-    DspChunk TimingsCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
+    DspChunk SampleCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
     {
         assert(m_format);
 
@@ -109,7 +109,7 @@ namespace SaneAudioRenderer
         return chunk;
     }
 
-    void TimingsCorrection::FillMissingTimings(AM_SAMPLE2_PROPERTIES& sampleProps)
+    void SampleCorrection::FillMissingTimings(AM_SAMPLE2_PROPERTIES& sampleProps)
     {
         assert(m_format);
 
@@ -131,19 +131,19 @@ namespace SaneAudioRenderer
         }
     }
 
-    size_t TimingsCorrection::TimeToFrames(REFERENCE_TIME time)
+    size_t SampleCorrection::TimeToFrames(REFERENCE_TIME time)
     {
         assert(m_format);
         return (size_t)(time * m_format->nSamplesPerSec / OneSecond * m_rate);
     }
 
-    REFERENCE_TIME TimingsCorrection::FramesToTime(size_t frames)
+    REFERENCE_TIME SampleCorrection::FramesToTime(size_t frames)
     {
         assert(m_format);
         return (REFERENCE_TIME)(frames * OneSecond / m_format->nSamplesPerSec / m_rate);
     }
 
-    void TimingsCorrection::AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames)
+    void SampleCorrection::AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames)
     {
         if (m_processedFrames == 0)
             m_firstSampleStart = sampleProps.tStart;

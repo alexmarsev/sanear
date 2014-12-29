@@ -4,11 +4,11 @@
 
 namespace SaneAudioRenderer
 {
-    class TimingsCorrection final
+    class SampleCorrection final
     {
     public:
 
-        TimingsCorrection() = default;
+        SampleCorrection() = default;
 
         void SetFormat(SharedWaveFormat format);
         void NewSegment(double rate);

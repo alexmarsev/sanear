@@ -11,7 +11,7 @@
 #include "DspVolume.h"
 #include "Interfaces.h"
 #include "MyClock.h"
-#include "TimingsCorrection.h"
+#include "SampleCorrection.h"
 
 namespace SaneAudioRenderer
 {
@@ -81,7 +81,7 @@ namespace SaneAudioRenderer
 
         FILTER_STATE m_state = State_Stopped;
 
-        TimingsCorrection m_timingsCorrection;
+        SampleCorrection m_timingsCorrection;
 
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_graphClock;
