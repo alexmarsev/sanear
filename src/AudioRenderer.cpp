@@ -81,16 +81,21 @@ namespace SaneAudioRenderer
 
             try
             {
+                // Clear the device if related settings were changed.
                 CheckDeviceSettings();
 
+                // Create the device if needed.
                 if (!m_device)
                     CreateDevice();
 
+                // Apply sample corrections (pad, crop, guess timings).
                 chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps);
 
+                // Apply clock corrections (graph clock and rate dsp).
                 if (m_device && m_state == State_Running)
                     ApplyClockCorrection();
 
+                // Apply dsp chain.
                 if (m_device && !m_device->bitstream)
                 {
                     auto f = [&](DspBase* pDsp)
@@ -110,6 +115,7 @@ namespace SaneAudioRenderer
             }
         }
 
+        // Send processed sample to the device.
         return Push(chunk);
     }
 
