@@ -61,6 +61,8 @@ namespace SaneAudioRenderer
 
         void ApplyClockCorrection();
 
+        HRESULT GetGraphTime(REFERENCE_TIME& time);
+
         void InitializeProcessors();
 
         template <typename F>
@@ -86,6 +88,7 @@ namespace SaneAudioRenderer
         SampleCorrection m_sampleCorrection;
 
         IMyClockPtr m_myClock;
+        IReferenceClockPtr m_myGraphClock;
         IReferenceClockPtr m_graphClock;
         bool m_externalClock = false;
         REFERENCE_TIME m_correctedWithRateDsp = 0;

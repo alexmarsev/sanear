@@ -20,7 +20,7 @@ namespace SaneAudioRenderer
             if (!m_settings || !m_myClock)
                 throw E_UNEXPECTED;
 
-            ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_graphClock)));
+            ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_myGraphClock)));
 
             if (static_cast<HANDLE>(m_flush) == NULL ||
                 static_cast<HANDLE>(m_bufferFilled) == NULL)
@@ -45,18 +45,21 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_graphClock)));
-        m_externalClock = false;
+        m_graphClock = pClock;
 
-        if (pClock && m_graphClock != pClock)
+        if (m_graphClock && m_graphClock != m_myGraphClock)
         {
-            m_graphClock = pClock;
-
             if (!m_externalClock)
-            {
-                m_externalClock = true;
                 ClearDevice();
-            }
+
+            m_externalClock = true;
+        }
+        else
+        {
+            if (m_externalClock)
+                ClearDevice();
+
+            m_externalClock = false;
         }
     }
 
@@ -426,7 +429,7 @@ namespace SaneAudioRenderer
             REFERENCE_TIME graphTime, myTime, myStartTime;
             if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
                 SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
-                SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                SUCCEEDED(GetGraphTime(graphTime)) &&
                 myTime > myStartTime)
             {
                 REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
@@ -437,6 +440,15 @@ namespace SaneAudioRenderer
                 }
             }
         }
+    }
+
+    HRESULT AudioRenderer::GetGraphTime(REFERENCE_TIME& time)
+    {
+        CAutoLock objectLock(this);
+
+        return m_graphClock ?
+                   m_graphClock->GetTime(&time) :
+                   m_myGraphClock->GetTime(&time);
     }
 
     void AudioRenderer::InitializeProcessors()
@@ -543,7 +555,7 @@ namespace SaneAudioRenderer
             // Loop until the graph time passes the current sample end.
             REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
-                SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                SUCCEEDED(GetGraphTime(graphTime)) &&
                 graphTime > m_startTime + m_sampleCorrection.GetLastSampleEnd())
             {
                 break;

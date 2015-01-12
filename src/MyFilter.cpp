@@ -109,14 +109,7 @@ namespace SaneAudioRenderer
 
         CBaseFilter::SetSyncSource(pClock);
 
-        try
-        {
-            m_renderer->SetClock(pClock);
-        }
-        catch (HRESULT)
-        {
-            return E_UNEXPECTED;
-        }
+        m_renderer->SetClock(pClock);
 
         return S_OK;
     }
