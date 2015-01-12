@@ -17,7 +17,7 @@ namespace SaneAudioRenderer
 
     void DspDither::Process(DspChunk& chunk)
     {
-        // TODO: handle >18 channels situation gracefully (both here and in DspMixer)
+        // TODO: handle >18 channels situation gracefully (both here and in DspMatrix)
         if (m_active && !chunk.IsEmpty() && chunk.GetFormatSize() > DspFormatSize(DspFormat::Pcm16))
         {
             DspChunk::ToFloat(chunk);
