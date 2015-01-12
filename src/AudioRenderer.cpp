@@ -532,7 +532,7 @@ namespace SaneAudioRenderer
                 }
             }
 
-            // The following code emulates null audio device.
+            // The code below emulates null audio device.
             assert(!m_device);
 
             // Don't delay Paused->Running transition, because we don't have a buffer to fill anyway.
