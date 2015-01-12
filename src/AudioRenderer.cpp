@@ -127,11 +127,13 @@ namespace SaneAudioRenderer
             CAutoLock objectLock(this);
             assert(m_state != State_Stopped);
 
+            // No device - nothing to block on.
             if (!m_device)
                 blockUntilEnd = false;
 
             try
             {
+                // Apply dsp chain.
                 if (m_device && !m_device->bitstream)
                 {
                     auto f = [&](DspBase* pDsp)
@@ -153,8 +155,10 @@ namespace SaneAudioRenderer
 
         auto doBlock = [this]
         {
+            // Increase system timer resolution.
             TimePeriodHelper timePeriodHelper(1);
 
+            // Unslave the clock because no more samples are going to be pushed.
             m_myClock->UnslaveClockFromAudio();
 
             for (;;)
@@ -185,18 +189,22 @@ namespace SaneAudioRenderer
                     actual = llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
                     target = llMulDiv(m_pushedFrames, OneSecond, m_device->waveFormat->nSamplesPerSec, 0);
 
+                    // Return if the end of stream is reached.
                     if (actual == target)
                         return true;
 
+                    // Stalling protection.
                     if (actual == previous && m_state == State_Running)
                         return true;
                 }
 
+                // Sleep until predicted end of stream.
                 if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
                     return false;
             }
         };
 
+        // Send processed sample to the device, and block until the buffer is drained (if requested).
         return Push(chunk) && (!blockUntilEnd || doBlock());
     }
 
