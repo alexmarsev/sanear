@@ -59,6 +59,8 @@ namespace SaneAudioRenderer
         void CreateDevice();
         void ClearDevice();
 
+        void ApplyClockCorrection();
+
         void InitializeProcessors();
 
         template <typename F>
@@ -81,7 +83,7 @@ namespace SaneAudioRenderer
 
         FILTER_STATE m_state = State_Stopped;
 
-        SampleCorrection m_timingsCorrection;
+        SampleCorrection m_sampleCorrection;
 
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_graphClock;

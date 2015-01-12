@@ -83,38 +83,10 @@ namespace SaneAudioRenderer
                 if (!m_device)
                     CreateDevice();
 
-                chunk = m_timingsCorrection.ProcessSample(pSample, sampleProps);
+                chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps);
 
                 if (m_device && m_state == State_Running)
-                {
-                    {
-                        REFERENCE_TIME offset = m_timingsCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
-                        if (std::abs(offset) > 1000)
-                        {
-                            m_myClock->OffsetSlavedClock(offset);
-                            //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(sampleProps.tStop - sampleProps.tStart) + L"\n").c_str());
-                        }
-                    }
-
-                    if (m_externalClock && !m_device->bitstream)
-                    {
-                        assert(m_dspRate.Active());
-                        REFERENCE_TIME graphTime, myTime, myStartTime;
-                        if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
-                            SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
-                            SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                            myTime > myStartTime)
-                        {
-                            REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
-                            if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
-                            {
-                                //DbgOutString((std::to_wstring(offset) + L" " + std::to_wstring(m_corrected) + L"\n").c_str());
-                                m_dspRate.Adjust(offset);
-                                m_correctedWithRateDsp += offset;
-                            }
-                        }
-                    }
-                }
+                    ApplyClockCorrection();
 
                 if (m_device && !m_device->bitstream)
                 {
@@ -266,7 +238,7 @@ namespace SaneAudioRenderer
 
         m_inputFormat = inputFormat;
 
-        m_timingsCorrection.SetFormat(inputFormat);
+        m_sampleCorrection.SetFormat(inputFormat);
 
         ClearDevice();
     }
@@ -282,7 +254,7 @@ namespace SaneAudioRenderer
         m_startClockOffset = 0;
         m_rate = rate;
 
-        m_timingsCorrection.NewSegment(m_rate);
+        m_sampleCorrection.NewSegment(m_rate);
 
         assert(m_inputFormat);
         if (m_device)
@@ -409,7 +381,7 @@ namespace SaneAudioRenderer
         {
             InitializeProcessors();
 
-            m_startClockOffset = m_timingsCorrection.GetLastSampleEnd();
+            m_startClockOffset = m_sampleCorrection.GetLastSampleEnd();
 
             if (m_state == State_Running)
                 StartDevice();
@@ -431,6 +403,40 @@ namespace SaneAudioRenderer
         m_deviceManager.ReleaseDevice();
 
         m_pushedFrames = 0;
+    }
+
+    void AudioRenderer::ApplyClockCorrection()
+    {
+        CAutoLock objectLock(this);
+        assert(m_inputFormat);
+        assert(m_device);
+        assert(m_state == State_Running);
+
+        {
+            REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
+            if (std::abs(offset) > 1000)
+            {
+                m_myClock->OffsetSlavedClock(offset);
+            }
+        }
+
+        if (m_externalClock && !m_device->bitstream)
+        {
+            assert(m_dspRate.Active());
+            REFERENCE_TIME graphTime, myTime, myStartTime;
+            if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
+                SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
+                SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
+                myTime > myStartTime)
+            {
+                REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
+                if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
+                {
+                    m_dspRate.Adjust(offset);
+                    m_correctedWithRateDsp += offset;
+                }
+            }
+        }
     }
 
     void AudioRenderer::InitializeProcessors()
@@ -538,7 +544,7 @@ namespace SaneAudioRenderer
             REFERENCE_TIME graphTime;
             if (m_state == State_Running &&
                 SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                graphTime > m_startTime + m_timingsCorrection.GetLastSampleEnd())
+                graphTime > m_startTime + m_sampleCorrection.GetLastSampleEnd())
             {
                 break;
             }
