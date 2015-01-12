@@ -33,74 +33,71 @@ namespace SaneAudioRenderer
 
     void DspRate::Process(DspChunk& chunk)
     {
-        if (m_soxr && !chunk.IsEmpty())
+        if (!m_soxr || chunk.IsEmpty())
+            return;
+
+        assert(chunk.GetRate() == m_inputRate);
+        assert(chunk.GetChannelCount() == m_channels);
+
+        DspChunk::ToFloat(chunk);
+
+        size_t outputFrames = (size_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
+
+        if (m_variable)
         {
-            DspChunk::ToFloat(chunk);
-            assert(chunk.GetRate() == m_inputRate);
-            assert(chunk.GetChannelCount() == m_channels);
+            double multiplier = 1.0;
 
-            size_t outputFrames = (size_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
-
-            if (m_variable)
+            if (m_delta != 0)
             {
-                double multiplier = 1.0;
-
-                if (m_delta != 0)
-                {
-                    REFERENCE_TIME chunkTime = OneSecond * chunk.GetFrameCount() / m_inputRate;
-                    multiplier = (double)chunkTime / (chunkTime - std::min(m_delta, chunkTime - 1));
-                    multiplier = std::max(1 / m_maxVariableRateMultiplier,
-                                          std::min(m_maxVariableRateMultiplier, multiplier));
-                    m_delta -= (REFERENCE_TIME)(chunkTime - chunkTime / multiplier);
-                }
-
-                assert(multiplier > 0.0);
-                soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
-                if (multiplier < 1.0)
-                    outputFrames = (size_t)(outputFrames / multiplier);
+                REFERENCE_TIME chunkTime = OneSecond * chunk.GetFrameCount() / m_inputRate;
+                multiplier = (double)chunkTime / (chunkTime - std::min(m_delta, chunkTime - 1));
+                multiplier = std::max(1 / m_maxVariableRateMultiplier,
+                                      std::min(m_maxVariableRateMultiplier, multiplier));
+                m_delta -= (REFERENCE_TIME)(chunkTime - chunkTime / multiplier);
             }
 
-            DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
-
-            size_t inputDone = 0;
-            size_t outputDone = 0;
-            soxr_process(m_soxr, chunk.GetConstData(), chunk.GetFrameCount(), &inputDone,
-                                 output.GetData(), output.GetFrameCount(), &outputDone);
-            assert(inputDone == chunk.GetFrameCount());
-            output.Shrink(outputDone);
-
-            chunk = std::move(output);
+            assert(multiplier > 0.0);
+            soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
+            if (multiplier < 1.0)
+                outputFrames = (size_t)(outputFrames / multiplier);
         }
+
+        DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
+
+        size_t inputDone = 0;
+        size_t outputDone = 0;
+        soxr_process(m_soxr, chunk.GetConstData(), chunk.GetFrameCount(), &inputDone,
+                             output.GetData(), output.GetFrameCount(), &outputDone);
+        assert(inputDone == chunk.GetFrameCount());
+        output.Shrink(outputDone);
+
+        chunk = std::move(output);
     }
 
     void DspRate::Finish(DspChunk& chunk)
     {
-        if (m_soxr)
+        if (!m_soxr)
+            return;
+
+        Process(chunk);
+
+        for (;;)
         {
-            Process(chunk);
+            DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_outputRate, m_outputRate);
 
-            for (;;)
-            {
-                DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_outputRate, m_outputRate);
+            if (!chunk.IsEmpty())
+                memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
 
-                if (!chunk.IsEmpty())
-                {
-                    assert(output.GetFormat() == chunk.GetFormat());
-                    assert(output.GetFrameSize() == chunk.GetFrameSize());
-                    memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
-                }
+            size_t inputDone = 0;
+            size_t outputDo = output.GetFrameCount() - chunk.GetFrameCount();
+            size_t outputDone = 0;
+            soxr_process(m_soxr, nullptr, 0, &inputDone, output.GetData() + chunk.GetSize(), outputDo, &outputDone);
+            output.Shrink(outputDone);
 
-                size_t inputDone = 0;
-                size_t outputDo = output.GetFrameCount() - chunk.GetFrameCount();
-                size_t outputDone = 0;
-                soxr_process(m_soxr, nullptr, 0, &inputDone, output.GetData() + chunk.GetSize(), outputDo, &outputDone);
-                output.Shrink(outputDone);
+            chunk = std::move(output);
 
-                chunk = std::move(output);
-
-                if (outputDone < outputDo)
-                    break;
-            }
+            if (outputDone < outputDo)
+                break;
         }
     }
 

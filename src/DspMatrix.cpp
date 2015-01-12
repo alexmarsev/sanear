@@ -232,37 +232,36 @@ namespace SaneAudioRenderer
 
     void DspMatrix::Process(DspChunk& chunk)
     {
-        if (m_matrix && !chunk.IsEmpty())
+        if (!m_matrix || chunk.IsEmpty())
+            return;
+
+        assert(chunk.GetChannelCount() == m_inputChannels);
+
+        DspChunk::ToFloat(chunk);
+
+        DspChunk output(DspFormat::Float, m_outputChannels, chunk.GetFrameCount(), chunk.GetRate());
+
+        auto inputData = reinterpret_cast<const float*>(chunk.GetConstData());
+        auto outputData = reinterpret_cast<float*>(output.GetData());
+
+        if (m_inputChannels == 6 && m_outputChannels == 2)
         {
-            DspChunk::ToFloat(chunk);
-
-            assert(chunk.GetFormat() == DspFormat::Float);
-            assert(chunk.GetChannelCount() == m_inputChannels);
-
-            DspChunk output(DspFormat::Float, m_outputChannels, chunk.GetFrameCount(), chunk.GetRate());
-
-            const float* inputData = (const float*)chunk.GetConstData();
-            float* outputData = (float*)output.GetData();
-
-            if (m_inputChannels == 6 && m_outputChannels == 2)
-            {
-                Mix<6, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
-            }
-            else if (m_inputChannels == 7 && m_outputChannels == 2)
-            {
-                Mix<7, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
-            }
-            else if (m_inputChannels == 8 && m_outputChannels == 2)
-            {
-                Mix<8, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
-            }
-            else
-            {
-                Mix(m_inputChannels, inputData, m_outputChannels, outputData, m_matrix.get(), chunk.GetFrameCount());
-            }
-
-            chunk = std::move(output);
+            Mix<6, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
         }
+        else if (m_inputChannels == 7 && m_outputChannels == 2)
+        {
+            Mix<7, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
+        }
+        else if (m_inputChannels == 8 && m_outputChannels == 2)
+        {
+            Mix<8, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
+        }
+        else
+        {
+            Mix(m_inputChannels, inputData, m_outputChannels, outputData, m_matrix.get(), chunk.GetFrameCount());
+        }
+
+        chunk = std::move(output);
     }
 
     void DspMatrix::Finish(DspChunk& chunk)

@@ -53,17 +53,14 @@ namespace SaneAudioRenderer
 
     void DspLimiter::Process(DspChunk& chunk)
     {
-        if (chunk.IsEmpty())
-            return;
-
         if (m_settingsSerial != m_settings->GetSerial())
             UpdateSettings();
 
-        if (chunk.GetFormat() == DspFormat::Float &&
-            (m_exclusive || m_enabledShared))
-        {
-            DspChunk::ToFloat(chunk);
+        if (chunk.IsEmpty())
+            return;
 
+        if (chunk.GetFormat() == DspFormat::Float && (m_exclusive || m_enabledShared))
+        {
             m_bufferFrameCount += chunk.GetFrameCount();
             m_buffer.push_back(std::move(chunk));
             assert(chunk.IsEmpty());
@@ -104,7 +101,7 @@ namespace SaneAudioRenderer
 
         if (!m_buffer.empty())
         {
-            assert(chunk.IsEmpty() || chunk.GetFormat() == DspFormat::Float);
+            DspChunk::ToFloat(chunk);
 
             DspChunk output(DspFormat::Float, m_buffer.front().GetChannelCount(),
                             chunk.GetFrameCount() + m_bufferFrameCount, m_buffer.front().GetRate());

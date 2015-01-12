@@ -31,13 +31,14 @@ namespace SaneAudioRenderer
         if (m_possible && m_settingsSerial != m_settings->GetSerial())
             UpdateSettings();
 
-        if (m_active && !chunk.IsEmpty())
-        {
-            DspChunk::ToFloat(chunk);
+        if (!m_active || chunk.IsEmpty())
+            return;
 
-            assert(chunk.GetChannelCount() == 2);
-            m_bs2b.cross_feed((float*)chunk.GetData(), (int)chunk.GetFrameCount());
-        }
+        assert(chunk.GetChannelCount() == 2);
+
+        DspChunk::ToFloat(chunk);
+
+        m_bs2b.cross_feed((float*)chunk.GetData(), (int)chunk.GetFrameCount());
     }
 
     void DspCrossfeed::Finish(DspChunk& chunk)
