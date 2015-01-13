@@ -219,12 +219,12 @@ namespace SaneAudioRenderer
 
             {
                 LPWSTR pDeviceName = nullptr;
-                ThrowIfFailed(m_createDeviceSettings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
+                ThrowIfFailed(m_checkBitstreamSettings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
 
                 std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
                 deviceName.reset(pDeviceName);
 
-                m_device->friendlyName = std::make_shared<std::wstring>(deviceName.get());
+                device.friendlyName = std::make_shared<std::wstring>(deviceName.get());
             }
 
             CreateAudioClient(device);
