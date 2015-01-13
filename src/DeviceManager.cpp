@@ -98,12 +98,12 @@ namespace SaneAudioRenderer
                     ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
                     audioDevice.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
 
-                    if (*targetName != *audioDevice.friendlyName)
-                    {
-                        device = nullptr;
-                        devicePropertyStore = nullptr;
-                        audioDevice.friendlyName = nullptr;
-                    }
+                    if (*targetName == *audioDevice.friendlyName)
+                        break;
+
+                    device = nullptr;
+                    devicePropertyStore = nullptr;
+                    audioDevice.friendlyName = nullptr;
                 }
             }
 
