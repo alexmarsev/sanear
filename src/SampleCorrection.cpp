@@ -29,6 +29,8 @@ namespace SaneAudioRenderer
 
     DspChunk SampleCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
     {
+        // TODO: bitstreaming and AM_SAMPLE_SPLICEPOINT
+
         assert(m_format);
 
         FillMissingTimings(sampleProps);
