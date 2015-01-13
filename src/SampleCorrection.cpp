@@ -3,14 +3,17 @@
 
 namespace SaneAudioRenderer
 {
-    void SampleCorrection::SetFormat(SharedWaveFormat format)
+    void SampleCorrection::NewFormat(SharedWaveFormat format)
     {
         assert(format);
 
         if (m_format)
         {
-            m_processedFramesTimeInPreviousFormats += llMulDiv(m_processedFrames, OneSecond, m_format->nSamplesPerSec, 0);
-            m_processedFrames = 0;
+            assert(m_format->nSamplesPerSec > 0);
+
+            REFERENCE_TIME time = llMulDiv(m_segmentFramesInCurrentFormat, OneSecond, m_format->nSamplesPerSec, 0);
+            m_segmentTimeInPreviousFormats += time;
+            m_segmentFramesInCurrentFormat = 0;
         }
 
         m_format = format;
@@ -19,40 +22,45 @@ namespace SaneAudioRenderer
 
     void SampleCorrection::NewSegment(double rate)
     {
+        assert(rate > 0.0);
+
         m_rate = rate;
 
-        m_processedFramesTimeInPreviousFormats = 0;
-        m_processedFrames = 0;
-        m_firstSampleStart = 0;
+        m_freshSegment = true;
+        m_segmentStartTimestamp = 0;
+        m_segmentTimeInPreviousFormats = 0;
+        m_segmentFramesInCurrentFormat = 0;
+
         m_lastSampleEnd = 0;
+
+        m_timingsError = 0;
+    }
+
+    void SampleCorrection::NewBuffer()
+    {
+        m_freshBuffer = true;
     }
 
     DspChunk SampleCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
     {
-        // TODO: bitstreaming and AM_SAMPLE_SPLICEPOINT
-
         assert(m_format);
 
         FillMissingTimings(sampleProps);
 
         DspChunk chunk;
 
-        if (m_bitstream || m_lastSampleEnd > 0)
-        {
-            // Leave the sample untouched.
-            chunk = DspChunk(pSample, sampleProps, *m_format);
-            AccumulateTimings(sampleProps, chunk.GetFrameCount());
-        }
-        else if (sampleProps.tStop <= m_lastSampleEnd)
+        const bool drop = (m_bitstream && m_freshBuffer && !(sampleProps.dwSampleFlags & AM_SAMPLE_SPLICEPOINT)) ||
+                          (!m_bitstream && m_freshSegment && sampleProps.tStop <= 0);
+
+        if (drop)
         {
             // Drop the sample.
             assert(chunk.IsEmpty());
-            AccumulateTimings(sampleProps, chunk.GetFrameCount());
         }
-        else if (sampleProps.tStart < m_lastSampleEnd)
+        else if (!m_bitstream && m_freshSegment && sampleProps.tStart < 0)
         {
             // Crop the sample.
-            size_t cropFrames = TimeToFrames(m_lastSampleEnd - sampleProps.tStart);
+            size_t cropFrames = (size_t)TimeToFrames(m_lastSampleEnd - sampleProps.tStart, m_rate);
 
             if (cropFrames > 0)
             {
@@ -61,7 +69,7 @@ namespace SaneAudioRenderer
                 assert((int32_t)cropBytes < sampleProps.lActual);
                 sampleProps.pbBuffer += cropBytes;
                 sampleProps.lActual -= (int32_t)cropBytes;
-                sampleProps.tStart += FramesToTime(cropFrames);
+                sampleProps.tStart += FramesToTime(cropFrames, m_rate);
 
                 chunk = DspChunk(pSample, sampleProps, *m_format);
                 AccumulateTimings(sampleProps, chunk.GetFrameCount());
@@ -72,28 +80,28 @@ namespace SaneAudioRenderer
                 AccumulateTimings(sampleProps, chunk.GetFrameCount());
             }
         }
-        else if (sampleProps.tStart > m_lastSampleEnd)
+        else if (!m_bitstream && m_freshSegment && sampleProps.tStart > 0)
         {
             // Zero-pad the sample.
-            size_t extendFrames = TimeToFrames(sampleProps.tStart - m_lastSampleEnd);
+            size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastSampleEnd, m_rate);
 
-            if (extendFrames > 0)
+            if (padFrames > 0)
             {
                 DspChunk tempChunk(pSample, sampleProps, *m_format);
 
-                size_t extendBytes = extendFrames * tempChunk.GetFrameSize();
+                size_t padBytes = padFrames * tempChunk.GetFrameSize();
                 sampleProps.pbBuffer = nullptr;
-                sampleProps.lActual += extendBytes;
-                sampleProps.tStart -= FramesToTime(extendFrames);
+                sampleProps.lActual += padBytes;
+                sampleProps.tStart -= FramesToTime(padFrames);
 
-                AccumulateTimings(sampleProps, tempChunk.GetFrameCount() + extendFrames);
+                AccumulateTimings(sampleProps, tempChunk.GetFrameCount() + padFrames);
 
                 chunk = DspChunk(tempChunk.GetFormat(), tempChunk.GetChannelCount(),
-                                 tempChunk.GetFrameCount() + extendFrames, tempChunk.GetRate());
+                                 tempChunk.GetFrameCount() + padFrames, tempChunk.GetRate());
 
-                assert(chunk.GetSize() == tempChunk.GetSize() + extendBytes);
-                ZeroMemory(chunk.GetData(), extendBytes);
-                memcpy(chunk.GetData() + extendBytes, tempChunk.GetConstData(), tempChunk.GetSize());
+                assert(chunk.GetSize() == tempChunk.GetSize() + padBytes);
+                ZeroMemory(chunk.GetData(), padBytes);
+                memcpy(chunk.GetData() + padBytes, tempChunk.GetConstData(), tempChunk.GetSize());
             }
             else
             {
@@ -114,49 +122,76 @@ namespace SaneAudioRenderer
     void SampleCorrection::FillMissingTimings(AM_SAMPLE2_PROPERTIES& sampleProps)
     {
         assert(m_format);
+        assert(m_rate > 0.0);
 
         if (!(sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID))
         {
-            sampleProps.tStart = m_firstSampleStart +
-                                 (REFERENCE_TIME)((m_processedFramesTimeInPreviousFormats +
-                                                  llMulDiv(m_processedFrames, OneSecond,
-                                                           m_format->nSamplesPerSec, 0)) / m_rate);
+            REFERENCE_TIME time = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
+
+            sampleProps.tStart = m_segmentStartTimestamp + (REFERENCE_TIME)(time / m_rate);
             sampleProps.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
         }
 
         if (!(sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID))
         {
-            REFERENCE_TIME duration = sampleProps.lActual * 8 / m_format->wBitsPerSample /
-                                      m_format->nChannels * OneSecond / m_format->nSamplesPerSec;
-            sampleProps.tStop = sampleProps.tStart + (REFERENCE_TIME)(duration / m_rate);
+            REFERENCE_TIME time = sampleProps.lActual * 8 / m_format->wBitsPerSample /
+                                  m_format->nChannels * OneSecond / m_format->nSamplesPerSec;
+
+            sampleProps.tStop = sampleProps.tStart + (REFERENCE_TIME)(time / m_rate);
             sampleProps.dwSampleFlags |= AM_SAMPLE_STOPVALID;
         }
     }
 
-    size_t SampleCorrection::TimeToFrames(REFERENCE_TIME time)
+    uint64_t SampleCorrection::TimeToFrames(REFERENCE_TIME time)
     {
         assert(m_format);
-        return (size_t)(time * m_format->nSamplesPerSec / OneSecond * m_rate);
+        return (size_t)llMulDiv(time, m_format->nSamplesPerSec, OneSecond, 0);
     }
 
-    REFERENCE_TIME SampleCorrection::FramesToTime(size_t frames)
+    uint64_t SampleCorrection::TimeToFrames(REFERENCE_TIME time, double rate)
+    {
+        assert(m_rate > 0.0);
+        return (size_t)(TimeToFrames(time) * m_rate);
+    }
+
+    REFERENCE_TIME SampleCorrection::FramesToTime(uint64_t frames)
     {
         assert(m_format);
-        return (REFERENCE_TIME)(frames * OneSecond / m_format->nSamplesPerSec / m_rate);
+        return llMulDiv(frames, OneSecond, m_format->nSamplesPerSec, 0);
+    }
+
+    REFERENCE_TIME SampleCorrection::FramesToTime(uint64_t frames, double rate)
+    {
+        assert(m_rate > 0.0);
+        return (REFERENCE_TIME)(FramesToTime(frames) / m_rate);
     }
 
     void SampleCorrection::AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames)
     {
-        if (m_processedFrames == 0)
-            m_firstSampleStart = sampleProps.tStart;
+        assert(m_format);
+        assert(m_format->nSamplesPerSec > 0);
+        assert(m_rate > 0.0);
 
-        m_processedFrames += frames;
+        if (frames == 0)
+            return;
 
-        m_lastSampleEnd = sampleProps.tStop;
+        if (m_freshSegment)
+        {
+            assert(m_segmentStartTimestamp == 0);
+            m_segmentStartTimestamp = sampleProps.tStart;
+            m_freshSegment = false;
+        }
 
-        m_timingsError = sampleProps.tStart -
-                         (REFERENCE_TIME)(m_processedFramesTimeInPreviousFormats +
-                                          llMulDiv(m_processedFrames - frames, OneSecond,
-                                                   m_format->nSamplesPerSec, 0) / m_rate);
+        if (!m_freshSegment)
+            m_lastSampleEnd = sampleProps.tStop;
+
+        REFERENCE_TIME time = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
+
+        m_timingsError = sampleProps.tStart - (REFERENCE_TIME)(time / m_rate);
+
+        m_segmentFramesInCurrentFormat += frames;
+
+        if (m_freshBuffer)
+            m_freshBuffer = false;
     }
 }

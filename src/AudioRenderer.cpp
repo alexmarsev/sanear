@@ -222,11 +222,11 @@ namespace SaneAudioRenderer
         {
             m_device->audioClient->Reset();
             m_bufferFilled.Reset();
+            m_sampleCorrection.NewBuffer();
+            m_pushedFrames = 0;
         }
 
         m_flush.Reset();
-
-        m_pushedFrames = 0;
     }
 
     bool AudioRenderer::CheckFormat(SharedWaveFormat inputFormat)
@@ -255,7 +255,7 @@ namespace SaneAudioRenderer
 
         m_inputFormat = inputFormat;
 
-        m_sampleCorrection.SetFormat(inputFormat);
+        m_sampleCorrection.NewFormat(inputFormat);
 
         ClearDevice();
     }
@@ -398,6 +398,9 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
+            m_sampleCorrection.NewBuffer();
+            m_pushedFrames = 0;
+
             InitializeProcessors();
 
             m_startClockOffset = m_sampleCorrection.GetLastSampleEnd();
@@ -416,12 +419,11 @@ namespace SaneAudioRenderer
             m_myClock->UnslaveClockFromAudio();
             m_device->audioClient->Stop();
             m_bufferFilled.Reset();
+            m_sampleCorrection.NewBuffer();
+            m_pushedFrames = 0;
+            m_device = nullptr;
+            m_deviceManager.ReleaseDevice();
         }
-
-        m_device = nullptr;
-        m_deviceManager.ReleaseDevice();
-
-        m_pushedFrames = 0;
     }
 
     void AudioRenderer::ApplyClockCorrection()
