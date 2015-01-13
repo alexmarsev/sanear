@@ -335,8 +335,8 @@ namespace SaneAudioRenderer
             }
 
             ThrowIfFailed(m_device->audioClient->Initialize(m_device->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
-                                                           0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
-                                                           0, &(*m_device->waveFormat), nullptr));
+                                                            0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
+                                                            0, &(*m_device->waveFormat), nullptr));
 
             ThrowIfFailed(m_device->audioClient->GetService(IID_PPV_ARGS(&m_device->audioRenderClient)));
 
