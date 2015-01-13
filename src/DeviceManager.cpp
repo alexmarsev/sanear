@@ -65,21 +65,8 @@ namespace SaneAudioRenderer
             return ret;
         }
 
-        void CreateAudioClient(AudioDevice& output, ISettings* pSettings)
+        void CreateAudioClient(AudioDevice& audioDevice)
         {
-            assert(pSettings);
-
-            std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
-
-            {
-                LPWSTR pDeviceName = nullptr;
-                BOOL exclusive;
-                ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceName, &exclusive));
-
-                deviceName.reset(pDeviceName);
-                output.exclusive = !!exclusive;
-            }
-
             IMMDeviceEnumeratorPtr enumerator;
             ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
                                            CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
@@ -87,16 +74,17 @@ namespace SaneAudioRenderer
             IMMDevicePtr device;
             IPropertyStorePtr devicePropertyStore;
 
-            if (!deviceName || !*deviceName)
+            if (!audioDevice.friendlyName || audioDevice.friendlyName->empty())
             {
-                output.default = true;
+                audioDevice.default = true;
                 ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
                 ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                output.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+                audioDevice.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
             }
             else
             {
-                output.default = false;
+                auto targetName = audioDevice.friendlyName;
+                audioDevice.default = false;
 
                 IMMDeviceCollectionPtr collection;
                 ThrowIfFailed(enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
@@ -108,13 +96,13 @@ namespace SaneAudioRenderer
                 {
                     ThrowIfFailed(collection->Item(i, &device));
                     ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                    output.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+                    audioDevice.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
 
-                    if (wcscmp(deviceName.get(), output.friendlyName->c_str()))
+                    if (*targetName != *audioDevice.friendlyName)
                     {
                         device = nullptr;
                         devicePropertyStore = nullptr;
-                        output.friendlyName = nullptr;
+                        audioDevice.friendlyName = nullptr;
                     }
                 }
             }
@@ -122,11 +110,11 @@ namespace SaneAudioRenderer
             if (!device)
                 return;
 
-            output.adapterName = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
-            output.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
+            audioDevice.adapterName = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
+            audioDevice.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
 
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
-                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&output.audioClient));
+                                           CLSCTX_INPROC_SERVER, nullptr, (void**)&audioDevice.audioClient));
         }
     }
 
@@ -229,7 +217,17 @@ namespace SaneAudioRenderer
         {
             AudioDevice device = {};
 
-            CreateAudioClient(device, m_checkBitstreamSettings);
+            {
+                LPWSTR pDeviceName = nullptr;
+                ThrowIfFailed(m_createDeviceSettings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
+
+                std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
+                deviceName.reset(pDeviceName);
+
+                m_device->friendlyName = std::make_shared<std::wstring>(deviceName.get());
+            }
+
+            CreateAudioClient(device);
 
             if (!device.audioClient)
                 return 1;
@@ -258,7 +256,21 @@ namespace SaneAudioRenderer
             assert(!m_device);
             m_device = std::make_shared<AudioDevice>();
 
-            CreateAudioClient(*m_device, m_createDeviceSettings);
+            {
+                LPWSTR pDeviceName = nullptr;
+                BOOL exclusive;
+                UINT32 buffer;
+                ThrowIfFailed(m_createDeviceSettings->GetOuputDevice(&pDeviceName, &exclusive, &buffer));
+
+                std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
+                deviceName.reset(pDeviceName);
+
+                m_device->friendlyName = std::make_shared<std::wstring>(deviceName.get());
+                m_device->exclusive = !!exclusive;
+                m_device->bufferDuration = buffer;
+            }
+
+            CreateAudioClient(*m_device);
 
             if (!m_device->audioClient)
                 return 1;
@@ -266,8 +278,6 @@ namespace SaneAudioRenderer
             WAVEFORMATEX* pFormat;
             ThrowIfFailed(m_device->audioClient->GetMixFormat(&pFormat));
             SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
-
-            m_device->bufferDuration = 200;
 
             m_device->bitstream = (DspFormatFromWaveFormat(*m_createDeviceFormat) == DspFormat::Unknown);
 

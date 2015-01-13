@@ -10,8 +10,12 @@ namespace SaneAudioRenderer
     {
         STDMETHOD_(UINT32, GetSerial)() = 0;
 
-        STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceName, BOOL bExclusive) = 0;
-        STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceName, BOOL* pbExclusive) = 0;
+        enum
+        {
+            OUTPUT_DEVICE_DEFAULT_BUFFER_MS = 200,
+        };
+        STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS) = 0;
+        STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceName, BOOL* pbExclusive, UINT32* puBufferMS) = 0;
 
         STDMETHOD_(void, SetAllowBitstreaming)(BOOL bAllowBitstreaming) = 0;
         STDMETHOD_(void, GetAllowBitstreaming)(BOOL* pbAllowBitstreaming) = 0;

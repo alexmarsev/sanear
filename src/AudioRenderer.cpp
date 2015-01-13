@@ -237,7 +237,7 @@ namespace SaneAudioRenderer
             return true;
 
         BOOL exclusive;
-        m_settings->GetOuputDevice(nullptr, &exclusive);
+        m_settings->GetOuputDevice(nullptr, &exclusive, nullptr);
         BOOL bitstreamingAllowed;
         m_settings->GetAllowBitstreaming(&bitstreamingAllowed);
 
@@ -352,9 +352,11 @@ namespace SaneAudioRenderer
         {
             LPWSTR pDeviceName = nullptr;
             BOOL exclusive;
-            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceName, &exclusive)))
+            UINT32 buffer;
+            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceName, &exclusive, &buffer)))
             {
                 if (m_device->exclusive != !!exclusive ||
+                    m_device->bufferDuration != buffer ||
                     (pDeviceName && *pDeviceName && wcscmp(pDeviceName, m_device->friendlyName->c_str())) ||
                     ((!pDeviceName || !*pDeviceName) && !m_device->default))
                 {
