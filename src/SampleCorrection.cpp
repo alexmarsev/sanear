@@ -89,7 +89,7 @@ namespace SaneAudioRenderer
 
                 size_t padBytes = padFrames * tempChunk.GetFrameSize();
                 sampleProps.pbBuffer = nullptr;
-                sampleProps.lActual += padBytes;
+                sampleProps.lActual += (int32_t)padBytes;
                 sampleProps.tStart -= FramesToTime(padFrames);
 
                 AccumulateTimings(sampleProps, tempChunk.GetFrameCount() + padFrames);
