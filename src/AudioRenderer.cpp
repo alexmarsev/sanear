@@ -531,6 +531,8 @@ namespace SaneAudioRenderer
                     // Find out how many frames we can write this time.
                     const UINT32 doFrames = std::min(bufferFrames - bufferPadding, (UINT32)(chunkFrames - doneFrames));
 
+                    sleepDuration = m_device->bufferDuration / 4;
+
                     if (doFrames == 0)
                         continue;
 
@@ -551,8 +553,6 @@ namespace SaneAudioRenderer
 
                     doneFrames += doFrames;
                     m_pushedFrames += doFrames;
-
-                    sleepDuration = m_device->bufferDuration / 4;
 
                     continue;
                 }
