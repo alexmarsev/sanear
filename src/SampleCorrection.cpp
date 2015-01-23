@@ -58,7 +58,7 @@ namespace SaneAudioRenderer
         else if (!m_bitstream && m_freshSegment && sampleProps.tStart < 0)
         {
             // Crop the sample.
-            size_t cropFrames = (size_t)TimeToFrames(m_lastSampleEnd - sampleProps.tStart, m_rate);
+            size_t cropFrames = (size_t)TimeToFrames(m_lastSampleEnd - sampleProps.tStart);
 
             if (cropFrames > 0)
             {
@@ -67,7 +67,7 @@ namespace SaneAudioRenderer
                 assert((int32_t)cropBytes < sampleProps.lActual);
                 sampleProps.pbBuffer += cropBytes;
                 sampleProps.lActual -= (int32_t)cropBytes;
-                sampleProps.tStart += FramesToTime(cropFrames, m_rate);
+                sampleProps.tStart += FramesToTime(cropFrames);
 
                 chunk = DspChunk(pSample, sampleProps, *m_format);
                 AccumulateTimings(sampleProps, chunk.GetFrameCount());
@@ -81,7 +81,7 @@ namespace SaneAudioRenderer
         else if (!m_bitstream && m_freshSegment && sampleProps.tStart > 0)
         {
             // Zero-pad the sample.
-            size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastSampleEnd, m_rate);
+            size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastSampleEnd);
 
             if (padFrames > 0)
             {
@@ -126,7 +126,7 @@ namespace SaneAudioRenderer
         {
             REFERENCE_TIME time = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
 
-            sampleProps.tStart = m_segmentStartTimestamp + (REFERENCE_TIME)(time / m_rate);
+            sampleProps.tStart = m_segmentStartTimestamp + time;
             sampleProps.dwSampleFlags |= AM_SAMPLE_TIMEVALID;
         }
 
@@ -143,31 +143,20 @@ namespace SaneAudioRenderer
     uint64_t SampleCorrection::TimeToFrames(REFERENCE_TIME time)
     {
         assert(m_format);
-        return (size_t)llMulDiv(time, m_format->nSamplesPerSec, OneSecond, 0);
-    }
-
-    uint64_t SampleCorrection::TimeToFrames(REFERENCE_TIME time, double rate)
-    {
         assert(m_rate > 0.0);
-        return (size_t)(TimeToFrames(time) * m_rate);
+        return (size_t)(llMulDiv(time, m_format->nSamplesPerSec, OneSecond, 0) * m_rate);
     }
 
     REFERENCE_TIME SampleCorrection::FramesToTime(uint64_t frames)
     {
         assert(m_format);
-        return llMulDiv(frames, OneSecond, m_format->nSamplesPerSec, 0);
-    }
-
-    REFERENCE_TIME SampleCorrection::FramesToTime(uint64_t frames, double rate)
-    {
         assert(m_rate > 0.0);
-        return (REFERENCE_TIME)(FramesToTime(frames) / m_rate);
+        return (REFERENCE_TIME)(llMulDiv(frames, OneSecond, m_format->nSamplesPerSec, 0) / m_rate);
     }
 
     void SampleCorrection::AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames)
     {
         assert(m_format);
-        assert(m_format->nSamplesPerSec > 0);
         assert(m_rate > 0.0);
 
         if (frames == 0)
@@ -185,7 +174,7 @@ namespace SaneAudioRenderer
 
         REFERENCE_TIME time = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
 
-        m_timingsError = sampleProps.tStart - (REFERENCE_TIME)(time / m_rate);
+        m_timingsError = sampleProps.tStart - time;
 
         m_segmentFramesInCurrentFormat += frames;
 

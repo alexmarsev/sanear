@@ -25,9 +25,7 @@ namespace SaneAudioRenderer
         void AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames);
 
         uint64_t TimeToFrames(REFERENCE_TIME time);
-        uint64_t TimeToFrames(REFERENCE_TIME time, double rate);
         REFERENCE_TIME FramesToTime(uint64_t frames);
-        REFERENCE_TIME FramesToTime(uint64_t frames, double rate);
 
         SharedWaveFormat m_format;
         bool m_bitstream = false;
