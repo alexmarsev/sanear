@@ -6,13 +6,11 @@ namespace SaneAudioRenderer
     void SampleCorrection::NewFormat(SharedWaveFormat format)
     {
         assert(format);
+        assert(format->nSamplesPerSec > 0);
 
         if (m_format)
         {
-            assert(m_format->nSamplesPerSec > 0);
-
-            REFERENCE_TIME time = llMulDiv(m_segmentFramesInCurrentFormat, OneSecond, m_format->nSamplesPerSec, 0);
-            m_segmentTimeInPreviousFormats += time;
+            m_segmentTimeInPreviousFormats += FramesToTime(m_segmentFramesInCurrentFormat);
             m_segmentFramesInCurrentFormat = 0;
         }
 
