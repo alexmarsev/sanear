@@ -433,6 +433,7 @@ namespace SaneAudioRenderer
         assert(m_device);
         assert(m_state == State_Running);
 
+        // Apply corrections to internal clock.
         {
             REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
             if (std::abs(offset) > 1000)
@@ -441,6 +442,8 @@ namespace SaneAudioRenderer
             }
         }
 
+        // Try to match internal clock with graph clock if they're different.
+        // We do it in the roundabout way by dynamically changing audio sampling rate.
         if (m_externalClock && !m_device->bitstream)
         {
             assert(m_dspRate.Active());
