@@ -141,8 +141,7 @@ namespace SaneAudioRenderer
         try
         {
             std::wostringstream stream;
-            DebugOutForward(stream, std::forward<T>(args)...);
-            stream << "\n";
+            DebugOutForward(stream, std::forward<T>(args)..., "\n");
             OutputDebugString(stream.str().c_str());
         }
         catch (...)
