@@ -27,6 +27,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <sstream>
 
 #include "Utils.h"
 

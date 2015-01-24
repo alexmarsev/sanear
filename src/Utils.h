@@ -121,4 +121,34 @@ namespace SaneAudioRenderer
         memcpy(pBuffer, &format, size);
         return SharedWaveFormat(reinterpret_cast<WAVEFORMATEX*>(pBuffer), AlignedFreeDeleter());
     }
+
+    namespace
+    {
+        inline void DebugOutForward(std::wostringstream&) {}
+
+        template <typename T0, typename... T>
+        inline void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
+        {
+            std::streamoff off = stream.tellp();
+            stream << (off == 0 ? "sanear: " : " ") << arg0;
+            DebugOutForward(stream, std::forward<T>(args)...);
+        }
+    }
+    template <typename... T>
+    inline void DebugOut(T&&... args)
+    {
+        #ifndef NDEBUG
+        try
+        {
+            std::wostringstream stream;
+            DebugOutForward(stream, std::forward<T>(args)...);
+            stream << "\n";
+            OutputDebugString(stream.str().c_str());
+        }
+        catch (...)
+        {
+            OutputDebugString(L"sanear: caught exception while formatting debug message");
+        }
+        #endif
+    }
 }
