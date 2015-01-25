@@ -129,8 +129,7 @@ namespace SaneAudioRenderer
         template <typename T0, typename... T>
         inline void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
         {
-            std::streamoff off = stream.tellp();
-            stream << (off == 0 ? "sanear: " : " ") << arg0;
+            stream << " " << arg0;
             DebugOutForward(stream, std::forward<T>(args)...);
         }
     }
@@ -141,7 +140,9 @@ namespace SaneAudioRenderer
         try
         {
             std::wostringstream stream;
-            DebugOutForward(stream, std::forward<T>(args)..., "\n");
+            stream << "sanear:";
+            DebugOutForward(stream, std::forward<T>(args)...);
+            stream << "\n";
             OutputDebugString(stream.str().c_str());
         }
         catch (...)
