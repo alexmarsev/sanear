@@ -264,10 +264,6 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        // It makes things a lot easier when rate is within float precision,
-        // please add a cast to your player's code.
-        assert((double)(float)rate == rate);
-
         m_startClockOffset = 0;
         m_rate = rate;
 
@@ -494,7 +490,7 @@ namespace SaneAudioRenderer
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
-        m_dspTempo.Initialize((float)m_rate, outRate, outChannels);
+        m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspVolume.Initialize(m_device->exclusive);
         m_dspLimiter.Initialize(m_settings, outRate, m_device->exclusive);

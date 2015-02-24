@@ -3,7 +3,7 @@
 
 namespace SaneAudioRenderer
 {
-    void DspTempo::Initialize(float tempo, uint32_t rate, uint32_t channels)
+    void DspTempo::Initialize(double tempo, uint32_t rate, uint32_t channels)
     {
         m_stouch.clear();
 
@@ -12,12 +12,19 @@ namespace SaneAudioRenderer
         m_rate = rate;
         m_channels = channels;
 
-        if (tempo != 1.0f)
+        m_tempo = tempo;
+        m_ftempo = (float)tempo;
+        m_ftempo1 = (float)tempo;
+        m_ftempo2 = std::nexttoward(m_ftempo, m_tempo);
+        m_outSamples1 = 0;
+        m_outSamples2 = 0;
+
+        if (tempo != 1.0)
         {
             m_stouch.setSampleRate(rate);
             m_stouch.setChannels(channels);
 
-            m_stouch.setTempo(tempo);
+            m_stouch.setTempo(m_ftempo);
 
             //m_stouch.setSetting(SETTING_SEQUENCE_MS, 40);
             //m_stouch.setSetting(SETTING_SEEKWINDOW_MS, 15);
@@ -40,6 +47,10 @@ namespace SaneAudioRenderer
         assert(chunk.GetRate() == m_rate);
         assert(chunk.GetChannelCount() == m_channels);
 
+        // DirectShow speed is in double precision, SoundTouch operates in single.
+        // We have to adjust it dynamically.
+        AdjustTempo();
+
         DspChunk::ToFloat(chunk);
 
         m_stouch.putSamples((const float*)chunk.GetConstData(), (uint32_t)chunk.GetFrameCount());
@@ -49,6 +60,9 @@ namespace SaneAudioRenderer
         uint32_t done = m_stouch.receiveSamples((float*)output.GetData(), (uint32_t)output.GetFrameCount());
         assert(done == output.GetFrameCount());
         output.Shrink(done);
+
+        auto& outSamples = (m_ftempo == m_ftempo1) ? m_outSamples1 : m_outSamples2;
+        outSamples += done;
 
         chunk = std::move(output);
     }
@@ -77,6 +91,32 @@ namespace SaneAudioRenderer
             output.Shrink(chunk.GetFrameCount() + done);
 
             chunk = std::move(output);
+        }
+    }
+
+    void DspTempo::AdjustTempo()
+    {
+        if (m_tempo != m_ftempo)
+        {
+            assert(m_tempo != m_ftempo1);
+            assert(m_tempo != m_ftempo2);
+
+            double ratio = std::abs((m_tempo - m_ftempo2) / (m_tempo - m_ftempo1));
+
+            if (m_ftempo != m_ftempo2 &&
+                m_outSamples1 * ratio - m_outSamples2 > 60 * m_rate / m_tempo)
+            {
+                DebugOut("DspTempo adjusting for float/double imprecision (2), ratio", ratio);
+                m_ftempo = m_ftempo2;
+                m_stouch.setTempo(m_ftempo);
+            }
+            else if (m_ftempo != m_ftempo1 &&
+                     m_outSamples2 - m_outSamples1 * ratio > 60 * m_rate / m_tempo)
+            {
+                DebugOut("DspTempo adjusting for float/double imprecision (1), ratio", ratio);
+                m_ftempo = m_ftempo1;
+                m_stouch.setTempo(m_ftempo);
+            }
         }
     }
 }
