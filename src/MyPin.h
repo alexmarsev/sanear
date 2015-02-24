@@ -16,6 +16,7 @@ namespace SaneAudioRenderer
 
         HRESULT CheckMediaType(const CMediaType* pmt) override;
         HRESULT SetMediaType(const CMediaType* pmt) override;
+        HRESULT CompleteConnect(IPin* pPin) override;
 
         STDMETHODIMP NewSegment(REFERENCE_TIME startTime, REFERENCE_TIME stopTime, double rate) override;
         STDMETHODIMP ReceiveCanBlock() override { return S_OK; }
