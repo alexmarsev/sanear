@@ -101,19 +101,19 @@ namespace SaneAudioRenderer
             assert(m_tempo != m_ftempo1);
             assert(m_tempo != m_ftempo2);
 
-            double ratio = std::abs((m_tempo - m_ftempo1) / (m_tempo - m_ftempo2));
+            double ratio21 = std::abs((m_tempo - m_ftempo1) / (m_tempo - m_ftempo2));
 
             if (m_ftempo != m_ftempo2 &&
-                m_outSamples1 * ratio - m_outSamples2 > 60 * m_rate)
+                m_outSamples1 * ratio21 - m_outSamples2 > 60 * m_rate)
             {
-                DebugOut("DspTempo adjusting for float/double imprecision (2), ratio", ratio);
+                DebugOut("DspTempo adjusting for float/double imprecision (2), ratio", ratio21);
                 m_ftempo = m_ftempo2;
                 m_stouch.setTempo(m_ftempo);
             }
             else if (m_ftempo != m_ftempo1 &&
-                     m_outSamples2 - m_outSamples1 * ratio > 60 * m_rate)
+                     m_outSamples2 - m_outSamples1 * ratio21 > 60 * m_rate)
             {
-                DebugOut("DspTempo adjusting for float/double imprecision (1), ratio", ratio);
+                DebugOut("DspTempo adjusting for float/double imprecision (1), ratio", ratio21);
                 m_ftempo = m_ftempo1;
                 m_stouch.setTempo(m_ftempo);
             }
