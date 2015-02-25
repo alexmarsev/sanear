@@ -101,7 +101,7 @@ namespace SaneAudioRenderer
             assert(m_tempo != m_ftempo1);
             assert(m_tempo != m_ftempo2);
 
-            double ratio = std::abs((m_tempo - m_ftempo2) / (m_tempo - m_ftempo1));
+            double ratio = std::abs((m_tempo - m_ftempo1) / (m_tempo - m_ftempo2));
 
             if (m_ftempo != m_ftempo2 &&
                 m_outSamples1 * ratio - m_outSamples2 > 60 * m_rate / m_tempo)
