@@ -13,9 +13,9 @@ namespace SaneAudioRenderer
         m_channels = channels;
 
         m_tempo = tempo;
-        m_ftempo = (float)tempo;
         m_ftempo1 = (float)tempo;
-        m_ftempo2 = std::nexttoward(m_ftempo, m_tempo);
+        m_ftempo2 = std::nexttoward(m_ftempo1, tempo);
+        m_ftempo = m_ftempo1;
         m_outSamples1 = 0;
         m_outSamples2 = 0;
 

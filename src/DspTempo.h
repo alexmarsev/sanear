@@ -36,9 +36,9 @@ namespace SaneAudioRenderer
         uint32_t m_channels = 0;
 
         double m_tempo = 1.0;
-        float m_ftempo = 1.0f;
         float m_ftempo1 = 1.0f;
         float m_ftempo2 = 1.0f;
+        float m_ftempo = 1.0f;
         uint64_t m_outSamples1 = 0;
         uint64_t m_outSamples2 = 0;
     };
