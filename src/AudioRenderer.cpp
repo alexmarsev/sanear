@@ -435,7 +435,7 @@ namespace SaneAudioRenderer
             if (std::abs(offset) > 1000)
             {
                 m_myClock->OffsetSlavedClock(offset);
-                DebugOut("AudioRenderer offset internal clock by", offset, "units");
+                DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
         }
 
@@ -455,7 +455,7 @@ namespace SaneAudioRenderer
                 {
                     m_dspRate.Adjust(offset);
                     m_correctedWithRateDsp += offset;
-                    DebugOut("AudioRenderer offset internal clock indirectly by", offset, "units");
+                    DebugOut("AudioRenderer offset internal clock indirectly by", offset / 10000., "ms");
                 }
             }
         }
