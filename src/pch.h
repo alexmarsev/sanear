@@ -28,11 +28,14 @@
 #include <random>
 #include <string>
 #include <sstream>
+#include <thread>
 
 #include "Utils.h"
 
 namespace SaneAudioRenderer
 {
+    _COM_SMARTPTR_TYPEDEF(IGlobalInterfaceTable, __uuidof(IGlobalInterfaceTable));
+
     _COM_SMARTPTR_TYPEDEF(IMMDeviceEnumerator, __uuidof(IMMDeviceEnumerator));
     _COM_SMARTPTR_TYPEDEF(IMMDeviceCollection, __uuidof(IMMDeviceCollection));
     _COM_SMARTPTR_TYPEDEF(IMMDevice, __uuidof(IMMDevice));

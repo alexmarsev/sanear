@@ -119,6 +119,7 @@ namespace SaneAudioRenderer
     }
 
     DeviceManager::DeviceManager(HRESULT& result)
+        : m_staHelper(result)
     {
         if (FAILED(result))
             return;
@@ -232,8 +233,14 @@ namespace SaneAudioRenderer
             if (!device.audioClient)
                 return 1;
 
-            return SUCCEEDED(device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
-                                                                   &(*m_checkBitstreamFormat), nullptr)) ? 0 : 1;
+            auto staInvoke = [&](IAudioClient* pAudioClient)
+            {
+                return device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
+                                                             &(*m_checkBitstreamFormat), nullptr);
+            };
+            ThrowIfFailed(m_staHelper.Invoke<IAudioClient>(m_device->audioClient, staInvoke));
+
+            return 0;
         }
         catch (HRESULT)
         {
@@ -334,9 +341,13 @@ namespace SaneAudioRenderer
                 m_device->waveFormat = mixFormat;
             }
 
-            ThrowIfFailed(m_device->audioClient->Initialize(m_device->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
-                                                            0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
-                                                            0, &(*m_device->waveFormat), nullptr));
+            auto staInvoke = [this](IAudioClient* pAudioClient)
+            {
+                return pAudioClient->Initialize(m_device->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
+                                                0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
+                                                0, &(*m_device->waveFormat), nullptr);
+            };
+            ThrowIfFailed(m_staHelper.Invoke<IAudioClient>(m_device->audioClient, staInvoke));
 
             ThrowIfFailed(m_device->audioClient->GetService(IID_PPV_ARGS(&m_device->audioRenderClient)));
 
@@ -358,7 +369,7 @@ namespace SaneAudioRenderer
 
     DWORD DeviceManager::ThreadProc()
     {
-        CoInitializeHelper coInitializeHelper(COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        CoInitializeHelper coInitializeHelper(COINIT_MULTITHREADED);
 
         HINSTANCE hInstance = GetModuleHandle(nullptr);
 

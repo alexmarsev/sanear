@@ -71,6 +71,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ApartmentInvokeHelper.h" />
     <ClInclude Include="src\DeviceManager.h" />
     <ClInclude Include="src\DspBalance.h" />
     <ClInclude Include="src\DspBase.h" />

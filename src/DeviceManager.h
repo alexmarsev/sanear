@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ApartmentInvokeHelper.h"
 #include "DspFormat.h"
 #include "Interfaces.h"
 
@@ -24,6 +25,7 @@ namespace SaneAudioRenderer
     typedef std::shared_ptr<const AudioDevice> SharedAudioDevice;
 
     class DeviceManager final
+        : private CCritSec
     {
     public:
 
@@ -43,6 +45,12 @@ namespace SaneAudioRenderer
 
         DWORD ThreadProc();
         LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+        // MSDN states:
+        // "In Windows 8, the first use of IAudioClient to access the audio device should be on the STA thread.
+        //  Calls from an MTA thread may result in undefined behavior."
+        // We abide.
+        ApartmentInvokeHelper m_staHelper;
 
         bool m_queuedCheckBitstream = false;
         bool m_queuedDestroy = false;

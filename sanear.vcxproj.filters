@@ -135,6 +135,9 @@
     <ClInclude Include="src\SampleCorrection.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\ApartmentInvokeHelper.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectShow">
