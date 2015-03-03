@@ -12,17 +12,15 @@ namespace SaneAudioRenderer
     {
         DestroyBackend();
 
-        m_variable = variable;
         m_inputRate = inputRate;
         m_outputRate = outputRate;
         m_channels = channels;
 
-        if (variable || inputRate != outputRate)
+        if (!variable && inputRate != outputRate)
         {
             auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
-            auto qualitySpec = variable ? soxr_quality_spec(SOXR_HQ, SOXR_VR) : soxr_quality_spec(SOXR_HQ, 0);
-            m_soxr = soxr_create(variable ? inputRate * (m_maxVariableRateMultiplier + 0.1) : inputRate, outputRate,
-                                 channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+            auto qualitySpec = soxr_quality_spec(SOXR_HQ, 0);
+            m_soxr = soxr_create(inputRate, outputRate, channels, nullptr, &ioSpec, &qualitySpec, nullptr);
         }
     }
 
@@ -42,26 +40,6 @@ namespace SaneAudioRenderer
         DspChunk::ToFloat(chunk);
 
         size_t outputFrames = (size_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
-
-        if (m_variable)
-        {
-            double multiplier = 1.0;
-
-            if (m_delta != 0)
-            {
-                REFERENCE_TIME chunkTime = OneSecond * chunk.GetFrameCount() / m_inputRate;
-                multiplier = (double)chunkTime / (chunkTime - std::min(m_delta, chunkTime - 1));
-                multiplier = std::max(1 / m_maxVariableRateMultiplier,
-                                      std::min(m_maxVariableRateMultiplier, multiplier));
-                m_delta -= (REFERENCE_TIME)(chunkTime - chunkTime / multiplier);
-            }
-
-            assert(multiplier > 0.0);
-            soxr_set_io_ratio(m_soxr, m_inputRate * multiplier / m_outputRate, 0);
-            if (multiplier < 1.0)
-                outputFrames = (size_t)(outputFrames / multiplier);
-        }
-
         DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
 
         size_t inputDone = 0;
@@ -99,11 +77,6 @@ namespace SaneAudioRenderer
             if (outputDone < outputDo)
                 break;
         }
-    }
-
-    void DspRate::Adjust(REFERENCE_TIME delta)
-    {
-        m_delta += delta;
     }
 
     void DspRate::DestroyBackend()

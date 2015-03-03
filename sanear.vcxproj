@@ -83,6 +83,7 @@
     <ClInclude Include="src\DspChunk.h" />
     <ClInclude Include="src\AudioRenderer.h" />
     <ClInclude Include="src\DspTempo.h" />
+    <ClInclude Include="src\DspVariableRate.h" />
     <ClInclude Include="src\DspVolume.h" />
     <ClInclude Include="src\Interfaces.h" />
     <ClInclude Include="src\MyBasicAudio.h" />
@@ -107,6 +108,7 @@
     <ClCompile Include="src\DspMatrix.cpp" />
     <ClCompile Include="src\DspChunk.cpp" />
     <ClCompile Include="src\DspTempo.cpp" />
+    <ClCompile Include="src\DspVariableRate.cpp" />
     <ClCompile Include="src\DspVolume.cpp" />
     <ClCompile Include="src\MyBasicAudio.cpp" />
     <ClCompile Include="src\MyFilter.cpp" />

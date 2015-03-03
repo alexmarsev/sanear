@@ -62,6 +62,9 @@
     <ClCompile Include="src\SampleCorrection.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\DspVariableRate.cpp">
+      <Filter>Processors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -137,6 +140,9 @@
     </ClInclude>
     <ClInclude Include="src\ApartmentInvokeHelper.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspVariableRate.h">
+      <Filter>Processors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

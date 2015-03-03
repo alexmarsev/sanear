@@ -439,6 +439,7 @@ namespace SaneAudioRenderer
             }
         }
 
+        /*
         // Try to match internal clock with graph clock if they're different.
         // We do it in the roundabout way by dynamically changing audio sampling rate.
         if (m_externalClock && !m_device->bitstream)
@@ -459,6 +460,7 @@ namespace SaneAudioRenderer
                 }
             }
         }
+        */
     }
 
     HRESULT AudioRenderer::GetGraphTime(REFERENCE_TIME& time)
@@ -490,6 +492,7 @@ namespace SaneAudioRenderer
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_externalClock, inRate, outRate, outChannels);
+        m_dspVariableRate.Initialize(m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspVolume.Initialize(m_device->exclusive);
