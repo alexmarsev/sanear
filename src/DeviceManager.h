@@ -25,7 +25,6 @@ namespace SaneAudioRenderer
     typedef std::shared_ptr<const AudioDevice> SharedAudioDevice;
 
     class DeviceManager final
-        : private CCritSec
     {
     public:
 
@@ -40,11 +39,9 @@ namespace SaneAudioRenderer
 
     private:
 
-        LRESULT OnCheckBitstreamFormat();
-        LRESULT OnCreateDevice();
-
-        DWORD ThreadProc();
-        LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+        HRESULT OnCheckBitstreamFormat();
+        HRESULT OnCreateDevice();
+        HRESULT OnReleaseDevice();
 
         // MSDN states:
         // "In Windows 8, the first use of IAudioClient to access the audio device should be on the STA thread.
@@ -52,20 +49,16 @@ namespace SaneAudioRenderer
         // We abide.
         ApartmentInvokeHelper m_staHelper;
 
-        bool m_queuedCheckBitstream = false;
-        bool m_queuedDestroy = false;
-        bool m_queuedCreateDevice = false;
+        std::thread m_thread;
+        std::atomic<bool> m_exit = false;
+        CAMEvent m_wake;
+        CAMEvent m_done;
 
-        HANDLE m_hThread = NULL;
-        HWND m_hWindow = NULL;
-        std::promise<bool> m_windowInitialized;
+        std::function<HRESULT(void)> m_function;
+        HRESULT m_result = S_OK;
 
+        SharedWaveFormat m_format;
+        ISettings* m_settings = nullptr;
         std::shared_ptr<AudioDevice> m_device;
-
-        SharedWaveFormat m_checkBitstreamFormat;
-        ISettings* m_checkBitstreamSettings = nullptr;
-
-        SharedWaveFormat m_createDeviceFormat;
-        ISettings* m_createDeviceSettings = nullptr;
     };
 }

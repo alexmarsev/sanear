@@ -3,7 +3,6 @@
 namespace SaneAudioRenderer
 {
     class ApartmentInvokeHelper final
-        : private CCritSec
     {
     public:
         explicit ApartmentInvokeHelper(HRESULT& result)
@@ -41,8 +40,6 @@ namespace SaneAudioRenderer
                             }
                             else if (code == WAIT_OBJECT_0)
                             {
-                                CAutoLock objectLock(this);
-
                                 if (m_function)
                                 {
                                     m_result = m_function();
@@ -90,8 +87,6 @@ namespace SaneAudioRenderer
             }
 
             {
-                CAutoLock objectLock(this);
-
                 m_function = [&]
                 {
                     IGlobalInterfaceTablePtr table;

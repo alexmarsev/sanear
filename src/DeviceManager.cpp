@@ -7,15 +7,6 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        const auto WindowClass = L"SaneAudioRenderer::DeviceManager";
-        const auto WindowTitle = L"";
-
-        enum
-        {
-            WM_CHECK_BITSTREAM_FORMAT = WM_USER + 100,
-            WM_CREATE_DEVICE,
-        };
-
         template <class T>
         bool IsLastInstance(T& smartPointer)
         {
@@ -124,19 +115,53 @@ namespace SaneAudioRenderer
         if (FAILED(result))
             return;
 
-        m_hThread = (HANDLE)_beginthreadex(nullptr, 0, StaticThreadProc<DeviceManager>, this, 0, nullptr);
+        try
+        {
+            if (static_cast<HANDLE>(m_wake) == NULL ||
+                static_cast<HANDLE>(m_done) == NULL)
+            {
+                throw E_OUTOFMEMORY;
+            }
 
-        if (m_hThread == NULL || !m_windowInitialized.get_future().get())
+            m_thread = std::thread(
+                [this]
+                {
+                    CoInitializeHelper coInitializeHelper(COINIT_MULTITHREADED);
+
+                    while (!m_exit)
+                    {
+                        m_wake.Wait();
+
+                        if (m_function)
+                        {
+                            m_result = m_function();
+                            m_function = nullptr;
+                            m_done.Set();
+                        }
+                    }
+                }
+            );
+        }
+        catch (HRESULT ex)
+        {
+            result = ex;
+        }
+        catch (std::system_error&)
+        {
             result = E_FAIL;
+        }
     }
 
     DeviceManager::~DeviceManager()
     {
-        m_queuedDestroy = true;
-        PostMessage(m_hWindow, WM_DESTROY, 0, 0);
-        WaitForSingleObject(m_hThread, INFINITE);
-        CloseHandle(m_hThread);
-        UnregisterClass(WindowClass, GetModuleHandle(nullptr));
+        if (m_device)
+            ReleaseDevice();
+
+        m_exit = true;
+        m_wake.Set();
+
+        if (m_thread.joinable())
+            m_thread.join();
     }
 
     bool DeviceManager::BitstreamFormatSupported(SharedWaveFormat format, ISettings* pSettings)
@@ -144,15 +169,17 @@ namespace SaneAudioRenderer
         assert(format);
         assert(pSettings);
 
-        m_checkBitstreamFormat = format;
-        m_checkBitstreamSettings = pSettings;
-        m_queuedCheckBitstream = true;
+        m_format = format;
+        m_settings = pSettings;
 
-        bool ret = (SendMessage(m_hWindow, WM_CHECK_BITSTREAM_FORMAT, 0, 0) == 0);
+        m_function = [this] { return OnCheckBitstreamFormat(); };
+        m_wake.Set();
+        m_done.Wait();
 
-        m_checkBitstreamFormat = nullptr;
-        m_checkBitstreamSettings = nullptr;
-        assert(m_queuedCheckBitstream == false);
+        bool ret = SUCCEEDED(m_result);
+
+        m_format = nullptr;
+        m_settings = nullptr;
 
         return ret;
     }
@@ -162,57 +189,32 @@ namespace SaneAudioRenderer
         assert(format);
         assert(pSettings);
 
-        m_createDeviceFormat = format;
-        m_createDeviceSettings = pSettings;
-        m_queuedCreateDevice = true;
+        m_format = format;
+        m_settings = pSettings;
 
-        SharedAudioDevice ret = (SendMessage(m_hWindow, WM_CREATE_DEVICE, 0, 0) == 0) ? m_device : nullptr;
+        m_function = [this] { return OnCreateDevice(); };
+        m_wake.Set();
+        m_done.Wait();
 
-        m_createDeviceFormat = nullptr;
-        m_createDeviceSettings = nullptr;
-        assert(m_queuedCreateDevice == false);
+        SharedAudioDevice ret = SUCCEEDED(m_result) ? m_device : nullptr;
+
+        m_format = nullptr;
+        m_settings = nullptr;
 
         return ret;
     }
 
     void DeviceManager::ReleaseDevice()
     {
-        if (!m_device)
-            return;
-
-        auto areLastInstances = [this]
-        {
-            if (!m_device.unique())
-                return false;
-
-            if (m_device->audioClock && !IsLastInstance(m_device->audioClock))
-                return false;
-
-            m_device->audioClock = nullptr;
-
-            if (m_device->audioRenderClient && !IsLastInstance(m_device->audioRenderClient))
-                return false;
-
-            m_device->audioRenderClient = nullptr;
-
-            if (m_device->audioClient && !IsLastInstance(m_device->audioClient))
-                return false;
-
-            return true;
-        };
-        assert(areLastInstances());
-
-        m_device = nullptr;
+        m_function = [this] { return OnReleaseDevice(); };
+        m_wake.Set();
+        m_done.Wait();
     }
 
-    LRESULT DeviceManager::OnCheckBitstreamFormat()
+    HRESULT DeviceManager::OnCheckBitstreamFormat()
     {
-        if (!m_queuedCheckBitstream)
-            return 1;
-
-        assert(m_checkBitstreamFormat);
-        assert(m_checkBitstreamSettings);
-        m_queuedCheckBitstream = false;
+        assert(m_format);
+        assert(m_settings);
 
         try
         {
@@ -220,7 +222,7 @@ namespace SaneAudioRenderer
 
             {
                 LPWSTR pDeviceName = nullptr;
-                ThrowIfFailed(m_checkBitstreamSettings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
+                ThrowIfFailed(m_settings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
 
                 std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
                 deviceName.reset(pDeviceName);
@@ -236,28 +238,24 @@ namespace SaneAudioRenderer
             auto staInvoke = [&](IAudioClient* pAudioClient)
             {
                 return device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
-                                                             &(*m_checkBitstreamFormat), nullptr);
+                                                             &(*m_format), nullptr);
             };
             ThrowIfFailed(m_staHelper.Invoke<IAudioClient>(m_device->audioClient, staInvoke));
 
-            return 0;
+            return S_OK;
         }
-        catch (HRESULT)
+        catch (HRESULT ex)
         {
-            return 1;
+            return ex;
         }
     }
 
     LRESULT DeviceManager::OnCreateDevice()
     {
-        if (!m_queuedCreateDevice)
-            return 1;
+        assert(m_format);
+        assert(m_settings);
 
-        assert(m_createDeviceFormat);
-        assert(m_createDeviceSettings);
-        m_queuedCreateDevice = false;
-
-        ReleaseDevice();
+        OnReleaseDevice();
         try
         {
             assert(!m_device);
@@ -267,7 +265,7 @@ namespace SaneAudioRenderer
                 LPWSTR pDeviceName = nullptr;
                 BOOL exclusive;
                 UINT32 buffer;
-                ThrowIfFailed(m_createDeviceSettings->GetOuputDevice(&pDeviceName, &exclusive, &buffer));
+                ThrowIfFailed(m_settings->GetOuputDevice(&pDeviceName, &exclusive, &buffer));
 
                 std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
                 deviceName.reset(pDeviceName);
@@ -286,7 +284,7 @@ namespace SaneAudioRenderer
             ThrowIfFailed(m_device->audioClient->GetMixFormat(&pFormat));
             SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
 
-            m_device->bitstream = (DspFormatFromWaveFormat(*m_createDeviceFormat) == DspFormat::Unknown);
+            m_device->bitstream = (DspFormatFromWaveFormat(*m_format) == DspFormat::Unknown);
 
             if (m_device->bitstream)
             {
@@ -295,12 +293,12 @@ namespace SaneAudioRenderer
                     return 1;
 
                 m_device->dspFormat = DspFormat::Unknown;
-                m_device->waveFormat = m_createDeviceFormat;
+                m_device->waveFormat = m_format;
             }
             else if (m_device->exclusive)
             {
                 // Exclusive.
-                auto inputRate = m_createDeviceFormat->nSamplesPerSec;
+                auto inputRate = m_format->nSamplesPerSec;
                 auto mixRate = mixFormat->nSamplesPerSec;
                 auto mixChannels = mixFormat->nChannels;
                 auto mixMask = DspMatrix::GetChannelMask(*mixFormat);
@@ -353,67 +351,49 @@ namespace SaneAudioRenderer
 
             ThrowIfFailed(m_device->audioClient->GetService(IID_PPV_ARGS(&m_device->audioClock)));
 
-            return 0;
+            return S_OK;
         }
         catch (std::bad_alloc&)
         {
-            ReleaseDevice();
-            return 1;
+            OnReleaseDevice();
+            return E_OUTOFMEMORY;
         }
-        catch (HRESULT)
+        catch (HRESULT ex)
         {
-            ReleaseDevice();
-            return 1;
+            OnReleaseDevice();
+            return ex;
         }
     }
 
-    DWORD DeviceManager::ThreadProc()
+    HRESULT DeviceManager::OnReleaseDevice()
     {
-        CoInitializeHelper coInitializeHelper(COINIT_MULTITHREADED);
+        if (!m_device)
+            return S_OK;
 
-        HINSTANCE hInstance = GetModuleHandle(nullptr);
-
-        WNDCLASSEX windowClass{sizeof(windowClass), 0, StaticWindowProc<DeviceManager>, 0, 0, hInstance,
-                               NULL, NULL, NULL, nullptr, WindowClass, NULL};
-
-        m_hWindow = NULL;
-        if (coInitializeHelper.Initialized())
+        auto areLastInstances = [this]
         {
-            RegisterClassEx(&windowClass);
-            m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, hInstance, this);
-        }
+            if (!m_device.unique())
+                return false;
 
-        if (m_hWindow != NULL)
-        {
-            m_windowInitialized.set_value(true);
-            RunMessageLoop();
-            ReleaseDevice();
-        }
-        else
-        {
-            m_windowInitialized.set_value(false);
-        }
+            if (m_device->audioClock && !IsLastInstance(m_device->audioClock))
+                return false;
 
-        return 0;
-    }
+            m_device->audioClock = nullptr;
 
-    LRESULT DeviceManager::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        switch (msg)
-        {
-            case WM_DESTROY:
-                if (m_queuedDestroy)
-                    PostQuitMessage(0);
-                return 0;
+            if (m_device->audioRenderClient && !IsLastInstance(m_device->audioRenderClient))
+                return false;
 
-            case WM_CHECK_BITSTREAM_FORMAT:
-                return OnCheckBitstreamFormat();
+            m_device->audioRenderClient = nullptr;
 
-            case WM_CREATE_DEVICE:
-                return OnCreateDevice();
+            if (m_device->audioClient && !IsLastInstance(m_device->audioClient))
+                return false;
 
-            default:
-                return DefWindowProc(hWnd, msg, wParam, lParam);
-        }
+            return true;
+        };
+        assert(areLastInstances());
+
+        m_device = nullptr;
+
+        return S_OK;
     }
 }
