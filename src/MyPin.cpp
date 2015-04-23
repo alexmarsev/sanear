@@ -105,6 +105,7 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyPin::NewSegment(REFERENCE_TIME startTime, REFERENCE_TIME stopTime, double rate)
     {
+        CAutoLock receiveLock(&m_receiveMutex);
         CAutoLock objectLock(this);
 
         CBaseInputPin::NewSegment(startTime, stopTime, rate);
