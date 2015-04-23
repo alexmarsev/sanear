@@ -21,17 +21,21 @@ namespace SaneAudioRenderer
     {
         CheckPointer(pmt, E_POINTER);
 
-        auto pType = pmt->Type();
-        auto pFormatType = pmt->FormatType();
-        auto pFormat = pmt->Format();
-
-        if (pType && *pType == MEDIATYPE_Audio &&
-            pFormatType && *pFormatType == FORMAT_WaveFormatEx &&
-            pFormat)
+        if (pmt->majortype == MEDIATYPE_Audio &&
+            pmt->formattype == FORMAT_WaveFormatEx)
         {
+            auto pFormat = reinterpret_cast<const WAVEFORMATEX*>(pmt->pbFormat);
+
+            if (!pFormat ||
+                pmt->cbFormat < sizeof(WAVEFORMATEX) ||
+                pmt->cbFormat != sizeof(WAVEFORMATEX) + pFormat->cbSize)
+            {
+                return E_INVALIDARG;
+            }
+
             try
             {
-                if (m_renderer.CheckFormat(CopyWaveFormat(*reinterpret_cast<WAVEFORMATEX*>(pFormat))))
+                if (m_renderer.CheckFormat(CopyWaveFormat(*pFormat)))
                     return S_OK;
             }
             catch (std::bad_alloc&)
