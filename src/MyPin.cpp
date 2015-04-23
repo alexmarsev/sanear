@@ -144,6 +144,7 @@ namespace SaneAudioRenderer
             ReturnIfFailed(SetMediaType(static_cast<CMediaType*>(m_SampleProps.pMediaType)));
         }
 
+        // Enqueue() returns 'false' in case of interruption.
         return m_renderer.Enqueue(pSample, m_SampleProps) ? S_OK : S_FALSE;
     }
 
@@ -164,7 +165,7 @@ namespace SaneAudioRenderer
         }
 
         // We ask audio renderer to block until all samples are played.
-        // The method returns 'false' in case of interruption.
+        // Finish() returns 'false' in case of interruption.
         bool eosDown = m_renderer.Finish(true);
 
         {
