@@ -73,7 +73,7 @@ namespace SaneAudioRenderer
 
     HRESULT MyPin::CompleteConnect(IPin* pPin)
     {
-        CAutoLock objectLock(this);
+        assert(CritCheckIn(this));
 
         IAMGraphStreamsPtr graphStreams;
         IAMPushSourcePtr pushSource;
