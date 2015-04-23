@@ -49,11 +49,15 @@ namespace SaneAudioRenderer
 
     HRESULT MyPin::SetMediaType(const CMediaType* pmt)
     {
-        // Callers lock the object beforehand, all is good.
+        assert(CritCheckIn(this));
 
         ReturnIfFailed(CBaseInputPin::SetMediaType(pmt));
 
-        WAVEFORMATEX* pFormat = (WAVEFORMATEX*)pmt->Format();
+        auto pFormat = reinterpret_cast<const WAVEFORMATEX*>(pmt->pbFormat);
+
+        // No point in doing integrity checks, that was done in CheckMediaType().
+        assert(pFormat);
+        assert(pmt->cbFormat == sizeof(WAVEFORMATEX) + pFormat->cbSize);
 
         try
         {
