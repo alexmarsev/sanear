@@ -1,0 +1,9 @@
+ - design new abstract AudioDevice class
+ - move wasapi code out of AudioRenderer into the new WasapiAudioDevice class
+ - move null audio device emulation code out of AudioRenderer into the new NullAudioDevice class
+ - add low/high latency switch to AudioDevice abstract class and update the implementations accordingly
+
+ - maybe some other stuff
+
+ - resolve licensing issues
+ - first release
