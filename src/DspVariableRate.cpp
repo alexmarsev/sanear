@@ -45,7 +45,7 @@ namespace SaneAudioRenderer
         m_resampler.process();
 
         assert(m_resampler.inp_count == 0);
-        output.Shrink(outputFrames - m_resampler.out_count);
+        output.ShrinkTail(outputFrames - m_resampler.out_count);
 
         chunk = std::move(output);
     }

@@ -59,7 +59,7 @@ namespace SaneAudioRenderer
 
         uint32_t done = m_stouch.receiveSamples((float*)output.GetData(), (uint32_t)output.GetFrameCount());
         assert(done == output.GetFrameCount());
-        output.Shrink(done);
+        output.ShrinkTail(done);
 
         auto& outSamples = (m_ftempo == m_ftempo1) ? m_outSamples1 : m_outSamples2;
         outSamples += done;
@@ -88,7 +88,7 @@ namespace SaneAudioRenderer
 
             uint32_t done = m_stouch.receiveSamples((float*)output.GetData() + chunk.GetSampleCount(), undone);
             assert(done == undone);
-            output.Shrink(chunk.GetFrameCount() + done);
+            output.ShrinkTail(chunk.GetFrameCount() + done);
 
             chunk = std::move(output);
         }

@@ -5,9 +5,9 @@
 
 namespace SaneAudioRenderer
 {
-    MyPin::MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, CAMEvent& bufferFilled, HRESULT& result)
+    MyPin::MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, HRESULT& result)
         : CBaseInputPin(L"SaneAudioRenderer::MyPin", pFilter, this, &result, L"Input0")
-        , m_bufferFilled(bufferFilled)
+        , m_bufferFilled(TRUE/*manual reset*/)
         , m_renderer(renderer)
     {
         if (FAILED(result))
@@ -128,7 +128,8 @@ namespace SaneAudioRenderer
 
             if (m_SampleProps.dwSampleFlags & AM_SAMPLE_TYPECHANGED)
             {
-                m_renderer.Finish(false);
+                // TODO: don't recreate the device when possible
+                m_renderer.Finish(false, &m_bufferFilled);
                 ReturnIfFailed(SetMediaType(static_cast<CMediaType*>(m_SampleProps.pMediaType)));
             }
 
@@ -145,7 +146,7 @@ namespace SaneAudioRenderer
         }
 
         // Enqueue() returns 'false' in case of interruption.
-        return m_renderer.Enqueue(pSample, m_SampleProps) ? S_OK : S_FALSE;
+        return m_renderer.Enqueue(pSample, m_SampleProps, &m_bufferFilled) ? S_OK : S_FALSE;
     }
 
     STDMETHODIMP MyPin::EndOfStream()
@@ -166,7 +167,7 @@ namespace SaneAudioRenderer
 
         // We ask audio renderer to block until all samples are played.
         // Finish() returns 'false' in case of interruption.
-        bool eosDown = m_renderer.Finish(true);
+        bool eosDown = m_renderer.Finish(true, &m_bufferFilled);
 
         {
             CAutoLock objectLock(this);
@@ -174,10 +175,7 @@ namespace SaneAudioRenderer
             m_eosDown = eosDown;
 
             if (m_eosDown)
-            {
                 m_pFilter->NotifyEvent(EC_COMPLETE, S_OK, (LONG_PTR)m_pFilter);
-                m_bufferFilled.Set();
-            }
         }
 
         return S_OK;

@@ -307,6 +307,7 @@ namespace SaneAudioRenderer
         , m_dataSize(0)
         , m_constData(nullptr)
         , m_delayedCopy(false)
+        , m_dataOffset(0)
     {
     }
 
@@ -318,6 +319,7 @@ namespace SaneAudioRenderer
         , m_dataSize(m_formatSize * channels * frames)
         , m_constData(nullptr)
         , m_delayedCopy(false)
+        , m_dataOffset(0)
     {
         assert(m_format != DspFormat::Unknown);
         Allocate();
@@ -332,6 +334,7 @@ namespace SaneAudioRenderer
         , m_dataSize(sampleProps.lActual)
         , m_constData((char*)sampleProps.pbBuffer)
         , m_delayedCopy(true)
+        , m_dataOffset(0)
     {
         assert(m_formatSize == sampleFormat.wBitsPerSample / 8);
         assert(m_mediaSample);
@@ -350,10 +353,11 @@ namespace SaneAudioRenderer
         , m_dataSize(other.m_dataSize)
         , m_constData(other.m_constData)
         , m_delayedCopy(other.m_delayedCopy)
+        , m_dataOffset(0)
     {
         other.m_mediaSample = nullptr;
-        other.m_dataSize = 0;
         std::swap(m_data, other.m_data);
+        other.m_dataSize = 0;
     }
 
     DspChunk& DspChunk::operator=(DspChunk&& other)
@@ -369,6 +373,7 @@ namespace SaneAudioRenderer
             m_constData = other.m_constData;
             m_delayedCopy = other.m_delayedCopy;
             m_data = nullptr; std::swap(m_data, other.m_data);
+            m_dataOffset = other.m_dataOffset;
         }
         return *this;
     }
@@ -376,15 +381,24 @@ namespace SaneAudioRenderer
     char* DspChunk::GetData()
     {
         InvokeDelayedCopy();
-        return m_data.get();
+        return m_data.get() + m_dataOffset;
     }
 
-    void DspChunk::Shrink(size_t toFrames)
+    void DspChunk::ShrinkTail(size_t toFrames)
     {
         if (toFrames < GetFrameCount())
-        {
-            InvokeDelayedCopy();
             m_dataSize = GetFormatSize() * GetChannelCount() * toFrames;
+    }
+
+    void DspChunk::ShrinkHead(size_t toFrames)
+    {
+        const size_t frameCount = GetFrameCount();
+        if (toFrames < frameCount)
+        {
+            size_t shrinkBytes = (frameCount - toFrames) * GetFormatSize() * GetChannelCount();
+            m_dataOffset += shrinkBytes;
+            assert(m_dataSize >= shrinkBytes);
+            m_dataSize -= shrinkBytes;
         }
     }
 
@@ -392,7 +406,7 @@ namespace SaneAudioRenderer
     {
         if (m_dataSize > 0)
         {
-            m_data.reset((char*)_aligned_malloc(m_dataSize, 16));
+            m_data.reset((char*)_aligned_malloc(m_dataSize + m_dataOffset, 16));
 
             if (!m_data.get())
                 throw std::bad_alloc();
@@ -405,7 +419,7 @@ namespace SaneAudioRenderer
         {
             Allocate();
             assert(m_constData);
-            memcpy(m_data.get(), m_constData, m_dataSize);
+            memcpy(m_data.get(), m_constData, m_dataSize + m_dataOffset);
             m_delayedCopy = false;
         }
     }

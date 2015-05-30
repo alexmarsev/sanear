@@ -119,17 +119,17 @@ namespace SaneAudioRenderer
         }
     }
 
-    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, SharedAudioDevice audioDevice,
+    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, AudioDevice const* pDevice,
                                    std::vector<std::wstring> processors, bool externalClock)
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {
-        std::wstring adapterField = (audioDevice && audioDevice->adapterName) ? *audioDevice->adapterName : L"-";
+        std::wstring adapterField = (pDevice && pDevice->GetAdapterName()) ? *pDevice->GetAdapterName() : L"-";
 
-        std::wstring endpointField = (audioDevice && audioDevice->endpointName) ? *audioDevice->endpointName : L"-";
+        std::wstring endpointField = (pDevice && pDevice->GetEndpointName()) ? *pDevice->GetEndpointName() : L"-";
 
-        std::wstring exclusiveField = (audioDevice ? (audioDevice->exclusive ? L"Yes" : L"No") : L"-");
+        std::wstring exclusiveField = (pDevice ? (pDevice->IsExclusive() ? L"Yes" : L"No") : L"-");
 
-        std::wstring bufferField = (audioDevice ? std::to_wstring(audioDevice->bufferDuration) + L"ms" : L"-");
+        std::wstring bufferField = (pDevice ? std::to_wstring(pDevice->GetBufferDuration()) + L"ms" : L"-");
 
         std::wstring bitstreamingField = (inputFormat ? (DspFormatFromWaveFormat(*inputFormat) ==
                                                          DspFormat::Unknown ? L"Yes" : L"No") : L"-");
@@ -138,18 +138,18 @@ namespace SaneAudioRenderer
 
         std::wstring channelsInputField = (inputFormat ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-");
-        std::wstring channelsDeviceField = (audioDevice ? std::to_wstring(audioDevice->waveFormat->nChannels) +
-                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*audioDevice->waveFormat)) + L")" : L"-");
+        std::wstring channelsDeviceField = (pDevice ? std::to_wstring(pDevice->GetWaveFormat()->nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pDevice->GetWaveFormat())) + L")" : L"-");
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
         std::wstring formatInputField = (inputFormat ? GetFormatString(*inputFormat) : L"-");
-        std::wstring formatDeviceField = (audioDevice ? GetFormatString(*audioDevice->waveFormat) : L"-");
+        std::wstring formatDeviceField = (pDevice ? GetFormatString(*pDevice->GetWaveFormat()) : L"-");
         std::wstring formatField = (formatInputField == formatDeviceField) ?
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 
         std::wstring rateInputField = (inputFormat ? std::to_wstring(inputFormat->nSamplesPerSec) : L"-");
-        std::wstring rateDeviceField = (audioDevice ? std::to_wstring(audioDevice->waveFormat->nSamplesPerSec) : L"-");
+        std::wstring rateDeviceField = (pDevice ? std::to_wstring(pDevice->GetWaveFormat()->nSamplesPerSec) : L"-");
         std::wstring rateField = (rateInputField == rateDeviceField) ?
                                       rateInputField : rateInputField + L" -> " + rateDeviceField;
 

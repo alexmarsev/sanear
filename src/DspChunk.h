@@ -29,10 +29,12 @@ namespace SaneAudioRenderer
         size_t GetSampleCount()    const { assert(m_formatSize); return m_dataSize / m_formatSize; }
         size_t GetFrameCount()     const { assert(m_channels != 0); return GetSampleCount() / m_channels; }
 
-        const char* GetConstData() const { return m_delayedCopy ? m_constData : m_data.get(); }
+        const char* GetConstData() const { return (m_delayedCopy ? m_constData : m_data.get()) + m_dataOffset; }
 
         char* GetData();
-        void Shrink(size_t toFrames);
+
+        void ShrinkTail(size_t toFrames);
+        void ShrinkHead(size_t toFrames);
 
     private:
 
@@ -50,5 +52,6 @@ namespace SaneAudioRenderer
         const char* m_constData;
         bool m_delayedCopy;
         std::unique_ptr<char[], AlignedFreeDeleter> m_data;
+        size_t m_dataOffset;
     };
 }

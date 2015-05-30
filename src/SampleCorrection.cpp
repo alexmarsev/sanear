@@ -34,7 +34,7 @@ namespace SaneAudioRenderer
         m_timingsError = 0;
     }
 
-    void SampleCorrection::NewBuffer()
+    void SampleCorrection::NewDeviceBuffer()
     {
         m_freshBuffer = true;
     }

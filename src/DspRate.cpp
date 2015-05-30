@@ -47,7 +47,7 @@ namespace SaneAudioRenderer
         soxr_process(m_soxr, chunk.GetConstData(), chunk.GetFrameCount(), &inputDone,
                              output.GetData(), output.GetFrameCount(), &outputDone);
         assert(inputDone == chunk.GetFrameCount());
-        output.Shrink(outputDone);
+        output.ShrinkTail(outputDone);
 
         chunk = std::move(output);
     }
@@ -70,7 +70,7 @@ namespace SaneAudioRenderer
             size_t outputDo = output.GetFrameCount() - chunk.GetFrameCount();
             size_t outputDone = 0;
             soxr_process(m_soxr, nullptr, 0, &inputDone, output.GetData() + chunk.GetSize(), outputDo, &outputDone);
-            output.Shrink(outputDone);
+            output.ShrinkTail(outputDone);
 
             chunk = std::move(output);
 

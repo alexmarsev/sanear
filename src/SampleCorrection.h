@@ -12,7 +12,7 @@ namespace SaneAudioRenderer
 
         void NewFormat(SharedWaveFormat format);
         void NewSegment(double rate);
-        void NewBuffer();
+        void NewDeviceBuffer();
 
         DspChunk ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
 

@@ -24,13 +24,13 @@ namespace SaneAudioRenderer
             //    m_testClock = new MyTestClock(result);
 
             if (SUCCEEDED(result))
-                m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, m_bufferFilled, result);
+                m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, result);
 
             if (SUCCEEDED(result))
                 m_basicAudio = new MyBasicAudio(*m_renderer);
 
             if (SUCCEEDED(result))
-                m_pin = std::make_unique<MyPin>(*m_renderer, this, m_bufferFilled, result);
+                m_pin = std::make_unique<MyPin>(*m_renderer, this, result);
 
             if (SUCCEEDED(result))
                 result = CreatePosPassThru(nullptr, FALSE, m_pin.get(), &m_seeking);

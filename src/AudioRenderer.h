@@ -1,6 +1,7 @@
 #pragma once
 
-#include "DeviceManager.h"
+#include "AudioDeviceManager.h"
+#include "AudioDevice.h"
 #include "DspBalance.h"
 #include "DspCrossfeed.h"
 #include "DspDither.h"
@@ -21,7 +22,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        AudioRenderer(ISettings* pSettings, IMyClock* pClock, CAMEvent& bufferFilled, HRESULT& result);
+        AudioRenderer(ISettings* pSettings, IMyClock* pClock, HRESULT& result);
         AudioRenderer(const AudioRenderer&) = delete;
         AudioRenderer& operator=(const AudioRenderer&) = delete;
         ~AudioRenderer();
@@ -29,8 +30,8 @@ namespace SaneAudioRenderer
         void SetClock(IReferenceClock* pClock);
         bool OnExternalClock();
 
-        bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
-        bool Finish(bool blockUntilEnd);
+        bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
+        bool Finish(bool blockUntilEnd, CAMEvent* pFilledEvent);
 
         void BeginFlush();
         void EndFlush();
@@ -50,7 +51,7 @@ namespace SaneAudioRenderer
         void SetBalance(float balance) { m_balance = balance; }
 
         SharedWaveFormat GetInputFormat();
-        SharedAudioDevice GetAudioDevice();
+        AudioDevice const* GetAudioDevice();
         std::vector<std::wstring> GetActiveProcessors();
 
     private:
@@ -80,10 +81,10 @@ namespace SaneAudioRenderer
             f(&m_dspDither);
         }
 
-        bool Push(DspChunk& chunk);
+        bool Push(DspChunk& chunk, CAMEvent* pFilledEvent);
 
-        DeviceManager m_deviceManager;
-        SharedAudioDevice m_device;
+        AudioDeviceManager m_deviceManager;
+        std::unique_ptr<AudioDevice> m_device;
 
         FILTER_STATE m_state = State_Stopped;
 
@@ -102,8 +103,6 @@ namespace SaneAudioRenderer
 
         CAMEvent m_flush;
 
-        uint64_t m_pushedFrames = 0;
-
         DspMatrix m_dspMatrix;
         DspRate m_dspRate;
         DspVariableRate m_dspVariableRate;
@@ -113,8 +112,6 @@ namespace SaneAudioRenderer
         DspBalance m_dspBalance;
         DspLimiter m_dspLimiter;
         DspDither m_dspDither;
-
-        CAMEvent& m_bufferFilled;
 
         ISettingsPtr m_settings;
         UINT32 m_deviceSettingsSerial = 0;

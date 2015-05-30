@@ -10,7 +10,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, CAMEvent& bufferFilled, HRESULT& result);
+        MyPin(AudioRenderer& renderer, CBaseFilter* pFilter, HRESULT& result);
         MyPin(const MyPin&) = delete;
         MyPin& operator=(const MyPin&) = delete;
 
@@ -41,7 +41,7 @@ namespace SaneAudioRenderer
         CCritSec m_receiveMutex;
         HANDLE m_hReceiveThread = NULL;
 
-        CAMEvent& m_bufferFilled;
+        CAMEvent m_bufferFilled;
         AudioRenderer& m_renderer;
     };
 }

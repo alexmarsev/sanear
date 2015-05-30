@@ -8,6 +8,8 @@ namespace SaneAudioRenderer
     // One second in 100ns units.
     const int64_t OneSecond = 10000000;
 
+    typedef std::shared_ptr<const std::wstring> SharedString;
+
     typedef std::shared_ptr<const WAVEFORMATEX> SharedWaveFormat;
 
     inline void ThrowIfFailed(HRESULT result)

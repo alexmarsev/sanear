@@ -71,8 +71,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\ApartmentInvokeHelper.h" />
-    <ClInclude Include="src\DeviceManager.h" />
+    <ClInclude Include="src\AudioDevice.h" />
+    <ClInclude Include="src\AudioDeviceManager.h" />
     <ClInclude Include="src\DspBalance.h" />
     <ClInclude Include="src\DspBase.h" />
     <ClInclude Include="src\DspCrossfeed.h" />
@@ -100,7 +100,8 @@
     <ClInclude Include="src\DspRate.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\DeviceManager.cpp" />
+    <ClCompile Include="src\AudioDevice.cpp" />
+    <ClCompile Include="src\AudioDeviceManager.cpp" />
     <ClCompile Include="src\DspBalance.cpp" />
     <ClCompile Include="src\DspCrossfeed.cpp" />
     <ClCompile Include="src\DspDither.cpp" />

@@ -22,9 +22,6 @@
     <ClCompile Include="src\DspRate.cpp">
       <Filter>Processors</Filter>
     </ClCompile>
-    <ClCompile Include="src\DeviceManager.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="src\AudioRenderer.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -65,6 +62,12 @@
     <ClCompile Include="src\DspVariableRate.cpp">
       <Filter>Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\AudioDeviceManager.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AudioDevice.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -93,9 +96,6 @@
     </ClInclude>
     <ClInclude Include="src\DspRate.h">
       <Filter>Processors</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DeviceManager.h">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\AudioRenderer.h">
       <Filter>Renderer</Filter>
@@ -138,11 +138,14 @@
     <ClInclude Include="src\SampleCorrection.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="src\ApartmentInvokeHelper.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="src\DspVariableRate.h">
       <Filter>Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AudioDeviceManager.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AudioDevice.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
