@@ -342,7 +342,8 @@ namespace SaneAudioRenderer
             auto staInvoke = [this](IAudioClient* pAudioClient)
             {
                 return pAudioClient->Initialize(m_device->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
-                                                0, MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
+                                                AUDCLNT_STREAMFLAGS_NOPERSIST,
+                                                MILLISECONDS_TO_100NS_UNITS(m_device->bufferDuration),
                                                 0, &(*m_device->waveFormat), nullptr);
             };
             ThrowIfFailed(m_staHelper.Invoke<IAudioClient>(m_device->audioClient, staInvoke));
