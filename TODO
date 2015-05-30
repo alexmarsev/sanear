@@ -1,9 +1,14 @@
- - design new abstract AudioDevice class
- - move wasapi code out of AudioRenderer into the new WasapiAudioDevice class
- - move null audio device emulation code out of AudioRenderer into the new NullAudioDevice class
- - add low/high latency switch to AudioDevice abstract class and update the implementations accordingly
+ - implement low-latency rendering path for realtime capture playback
+ - simplify DspLimiter and make it work with lower latency
+ - make sure that frame-stepping works alright
+ - stop wasapi on eos more gracefully
 
  - maybe some other stuff
 
  - resolve licensing issues
  - first release
+
+ - detect default audio device modification in exclusive mode
+ - don't recreate the device when media type changes during playback and the old one can be used
+ - add "excessive precision processing" option
+ - play silence during pause in exclusive mode (for ati hdmi)
