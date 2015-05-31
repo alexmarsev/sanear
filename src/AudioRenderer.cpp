@@ -232,11 +232,12 @@ namespace SaneAudioRenderer
         return m_deviceManager.BitstreamFormatSupported(inputFormat, m_settings);
     }
 
-    void AudioRenderer::SetFormat(SharedWaveFormat inputFormat)
+    void AudioRenderer::SetFormat(SharedWaveFormat inputFormat, bool live)
     {
         CAutoLock objectLock(this);
 
         m_inputFormat = inputFormat;
+        m_live = live;
 
         m_sampleCorrection.NewFormat(inputFormat);
 
@@ -372,7 +373,7 @@ namespace SaneAudioRenderer
         assert(m_inputFormat);
 
         m_deviceSettingsSerial = m_settings->GetSerial();
-        m_device = m_deviceManager.CreateDevice(m_inputFormat, m_settings);
+        m_device = m_deviceManager.CreateDevice(m_inputFormat, m_live, m_settings);
 
         if (m_device)
         {

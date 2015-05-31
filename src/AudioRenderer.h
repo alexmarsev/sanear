@@ -37,7 +37,7 @@ namespace SaneAudioRenderer
         void EndFlush();
 
         bool CheckFormat(SharedWaveFormat inputFormat);
-        void SetFormat(SharedWaveFormat inputFormat);
+        void SetFormat(SharedWaveFormat inputFormat, bool live);
 
         void NewSegment(double rate);
 
@@ -97,6 +97,7 @@ namespace SaneAudioRenderer
         REFERENCE_TIME m_correctedWithRateDsp = 0;
 
         SharedWaveFormat m_inputFormat;
+        bool m_live = false;
 
         REFERENCE_TIME m_startClockOffset = 0;
         REFERENCE_TIME m_startTime = 0;
