@@ -416,7 +416,7 @@ namespace SaneAudioRenderer
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
-        m_dspRate.Initialize(!m_live, inRate, outRate, outChannels);
+        m_dspRate.Initialize(m_live, inRate, outRate, outChannels);
         m_dspVariableRate.Initialize(m_live, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
