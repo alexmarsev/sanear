@@ -359,8 +359,11 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
-            m_startClockOffset = 0;
+            assert(m_live == m_device->IsLive());
+
+            if (!m_live)
+                m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
+
             m_device->Start();
         }
     }
