@@ -2,7 +2,6 @@
 
 #include "Interfaces.h"
 #include "MyClock.h"
-#include "MyTestClock.h"
 
 namespace SaneAudioRenderer
 {
@@ -33,8 +32,6 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP GetState(DWORD timeoutMilliseconds, FILTER_STATE* pState) override;
 
-        STDMETHODIMP SetSyncSource(IReferenceClock* pClock) override;
-
         STDMETHODIMP GetPages(CAUUID* pPages) override;
         STDMETHODIMP CreatePage(const GUID& guid, IPropertyPage** ppPage) override;
 
@@ -44,7 +41,6 @@ namespace SaneAudioRenderer
         STDMETHODIMP ChangeState(PinFunction pinFunction);
 
         IMyClockPtr m_clock;
-        //IReferenceClockPtr m_testClock;
         CAMEvent m_bufferFilled;
         std::unique_ptr<AudioRenderer> m_renderer;
         IBasicAudioPtr m_basicAudio;

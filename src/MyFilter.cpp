@@ -20,9 +20,6 @@ namespace SaneAudioRenderer
             if (SUCCEEDED(result))
                 m_clock = new MyClock(result);
 
-            //if (SUCCEEDED(result))
-            //    m_testClock = new MyTestClock(result);
-
             if (SUCCEEDED(result))
                 m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, result);
 
@@ -43,9 +40,6 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
     {
-        //if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
-        //    return m_testClock->QueryInterface(riid, ppv);
-
         if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
             return m_clock->QueryInterface(riid, ppv);
 
@@ -103,17 +97,6 @@ namespace SaneAudioRenderer
         return S_OK;
     }
 
-    STDMETHODIMP MyFilter::SetSyncSource(IReferenceClock* pClock)
-    {
-        CAutoLock objectLock(this);
-
-        CBaseFilter::SetSyncSource(pClock);
-
-        m_renderer->SetClock(pClock);
-
-        return S_OK;
-    }
-
     STDMETHODIMP MyFilter::GetPages(CAUUID* pPages)
     {
         CheckPointer(pPages, E_POINTER);
@@ -142,8 +125,7 @@ namespace SaneAudioRenderer
             auto inputFormat = m_renderer->GetInputFormat();
             auto audioDevice = m_renderer->GetAudioDevice();
 
-            pPage = new MyPropertyPage(inputFormat, audioDevice,
-                                       m_renderer->GetActiveProcessors(), m_renderer->OnExternalClock());
+            pPage = new MyPropertyPage(inputFormat, audioDevice, m_renderer->GetActiveProcessors());
         }
         catch (std::bad_alloc&)
         {

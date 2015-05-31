@@ -120,7 +120,7 @@ namespace SaneAudioRenderer
     }
 
     MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, AudioDevice const* pDevice,
-                                   std::vector<std::wstring> processors, bool externalClock)
+                                   std::vector<std::wstring> processors)
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {
         std::wstring adapterField = (pDevice && pDevice->GetAdapterName()) ? *pDevice->GetAdapterName() : L"-";
@@ -134,7 +134,7 @@ namespace SaneAudioRenderer
         std::wstring bitstreamingField = (inputFormat ? (DspFormatFromWaveFormat(*inputFormat) ==
                                                          DspFormat::Unknown ? L"Yes" : L"No") : L"-");
 
-        std::wstring externalClockField = (externalClock ? L"Yes" : L"No");
+        std::wstring externalClockField = L"N/A";
 
         std::wstring channelsInputField = (inputFormat ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-");
