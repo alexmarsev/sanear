@@ -192,6 +192,8 @@ namespace SaneAudioRenderer
         // Subsequent ones will be rejected because m_bFlushing == TRUE.
         CAutoLock receiveLock(&m_receiveMutex);
 
+        m_bufferFilled.Reset();
+
         {
             CAutoLock objectLock(this);
 
@@ -270,6 +272,8 @@ namespace SaneAudioRenderer
         // Barrier for any present Receive() and EndOfStream() calls.
         // Subsequent ones will be rejected because m_state == State_Stopped.
         CAutoLock receiveLock(&m_receiveMutex);
+
+        m_bufferFilled.Reset();
 
         {
             CAutoLock objectLock(this);
