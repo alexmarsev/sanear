@@ -58,7 +58,18 @@ namespace SaneAudioRenderer
 
     private:
 
+        void PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent);
+        void PushToBuffer(DspChunk& chunk);
+        void RetrieveFromBuffer(DspChunk& chunk);
+
         std::shared_ptr<AudioDeviceBackend> m_backend;
         uint64_t m_pushedFrames = 0;
+
+        std::thread m_thread;
+        CAMEvent m_wake;
+        std::atomic<bool> m_exit = false;
+
+        std::deque<DspChunk> m_buffer;
+        CCritSec m_bufferMutex;
     };
 }

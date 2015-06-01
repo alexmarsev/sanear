@@ -333,5 +333,9 @@ namespace SaneAudioRenderer
         {
             return nullptr;
         }
+        catch (std::system_error&)
+        {
+            return nullptr;
+        }
     }
 }

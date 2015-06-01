@@ -18,10 +18,47 @@ namespace SaneAudioRenderer
         : m_backend(backend)
     {
         assert(m_backend);
+
+        if (m_backend->live)
+            m_thread = std::thread(
+                [this]
+                {
+                    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+                    TimePeriodHelper timePeriodHelper(1);
+
+                    while (!m_exit)
+                    {
+                        m_wake.Wait(INFINITE);
+
+                        DspChunk chunk;
+                        RetrieveFromBuffer(chunk);
+
+                        while (!chunk.IsEmpty())
+                        {
+                            try
+                            {
+                                PushToDevice(chunk, nullptr);
+                                Sleep(1); // TODO: sleep less if the chunk is <1ms
+                            }
+                            catch (HRESULT)
+                            {
+                                m_exit = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            );
     }
 
     AudioDevice::~AudioDevice()
     {
+        m_exit = true;
+        m_wake.Set();
+
+        if (m_thread.joinable())
+            m_thread.join();
+
         auto areLastInstances = [this]
         {
             if (!m_backend.unique())
@@ -48,6 +85,53 @@ namespace SaneAudioRenderer
     }
 
     void AudioDevice::Push(DspChunk& chunk, CAMEvent* pFilledEvent)
+    {
+        if (IsLive())
+        {
+            PushToBuffer(chunk);
+
+            m_wake.Set();
+
+            if (pFilledEvent)
+                pFilledEvent->Set();
+        }
+        else
+        {
+            PushToDevice(chunk, pFilledEvent);
+        }
+    }
+
+    int64_t AudioDevice::GetPosition()
+    {
+        UINT64 deviceClockFrequency, deviceClockPosition;
+        ThrowIfFailed(m_backend->audioClock->GetFrequency(&deviceClockFrequency));
+        ThrowIfFailed(m_backend->audioClock->GetPosition(&deviceClockPosition, nullptr));
+
+        return llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
+    }
+
+    int64_t AudioDevice::GetEnd()
+    {
+        return llMulDiv(m_pushedFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+    }
+
+    void AudioDevice::Start()
+    {
+        m_backend->audioClient->Start();
+    }
+
+    void AudioDevice::Stop()
+    {
+        m_backend->audioClient->Stop();
+    }
+
+    void AudioDevice::Reset()
+    {
+        m_backend->audioClient->Reset();
+        m_pushedFrames = 0;
+    }
+
+    void AudioDevice::PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
         // Get up-to-date information on the device buffer.
         UINT32 bufferFrames, bufferPadding;
@@ -80,33 +164,38 @@ namespace SaneAudioRenderer
         m_pushedFrames += doFrames;
     }
 
-    int64_t AudioDevice::GetPosition()
+    void AudioDevice::PushToBuffer(DspChunk& chunk)
     {
-        UINT64 deviceClockFrequency, deviceClockPosition;
-        ThrowIfFailed(m_backend->audioClock->GetFrequency(&deviceClockFrequency));
-        ThrowIfFailed(m_backend->audioClock->GetPosition(&deviceClockPosition, nullptr));
+        if (m_exit)
+            throw E_FAIL;
 
-        return llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
+        if (chunk.IsEmpty())
+            return;
+
+        try
+        {
+            CAutoLock lock(&m_bufferMutex);
+            m_buffer.emplace_back(std::move(chunk));
+        }
+        catch (std::bad_alloc&)
+        {
+            m_exit = true;
+            throw E_OUTOFMEMORY;
+        }
     }
 
-    int64_t AudioDevice::GetEnd()
+    void AudioDevice::RetrieveFromBuffer(DspChunk& chunk)
     {
-        return llMulDiv(m_pushedFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
-    }
+        assert(chunk.IsEmpty());
 
-    void AudioDevice::Start()
-    {
-        m_backend->audioClient->Start();
-    }
+        CAutoLock lock(&m_bufferMutex);
 
-    void AudioDevice::Stop()
-    {
-        m_backend->audioClient->Stop();
-    }
+        if (m_buffer.empty())
+            return;
 
-    void AudioDevice::Reset()
-    {
-        m_backend->audioClient->Reset();
-        m_pushedFrames = 0;
+        // TODO: drop chunks if the buffer grows too large
+
+        chunk = std::move(m_buffer.front());
+        m_buffer.pop_front();
     }
 }
