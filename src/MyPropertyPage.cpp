@@ -134,7 +134,7 @@ namespace SaneAudioRenderer
         std::wstring bitstreamingField = (inputFormat ? (DspFormatFromWaveFormat(*inputFormat) ==
                                                          DspFormat::Unknown ? L"Yes" : L"No") : L"-");
 
-        std::wstring externalClockField = L"N/A";
+        std::wstring rateMatchingField = (pDevice && pDevice->IsLive()) ? L"Yes" : L"No";
 
         std::wstring channelsInputField = (inputFormat ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-");
@@ -176,8 +176,8 @@ namespace SaneAudioRenderer
         WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  120, 8, bufferField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68,  60,  8, L"Bitstreaming:");
         WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  120, 8, bitstreamingField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"External Clock:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  120, 8, externalClockField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"Rate Matching:");
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  120, 8, rateMatchingField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92,  60,  8, L"Format:");
         WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  120, 8, formatField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 104, 60,  8, L"Channels:");
