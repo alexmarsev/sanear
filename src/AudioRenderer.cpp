@@ -174,12 +174,20 @@ namespace SaneAudioRenderer
     void AudioRenderer::EndFlush()
     {
         CAutoLock objectLock(this);
-        assert(m_state != State_Running);
 
-        if (m_device)
+        if (m_live)
         {
-            m_device->Reset();
-            m_sampleCorrection.NewDeviceBuffer();
+            // A hack for mpc-hc manual flush in DVB playback
+        }
+        else
+        {
+            assert(m_state != State_Running);
+
+            if (m_device)
+            {
+                m_device->Reset();
+                m_sampleCorrection.NewDeviceBuffer();
+            }
         }
 
         m_flush.Reset();
