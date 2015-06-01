@@ -60,8 +60,8 @@ namespace SaneAudioRenderer
                 // Apply sample corrections (pad, crop, guess timings).
                 chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps);
 
-                // Apply clock corrections (graph clock and rate dsp).
-                if (m_device && m_state == State_Running)
+                // Apply clock corrections (what we couldn't correct with sample correction).
+                if (!m_live && m_device && m_state == State_Running)
                     ApplyClockCorrection();
 
                 // Apply dsp chain.
