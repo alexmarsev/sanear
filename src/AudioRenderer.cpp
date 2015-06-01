@@ -64,6 +64,8 @@ namespace SaneAudioRenderer
                 if (!m_live && m_device && m_state == State_Running)
                     ApplyClockCorrection();
 
+                // TODO: rate matching with DspVaribleRate
+
                 // Apply dsp chain.
                 if (m_device && !m_device->IsBitstream())
                 {
