@@ -28,10 +28,26 @@ namespace SaneAudioRenderer
 
                     while (!m_exit)
                     {
-                        m_wake.Wait(INFINITE);
+                        m_wake.Wait(1);
 
                         DspChunk chunk;
                         RetrieveFromBuffer(chunk);
+
+                        if (chunk.IsEmpty() &&
+                            GetEnd() - GetPosition() < MILLISECONDS_TO_100NS_UNITS(10))
+                        {
+                            try
+                            {
+                                PushSilenceToDevice(m_backend->waveFormat->nSamplesPerSec / 100);
+                                DebugOut("AudioDevice 10ms of silence");
+                            }
+                            catch (HRESULT)
+                            {
+                                m_exit = true;
+                            }
+
+                            continue;
+                        }
 
                         while (!chunk.IsEmpty())
                         {
@@ -164,6 +180,27 @@ namespace SaneAudioRenderer
         m_pushedFrames += doFrames;
     }
 
+    void AudioDevice::PushSilenceToDevice(UINT32 frames)
+    {
+        // Get up-to-date information on the device buffer.
+        UINT32 bufferFrames, bufferPadding;
+        ThrowIfFailed(m_backend->audioClient->GetBufferSize(&bufferFrames));
+        ThrowIfFailed(m_backend->audioClient->GetCurrentPadding(&bufferPadding));
+
+        // Find out how many frames we can write this time.
+        const UINT32 doFrames = std::min(bufferFrames - bufferPadding, frames);
+
+        if (doFrames == 0)
+            return;
+
+        // Write frames to the device buffer.
+        BYTE* deviceBuffer;
+        ThrowIfFailed(m_backend->audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
+        ThrowIfFailed(m_backend->audioRenderClient->ReleaseBuffer(doFrames, AUDCLNT_BUFFERFLAGS_SILENT));
+
+        m_pushedFrames += doFrames;
+    }
+
     void AudioDevice::PushToBuffer(DspChunk& chunk)
     {
         if (m_exit)
@@ -175,6 +212,7 @@ namespace SaneAudioRenderer
         try
         {
             CAutoLock lock(&m_bufferMutex);
+            m_bufferFrameCount += chunk.GetFrameCount();
             m_buffer.emplace_back(std::move(chunk));
         }
         catch (std::bad_alloc&)
@@ -193,9 +231,12 @@ namespace SaneAudioRenderer
         if (m_buffer.empty())
             return;
 
-        // TODO: drop chunks if the buffer grows too large
-
-        chunk = std::move(m_buffer.front());
-        m_buffer.pop_front();
+        do
+        {
+            chunk = std::move(m_buffer.front());
+            m_buffer.pop_front();
+            m_bufferFrameCount -= chunk.GetFrameCount();
+        }
+        while (m_bufferFrameCount > (m_backend->waveFormat->nSamplesPerSec / 100));
     }
 }
