@@ -134,7 +134,7 @@ namespace SaneAudioRenderer
             }
         }
 
-        LRESULT CreateAudioDeviceBackend(SharedWaveFormat format, bool live, ISettings* pSettings,
+        HRESULT CreateAudioDeviceBackend(SharedWaveFormat format, bool live, ISettings* pSettings,
                                          std::shared_ptr<AudioDeviceBackend>& backend)
         {
             assert(format);
