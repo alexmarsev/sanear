@@ -1,5 +1,5 @@
  - implement low-latency rendering path for realtime capture playback
- - simplify DspLimiter and make it work with lower latency
+ - implement proper low-latency clock matching (mainly for DVB)
  - make sure that frame-stepping works alright
  - stop wasapi on eos more gracefully
 
