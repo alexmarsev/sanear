@@ -88,6 +88,7 @@
     <ClInclude Include="src\Interfaces.h" />
     <ClInclude Include="src\MyBasicAudio.h" />
     <ClInclude Include="src\MyPropertyPage.h" />
+    <ClInclude Include="src\MyTestClock.h" />
     <ClInclude Include="src\Settings.h" />
     <ClInclude Include="src\SampleCorrection.h" />
     <ClInclude Include="src\Utils.h" />
@@ -115,6 +116,7 @@
     <ClCompile Include="src\MyClock.cpp" />
     <ClCompile Include="src\Factory.cpp" />
     <ClCompile Include="src\MyPropertyPage.cpp" />
+    <ClCompile Include="src\MyTestClock.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

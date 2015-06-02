@@ -39,6 +39,35 @@ namespace SaneAudioRenderer
             Stop();
     }
 
+    void AudioRenderer::SetClock(IReferenceClock* pClock)
+    {
+        CAutoLock objectLock(this);
+
+        m_graphClock = pClock;
+
+        if (m_graphClock && m_graphClock != m_myGraphClock)
+        {
+            if (!m_externalClock)
+                ClearDevice();
+
+            m_externalClock = true;
+        }
+        else
+        {
+            if (m_externalClock)
+                ClearDevice();
+
+            m_externalClock = false;
+        }
+    }
+
+    bool AudioRenderer::OnExternalClock()
+    {
+        CAutoLock objectLock(this);
+
+        return m_externalClock;
+    }
+
     bool AudioRenderer::Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
     {
         DspChunk chunk;
@@ -392,13 +421,38 @@ namespace SaneAudioRenderer
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
         }
+
+        /*
+        // Try to match internal clock with graph clock if they're different.
+        // We do it in the roundabout way by dynamically changing audio sampling rate.
+        if (m_externalClock && !m_device->bitstream)
+        {
+            assert(m_dspRate.Active());
+            REFERENCE_TIME graphTime, myTime, myStartTime;
+            if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
+                SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
+                SUCCEEDED(GetGraphTime(graphTime)) &&
+                myTime > myStartTime)
+            {
+                REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
+                if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
+                {
+                    m_dspRate.Adjust(offset);
+                    m_correctedWithRateDsp += offset;
+                    DebugOut("AudioRenderer offset internal clock indirectly by", offset / 10000., "ms");
+                }
+            }
+        }
+        */
     }
 
     HRESULT AudioRenderer::GetGraphTime(REFERENCE_TIME& time)
     {
         CAutoLock objectLock(this);
 
-        return m_myGraphClock->GetTime(&time);
+        return m_graphClock ?
+                   m_graphClock->GetTime(&time) :
+                   m_myGraphClock->GetTime(&time);
     }
 
     void AudioRenderer::InitializeProcessors()
@@ -406,6 +460,8 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_inputFormat);
         assert(m_device);
+
+        m_correctedWithRateDsp = 0;
 
         if (m_device->IsBitstream())
             return;

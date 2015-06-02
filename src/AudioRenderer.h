@@ -27,6 +27,9 @@ namespace SaneAudioRenderer
         AudioRenderer& operator=(const AudioRenderer&) = delete;
         ~AudioRenderer();
 
+        void SetClock(IReferenceClock* pClock);
+        bool OnExternalClock();
+
         bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
         bool Finish(bool blockUntilEnd, CAMEvent* pFilledEvent);
 
@@ -89,6 +92,9 @@ namespace SaneAudioRenderer
 
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_myGraphClock;
+        IReferenceClockPtr m_graphClock;
+        bool m_externalClock = false;
+        REFERENCE_TIME m_correctedWithRateDsp = 0;
 
         SharedWaveFormat m_inputFormat;
         bool m_live = false;
