@@ -53,7 +53,7 @@ namespace SaneAudioRenderer
         void SetBalance(float balance) { m_balance = balance; }
 
         SharedWaveFormat GetInputFormat();
-        AudioDevice const* GetAudioDevice();
+        const AudioDevice* GetAudioDevice();
         std::vector<std::wstring> GetActiveProcessors();
 
     private:

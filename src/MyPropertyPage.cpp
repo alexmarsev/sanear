@@ -119,7 +119,7 @@ namespace SaneAudioRenderer
         }
     }
 
-    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, AudioDevice const* pDevice,
+    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, const AudioDevice* pDevice,
                                    std::vector<std::wstring> processors, bool externalClock, bool live)
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {

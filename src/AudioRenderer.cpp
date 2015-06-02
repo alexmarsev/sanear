@@ -304,7 +304,7 @@ namespace SaneAudioRenderer
         return m_inputFormat;
     }
 
-    AudioDevice const* AudioRenderer::GetAudioDevice()
+    const AudioDevice* AudioRenderer::GetAudioDevice()
     {
         assert(CritCheckIn(this));
 
