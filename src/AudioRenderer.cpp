@@ -385,7 +385,7 @@ namespace SaneAudioRenderer
         assert(m_inputFormat);
 
         m_deviceSettingsSerial = m_settings->GetSerial();
-        m_device = m_deviceManager.CreateDevice(m_inputFormat, m_live, m_settings);
+        m_device = m_deviceManager.CreateDevice(m_inputFormat, m_live || m_externalClock, m_settings);
 
         if (m_device)
         {
