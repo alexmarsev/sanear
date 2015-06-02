@@ -38,7 +38,7 @@ namespace SaneAudioRenderer
         void BeginFlush();
         void EndFlush();
 
-        bool CheckFormat(SharedWaveFormat inputFormat);
+        bool CheckFormat(SharedWaveFormat inputFormat, bool live);
         void SetFormat(SharedWaveFormat inputFormat, bool live);
 
         void NewSegment(double rate);

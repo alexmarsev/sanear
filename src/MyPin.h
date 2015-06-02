@@ -16,6 +16,7 @@ namespace SaneAudioRenderer
 
         HRESULT CheckMediaType(const CMediaType* pmt) override;
         HRESULT SetMediaType(const CMediaType* pmt) override;
+        HRESULT CheckConnect(IPin* pPin) override;
 
         STDMETHODIMP NewSegment(REFERENCE_TIME startTime, REFERENCE_TIME stopTime, double rate) override;
         STDMETHODIMP ReceiveCanBlock() override { return S_OK; }
@@ -33,9 +34,13 @@ namespace SaneAudioRenderer
 
     private:
 
+        bool CheckLive(IPin* pPin);
+
         FILTER_STATE m_state = State_Stopped;
         bool m_eosUp = false;
         bool m_eosDown = false;
+
+        bool m_live = false;
 
         CCritSec m_receiveMutex;
         HANDLE m_hReceiveThread = NULL;

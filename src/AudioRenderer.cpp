@@ -221,7 +221,7 @@ namespace SaneAudioRenderer
         m_flush.Reset();
     }
 
-    bool AudioRenderer::CheckFormat(SharedWaveFormat inputFormat)
+    bool AudioRenderer::CheckFormat(SharedWaveFormat inputFormat, bool live)
     {
         assert(inputFormat);
 
@@ -233,7 +233,7 @@ namespace SaneAudioRenderer
         BOOL bitstreamingAllowed;
         m_settings->GetAllowBitstreaming(&bitstreamingAllowed);
 
-        if (!exclusive || !bitstreamingAllowed)
+        if (!exclusive || !bitstreamingAllowed || live)
             return false;
 
         CAutoLock objectLock(this);

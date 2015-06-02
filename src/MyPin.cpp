@@ -35,7 +35,7 @@ namespace SaneAudioRenderer
 
             try
             {
-                if (m_renderer.CheckFormat(CopyWaveFormat(*pFormat)))
+                if (m_renderer.CheckFormat(CopyWaveFormat(*pFormat), m_live))
                     return S_OK;
             }
             catch (std::bad_alloc&)
@@ -59,46 +59,27 @@ namespace SaneAudioRenderer
         assert(pFormat);
         assert(pmt->cbFormat == sizeof(WAVEFORMATEX) + pFormat->cbSize);
 
-        bool live = false;
-
-        IAMGraphStreamsPtr graphStreams;
-        IAMPushSourcePtr pushSource;
-        if (SUCCEEDED(m_pFilter->GetFilterGraph()->QueryInterface(IID_PPV_ARGS(&graphStreams))) &&
-            SUCCEEDED(graphStreams->FindUpstreamInterface(m_Connected, IID_PPV_ARGS(&pushSource), AM_INTF_SEARCH_OUTPUT_PIN)))
-        {
-            live = true;
-
-            ULONG flags;
-            if (SUCCEEDED(pushSource->GetPushSourceFlags(&flags)))
-            {
-                if (flags & AM_PUSHSOURCECAPS_INTERNAL_RM)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_INTERNAL_RM flag");
-
-                if (flags & AM_PUSHSOURCECAPS_NOT_LIVE)
-                {
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_NOT_LIVE flag");
-                    live = false;
-                }
-
-                if (flags & AM_PUSHSOURCECAPS_PRIVATE_CLOCK)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_PRIVATE_CLOCK flag");
-
-                if (flags & AM_PUSHSOURCEREQS_USE_STREAM_CLOCK)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCEREQS_USE_STREAM_CLOCK flag");
-
-                if (!flags)
-                    DebugOut("MyPin upstream live pin has no flags");
-            }
-        }
+        m_live = CheckLive(m_Connected);
 
         try
         {
-            m_renderer.SetFormat(CopyWaveFormat(*pFormat), live);
+            m_renderer.SetFormat(CopyWaveFormat(*pFormat), m_live);
         }
         catch (std::bad_alloc&)
         {
             return E_OUTOFMEMORY;
         }
+
+        return S_OK;
+    }
+
+    HRESULT MyPin::CheckConnect(IPin* pPin)
+    {
+        assert(CritCheckIn(this));
+
+        ReturnIfFailed(CBaseInputPin::CheckConnect(pPin));
+
+        m_live = CheckLive(pPin);
 
         return S_OK;
     }
@@ -305,5 +286,44 @@ namespace SaneAudioRenderer
         // because MyFilter always locks itself before calling this method.
 
         return !!m_bufferFilled.Wait(timeoutMilliseconds);
+    }
+
+    bool MyPin::CheckLive(IPin* pPin)
+    {
+        assert(pPin);
+
+        bool live = false;
+
+        IAMGraphStreamsPtr graphStreams;
+        IAMPushSourcePtr pushSource;
+        if (SUCCEEDED(m_pFilter->GetFilterGraph()->QueryInterface(IID_PPV_ARGS(&graphStreams))) &&
+            SUCCEEDED(graphStreams->FindUpstreamInterface(pPin, IID_PPV_ARGS(&pushSource), AM_INTF_SEARCH_OUTPUT_PIN)))
+        {
+            live = true;
+
+            ULONG flags;
+            if (SUCCEEDED(pushSource->GetPushSourceFlags(&flags)))
+            {
+                if (flags & AM_PUSHSOURCECAPS_INTERNAL_RM)
+                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_INTERNAL_RM flag");
+
+                if (flags & AM_PUSHSOURCECAPS_NOT_LIVE)
+                {
+                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_NOT_LIVE flag");
+                    live = false;
+                }
+
+                if (flags & AM_PUSHSOURCECAPS_PRIVATE_CLOCK)
+                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_PRIVATE_CLOCK flag");
+
+                if (flags & AM_PUSHSOURCEREQS_USE_STREAM_CLOCK)
+                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCEREQS_USE_STREAM_CLOCK flag");
+
+                if (!flags)
+                    DebugOut("MyPin upstream live pin has no flags");
+            }
+        }
+
+        return live;
     }
 }
