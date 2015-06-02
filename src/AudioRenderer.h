@@ -30,6 +30,8 @@ namespace SaneAudioRenderer
         void SetClock(IReferenceClock* pClock);
         bool OnExternalClock();
 
+        bool IsLive();
+
         bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
         bool Finish(bool blockUntilEnd, CAMEvent* pFilledEvent);
 

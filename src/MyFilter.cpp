@@ -143,7 +143,9 @@ namespace SaneAudioRenderer
             auto audioDevice = m_renderer->GetAudioDevice();
 
             pPage = new MyPropertyPage(inputFormat, audioDevice,
-                                       m_renderer->GetActiveProcessors(), m_renderer->OnExternalClock());
+                                       m_renderer->GetActiveProcessors(),
+                                       m_renderer->OnExternalClock(),
+                                       m_renderer->IsLive());
         }
         catch (std::bad_alloc&)
         {

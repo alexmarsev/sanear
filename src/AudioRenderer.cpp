@@ -68,6 +68,13 @@ namespace SaneAudioRenderer
         return m_externalClock;
     }
 
+    bool AudioRenderer::IsLive()
+    {
+        CAutoLock objectLock(this);
+
+        return m_live;
+    }
+
     bool AudioRenderer::Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
     {
         DspChunk chunk;
