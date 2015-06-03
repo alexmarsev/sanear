@@ -62,23 +62,15 @@ namespace SaneAudioRenderer
             size_t cropFrames = (size_t)TimeToFrames(m_lastSampleEnd - sampleProps.tStart);
             DebugOut("SampleCorrection crop", cropFrames, "frames from [", sampleProps.tStart, sampleProps.tStop, "]");
 
+            chunk = DspChunk(pSample, sampleProps, *m_format);
+
             if (cropFrames > 0)
             {
-                size_t cropBytes = cropFrames * m_format->nChannels * m_format->wBitsPerSample / 8;
-
-                assert((int32_t)cropBytes < sampleProps.lActual);
-                sampleProps.pbBuffer += cropBytes;
-                sampleProps.lActual -= (int32_t)cropBytes;
-                sampleProps.tStart += FramesToTime(cropFrames);
-
-                chunk = DspChunk(pSample, sampleProps, *m_format);
-                AccumulateTimings(sampleProps, chunk.GetFrameCount());
+                assert(chunk.GetFrameCount() > cropFrames);
+                chunk.ShrinkHead(chunk.GetFrameCount() - cropFrames);
             }
-            else
-            {
-                chunk = DspChunk(pSample, sampleProps, *m_format);
-                AccumulateTimings(sampleProps, chunk.GetFrameCount());
-            }
+
+            AccumulateTimings(sampleProps, chunk.GetFrameCount());
         }
         else if (!m_bitstream && m_freshSegment && sampleProps.tStart > 0)
         {
