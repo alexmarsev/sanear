@@ -20,7 +20,7 @@ namespace SaneAudioRenderer
         uint32_t              bufferDuration;
         bool                  exclusive;
         bool                  bitstream;
-        bool                  live;
+        bool                  realtime;
         bool                  default;
     };
 
@@ -53,7 +53,7 @@ namespace SaneAudioRenderer
 
         bool IsExclusive() const { return m_backend->exclusive; }
         bool IsBitstream() const { return m_backend->bitstream; }
-        bool IsLive()      const { return m_backend->live; }
+        bool IsRealtime()  const { return m_backend->realtime; }
         bool IsDefault()   const { return m_backend->default; }
 
     private:

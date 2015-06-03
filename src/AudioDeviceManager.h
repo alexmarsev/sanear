@@ -15,7 +15,7 @@ namespace SaneAudioRenderer
         ~AudioDeviceManager();
 
         bool BitstreamFormatSupported(SharedWaveFormat format, ISettings* pSettings);
-        std::unique_ptr<AudioDevice> CreateDevice(SharedWaveFormat format, bool live, ISettings* pSettings);
+        std::unique_ptr<AudioDevice> CreateDevice(SharedWaveFormat format, bool realtime, ISettings* pSettings);
 
     private:
 

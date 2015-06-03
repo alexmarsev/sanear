@@ -134,7 +134,7 @@ namespace SaneAudioRenderer
             }
         }
 
-        HRESULT CreateAudioDeviceBackend(SharedWaveFormat format, bool live, ISettings* pSettings,
+        HRESULT CreateAudioDeviceBackend(SharedWaveFormat format, bool realtime, ISettings* pSettings,
                                          std::shared_ptr<AudioDeviceBackend>& backend)
         {
             assert(format);
@@ -155,7 +155,7 @@ namespace SaneAudioRenderer
 
                     backend->friendlyName = std::make_shared<std::wstring>(deviceName.get());
                     backend->exclusive = !!exclusive;
-                    backend->live = live;
+                    backend->realtime = realtime;
                     backend->bufferDuration = buffer;
                 }
 
@@ -311,14 +311,15 @@ namespace SaneAudioRenderer
         return SUCCEEDED(m_result);
     }
 
-    std::unique_ptr<AudioDevice> AudioDeviceManager::CreateDevice(SharedWaveFormat format, bool live, ISettings* pSettings)
+    std::unique_ptr<AudioDevice> AudioDeviceManager::CreateDevice(SharedWaveFormat format, bool realtime,
+                                                                  ISettings* pSettings)
     {
         assert(format);
         assert(pSettings);
 
         std::shared_ptr<AudioDeviceBackend> backend;
 
-        m_function = [&] { return CreateAudioDeviceBackend(format, live, pSettings, backend); };
+        m_function = [&] { return CreateAudioDeviceBackend(format, realtime, pSettings, backend); };
         m_wake.Set();
         m_done.Wait();
 

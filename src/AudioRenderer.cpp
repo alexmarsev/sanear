@@ -116,7 +116,7 @@ namespace SaneAudioRenderer
                 }
 
                 // Don't deny the allocator to reuse IMediaSample while the chunk is hanging in the buffer.
-                if (m_device && m_device->IsLive())
+                if (m_device && m_device->IsRealtime())
                     chunk.FreeMediaSample();
             }
             catch (std::bad_alloc&)
@@ -372,8 +372,6 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            assert(m_live == m_device->IsLive());
-
             if (!m_live)
                 m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
 

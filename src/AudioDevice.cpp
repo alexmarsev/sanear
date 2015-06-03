@@ -19,7 +19,7 @@ namespace SaneAudioRenderer
     {
         assert(m_backend);
 
-        if (m_backend->live)
+        if (m_backend->realtime)
             m_thread = std::thread(
                 [this]
                 {
@@ -102,7 +102,7 @@ namespace SaneAudioRenderer
 
     void AudioDevice::Push(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
-        if (IsLive())
+        if (IsRealtime())
         {
             PushToBuffer(chunk);
 
