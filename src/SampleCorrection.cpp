@@ -102,7 +102,7 @@ namespace SaneAudioRenderer
 
                 assert(chunk.GetSize() == tempChunk.GetSize() + padBytes);
                 ZeroMemory(chunk.GetData(), padBytes);
-                memcpy(chunk.GetData() + padBytes, tempChunk.GetConstData(), tempChunk.GetSize());
+                memcpy(chunk.GetData() + padBytes, tempChunk.GetData(), tempChunk.GetSize());
             }
             else
             {

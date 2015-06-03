@@ -44,7 +44,7 @@ namespace SaneAudioRenderer
 
         size_t inputDone = 0;
         size_t outputDone = 0;
-        soxr_process(m_soxr, chunk.GetConstData(), chunk.GetFrameCount(), &inputDone,
+        soxr_process(m_soxr, chunk.GetData(), chunk.GetFrameCount(), &inputDone,
                              output.GetData(), output.GetFrameCount(), &outputDone);
         assert(inputDone == chunk.GetFrameCount());
         output.ShrinkTail(outputDone);
@@ -64,7 +64,7 @@ namespace SaneAudioRenderer
             DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_outputRate, m_outputRate);
 
             if (!chunk.IsEmpty())
-                memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
+                memcpy(output.GetData(), chunk.GetData(), chunk.GetSize());
 
             size_t inputDone = 0;
             size_t outputDo = output.GetFrameCount() - chunk.GetFrameCount();

@@ -164,7 +164,7 @@ namespace SaneAudioRenderer
         BYTE* deviceBuffer;
         ThrowIfFailed(m_backend->audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
         assert(chunk.GetFrameSize() == (m_backend->waveFormat->wBitsPerSample / 8 * m_backend->waveFormat->nChannels));
-        memcpy(deviceBuffer, chunk.GetConstData(), doFrames * chunk.GetFrameSize());
+        memcpy(deviceBuffer, chunk.GetData(), doFrames * chunk.GetFrameSize());
         ThrowIfFailed(m_backend->audioRenderClient->ReleaseBuffer(doFrames, 0));
 
         // If the buffer is fully filled, set the corresponding event (if requested).

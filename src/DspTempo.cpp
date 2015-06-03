@@ -53,7 +53,7 @@ namespace SaneAudioRenderer
 
         DspChunk::ToFloat(chunk);
 
-        m_stouch.putSamples((const float*)chunk.GetConstData(), (uint32_t)chunk.GetFrameCount());
+        m_stouch.putSamples((const float*)chunk.GetData(), (uint32_t)chunk.GetFrameCount());
 
         DspChunk output(DspFormat::Float, m_channels, m_stouch.numSamples(), m_rate);
 
@@ -82,7 +82,7 @@ namespace SaneAudioRenderer
             DspChunk output(DspFormat::Float, m_channels, chunk.GetFrameCount() + undone, m_rate);
 
             if (!chunk.IsEmpty())
-                memcpy(output.GetData(), chunk.GetConstData(), chunk.GetSize());
+                memcpy(output.GetData(), chunk.GetData(), chunk.GetSize());
 
             m_stouch.flush();
 

@@ -39,7 +39,7 @@ namespace SaneAudioRenderer
 
         m_resampler.inp_count = (uint32_t)chunk.GetFrameCount();
         m_resampler.out_count = outputFrames;
-        m_resampler.inp_data = (float*)chunk.GetConstData();
+        m_resampler.inp_data = (float*)chunk.GetData();
         m_resampler.out_data = (float*)output.GetData();
 
         m_resampler.process();

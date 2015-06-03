@@ -241,7 +241,7 @@ namespace SaneAudioRenderer
 
         DspChunk output(DspFormat::Float, m_outputChannels, chunk.GetFrameCount(), chunk.GetRate());
 
-        auto inputData = reinterpret_cast<const float*>(chunk.GetConstData());
+        auto inputData = reinterpret_cast<const float*>(chunk.GetData());
         auto outputData = reinterpret_cast<float*>(output.GetData());
 
         if (m_inputChannels == 6 && m_outputChannels == 2)

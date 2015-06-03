@@ -238,27 +238,27 @@ namespace SaneAudioRenderer
             switch (inputFormat)
             {
                 case DspFormat::Pcm8:
-                    ConvertSamples<DspFormat::Pcm8, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Pcm8, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
                 case DspFormat::Pcm16:
-                    ConvertSamples<DspFormat::Pcm16, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Pcm16, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
                 case DspFormat::Pcm24:
-                    ConvertSamples<DspFormat::Pcm24, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Pcm24, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
                 case DspFormat::Pcm32:
-                    ConvertSamples<DspFormat::Pcm32, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Pcm32, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
                 case DspFormat::Float:
-                    ConvertSamples<DspFormat::Float, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Float, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
                 case DspFormat::Double:
-                    ConvertSamples<DspFormat::Double, OutputFormat>(chunk.GetConstData(), outputData, chunk.GetSampleCount());
+                    ConvertSamples<DspFormat::Double, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
             }
 
@@ -305,8 +305,7 @@ namespace SaneAudioRenderer
         , m_channels(1)
         , m_rate(1)
         , m_dataSize(0)
-        , m_constData(nullptr)
-        , m_delayedCopy(false)
+        , m_mediaData(nullptr)
         , m_dataOffset(0)
     {
     }
@@ -317,8 +316,7 @@ namespace SaneAudioRenderer
         , m_channels(channels)
         , m_rate(rate)
         , m_dataSize(m_formatSize * channels * frames)
-        , m_constData(nullptr)
-        , m_delayedCopy(false)
+        , m_mediaData(nullptr)
         , m_dataOffset(0)
     {
         assert(m_format != DspFormat::Unknown);
@@ -332,13 +330,12 @@ namespace SaneAudioRenderer
         , m_channels(sampleFormat.nChannels)
         , m_rate(sampleFormat.nSamplesPerSec)
         , m_dataSize(sampleProps.lActual)
-        , m_constData((char*)sampleProps.pbBuffer)
-        , m_delayedCopy(true)
+        , m_mediaData((char*)sampleProps.pbBuffer)
         , m_dataOffset(0)
     {
         assert(m_formatSize == sampleFormat.wBitsPerSample / 8);
         assert(m_mediaSample);
-        assert(m_constData);
+        assert(m_mediaData);
 
         assert(m_dataSize % GetFrameSize() == 0);
         m_dataSize = m_dataSize - m_dataSize % GetFrameSize();
@@ -351,8 +348,7 @@ namespace SaneAudioRenderer
         , m_channels(other.m_channels)
         , m_rate(other.m_rate)
         , m_dataSize(other.m_dataSize)
-        , m_constData(other.m_constData)
-        , m_delayedCopy(other.m_delayedCopy)
+        , m_mediaData(other.m_mediaData)
         , m_dataOffset(0)
     {
         other.m_mediaSample = nullptr;
@@ -370,18 +366,11 @@ namespace SaneAudioRenderer
             m_channels = other.m_channels;
             m_rate = other.m_rate;
             m_dataSize = other.m_dataSize; other.m_dataSize = 0;
-            m_constData = other.m_constData;
-            m_delayedCopy = other.m_delayedCopy;
+            m_mediaData = other.m_mediaData;
             m_data = nullptr; std::swap(m_data, other.m_data);
             m_dataOffset = other.m_dataOffset;
         }
         return *this;
-    }
-
-    char* DspChunk::GetData()
-    {
-        InvokeDelayedCopy();
-        return m_data.get() + m_dataOffset;
     }
 
     void DspChunk::ShrinkTail(size_t toFrames)
@@ -410,17 +399,6 @@ namespace SaneAudioRenderer
 
             if (!m_data.get())
                 throw std::bad_alloc();
-        }
-    }
-
-    void DspChunk::InvokeDelayedCopy()
-    {
-        if (m_delayedCopy)
-        {
-            Allocate();
-            assert(m_constData);
-            memcpy(m_data.get(), m_constData, m_dataSize + m_dataOffset);
-            m_delayedCopy = false;
         }
     }
 }
