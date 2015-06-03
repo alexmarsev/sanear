@@ -9,7 +9,7 @@
 #include "DspMatrix.h"
 #include "DspRate.h"
 #include "DspTempo.h"
-#include "DspVariableRate.h"
+#include "DspRealtimeRate.h"
 #include "DspVolume.h"
 #include "Interfaces.h"
 #include "MyClock.h"
@@ -108,7 +108,7 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         DspRate m_dspRate;
-        DspVariableRate m_dspVariableRate;
+        DspRealtimeRate m_dspVariableRate;
         DspTempo m_dspTempo;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;

@@ -6,19 +6,19 @@
 
 namespace SaneAudioRenderer
 {
-    class DspVariableRate final
+    class DspRealtimeRate final
         : public DspBase
     {
     public:
 
-        DspVariableRate() = default;
-        DspVariableRate(const DspVariableRate&) = delete;
-        DspVariableRate& operator=(const DspVariableRate&) = delete;
-        ~DspVariableRate() = default;
+        DspRealtimeRate() = default;
+        DspRealtimeRate(const DspRealtimeRate&) = delete;
+        DspRealtimeRate& operator=(const DspRealtimeRate&) = delete;
+        ~DspRealtimeRate() = default;
 
-        void Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels);
+        void Initialize(bool realtime, uint32_t inputRate, uint32_t outputRate, uint32_t channels);
 
-        std::wstring Name() override { return L"VariableRate"; }
+        std::wstring Name() override { return L"RealtimeRate"; }
 
         bool Active() override;
 

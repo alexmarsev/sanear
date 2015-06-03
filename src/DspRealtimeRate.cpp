@@ -1,16 +1,16 @@
 #include "pch.h"
-#include "DspVariableRate.h"
+#include "DspRealtimeRate.h"
 
 namespace SaneAudioRenderer
 {
-    void DspVariableRate::Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels)
+    void DspRealtimeRate::Initialize(bool realtime, uint32_t inputRate, uint32_t outputRate, uint32_t channels)
     {
-        m_active = variable;
+        m_active = realtime;
         m_inputRate = inputRate;
         m_outputRate = outputRate;
         m_channels = channels;
 
-        if (variable)
+        if (realtime)
         {
             m_resampler.setup((double)outputRate / inputRate, channels, 32);
 
@@ -31,12 +31,12 @@ namespace SaneAudioRenderer
         }
     }
 
-    bool DspVariableRate::Active()
+    bool DspRealtimeRate::Active()
     {
         return m_active;
     }
 
-    void DspVariableRate::Process(DspChunk& chunk)
+    void DspRealtimeRate::Process(DspChunk& chunk)
     {
         if (!m_active || chunk.IsEmpty())
             return;
@@ -62,7 +62,7 @@ namespace SaneAudioRenderer
         chunk = std::move(output);
     }
 
-    void DspVariableRate::Finish(DspChunk& chunk)
+    void DspRealtimeRate::Finish(DspChunk& chunk)
     {
         if (!m_active)
             return;

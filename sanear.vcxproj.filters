@@ -59,14 +59,14 @@
     <ClCompile Include="src\SampleCorrection.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="src\DspVariableRate.cpp">
-      <Filter>Processors</Filter>
-    </ClCompile>
     <ClCompile Include="src\AudioDeviceManager.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\AudioDevice.cpp">
       <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DspRealtimeRate.cpp">
+      <Filter>Processors</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -138,14 +138,14 @@
     <ClInclude Include="src\SampleCorrection.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="src\DspVariableRate.h">
-      <Filter>Processors</Filter>
-    </ClInclude>
     <ClInclude Include="src\AudioDeviceManager.h">
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="src\AudioDevice.h">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspRealtimeRate.h">
+      <Filter>Processors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
