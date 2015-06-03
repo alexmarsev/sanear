@@ -34,6 +34,8 @@ namespace SaneAudioRenderer
         void ShrinkTail(size_t toFrames);
         void ShrinkHead(size_t toFrames);
 
+        void FreeMediaSample();
+
     private:
 
         void Allocate();

@@ -391,6 +391,20 @@ namespace SaneAudioRenderer
         }
     }
 
+    void DspChunk::FreeMediaSample()
+    {
+        if (m_mediaSample)
+        {
+            assert(m_mediaData);
+            assert(!m_data);
+
+            Allocate();
+            memcpy(m_data.get(), m_mediaData, m_dataSize + m_dataOffset);
+            m_mediaData = nullptr;
+            m_mediaSample = nullptr;
+        }
+    }
+
     void DspChunk::Allocate()
     {
         if (m_dataSize > 0)

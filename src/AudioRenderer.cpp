@@ -114,6 +114,10 @@ namespace SaneAudioRenderer
 
                     DspChunk::ToFormat(m_device->GetDspFormat(), chunk);
                 }
+
+                // Don't deny the allocator to reuse IMediaSample while the chunk is hanging in the buffer.
+                if (m_device && m_device->IsLive())
+                    chunk.FreeMediaSample();
             }
             catch (std::bad_alloc&)
             {
