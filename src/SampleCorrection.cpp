@@ -54,13 +54,13 @@ namespace SaneAudioRenderer
         {
             // Drop the sample.
             assert(chunk.IsEmpty());
-            DebugOut("SampleCorrection drop", sampleProps.tStart, sampleProps.tStop);
+            DebugOut("SampleCorrection drop [", sampleProps.tStart, sampleProps.tStop, "]");
         }
         else if (!m_bitstream && m_freshSegment && sampleProps.tStart < 0)
         {
             // Crop the sample.
             size_t cropFrames = (size_t)TimeToFrames(m_lastSampleEnd - sampleProps.tStart);
-            DebugOut("SampleCorrection crop", cropFrames, "frames", sampleProps.tStart, sampleProps.tStop);
+            DebugOut("SampleCorrection crop", cropFrames, "frames from [", sampleProps.tStart, sampleProps.tStop, "]");
 
             if (cropFrames > 0)
             {
@@ -84,7 +84,7 @@ namespace SaneAudioRenderer
         {
             // Zero-pad the sample.
             size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastSampleEnd);
-            DebugOut("SampleCorrection pad", padFrames, "frames", sampleProps.tStart, sampleProps.tStop);
+            DebugOut("SampleCorrection pad", padFrames, "frames into [", sampleProps.tStart, sampleProps.tStop, "]");
 
             if (padFrames > 0)
             {
