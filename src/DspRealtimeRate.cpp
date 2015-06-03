@@ -12,7 +12,7 @@ namespace SaneAudioRenderer
 
         if (realtime)
         {
-            m_resampler.setup((double)outputRate / inputRate, channels, 32);
+            m_resampler.setup((double)outputRate / inputRate, channels, 48);
 
             // Insert silence to align input
 
