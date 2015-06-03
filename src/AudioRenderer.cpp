@@ -422,7 +422,7 @@ namespace SaneAudioRenderer
         // Apply corrections to internal clock.
         {
             REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
-            if (std::abs(offset) > 1000)
+            if (std::abs(offset) > 100)
             {
                 m_myClock->OffsetSlavedClock(offset);
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
