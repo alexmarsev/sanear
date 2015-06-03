@@ -13,7 +13,21 @@ namespace SaneAudioRenderer
         if (variable)
         {
             m_resampler.setup((double)outputRate / inputRate, channels, 32);
-            DebugOut("DspVariableRate filter window is", m_resampler.inpsize(), "frames");
+
+            // Insert silence to align input
+
+            DspChunk silence(DspFormat::Float, channels, m_resampler.inpsize() / 2 - 1, outputRate);
+            ZeroMemory(silence.GetData(), silence.GetSize());
+            DspChunk temp(DspFormat::Float, channels, 1, outputRate);
+
+            m_resampler.inp_count = (uint32_t)silence.GetFrameCount();
+            m_resampler.out_count = 1;
+            m_resampler.inp_data = (float*)silence.GetData();
+            m_resampler.out_data = (float*)temp.GetData();
+
+            m_resampler.process();
+            assert(m_resampler.inp_count == 0);
+            assert(m_resampler.out_count == 1);
         }
     }
 
@@ -32,10 +46,8 @@ namespace SaneAudioRenderer
 
         DspChunk::ToFloat(chunk);
 
-        // TODO: pad to align
-
         uint32_t outputFrames = (uint32_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
-        DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
+        DspChunk output(DspFormat::Float, m_channels, outputFrames, m_outputRate);
 
         m_resampler.inp_count = (uint32_t)chunk.GetFrameCount();
         m_resampler.out_count = outputFrames;
@@ -52,6 +64,29 @@ namespace SaneAudioRenderer
 
     void DspVariableRate::Finish(DspChunk& chunk)
     {
+        if (!m_active)
+            return;
+
+        // Insert silence to align output
+        if (chunk.IsEmpty())
+        {
+            DspChunk::ToFloat(chunk);
+
+            assert(chunk.GetRate() == m_inputRate);
+            assert(chunk.GetChannelCount() == m_channels);
+
+            DspChunk temp(DspFormat::Float, m_channels, chunk.GetFrameCount() + m_resampler.inpsize() / 2, m_inputRate);
+            memcpy(temp.GetData(), chunk.GetData(), chunk.GetSize());
+            ZeroMemory(temp.GetData() + chunk.GetSize(), temp.GetSize() - chunk.GetSize());
+
+            chunk = std::move(temp);
+        }
+        else
+        {
+            chunk = DspChunk(DspFormat::Float, m_channels, m_resampler.inpsize() / 2, m_inputRate);
+            ZeroMemory(chunk.GetData(), chunk.GetSize());
+        }
+
         Process(chunk);
     }
 }
