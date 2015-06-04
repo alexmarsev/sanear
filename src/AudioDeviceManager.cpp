@@ -233,6 +233,8 @@ namespace SaneAudioRenderer
 
                 ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioClock)));
 
+                ThrowIfFailed(backend->audioClient->GetStreamLatency(&backend->latency));
+
                 return S_OK;
             }
             catch (std::bad_alloc&)

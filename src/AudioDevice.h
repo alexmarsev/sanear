@@ -18,6 +18,7 @@ namespace SaneAudioRenderer
         SharedWaveFormat      waveFormat;
         DspFormat             dspFormat;
         uint32_t              bufferDuration;
+        REFERENCE_TIME        latency;
         bool                  exclusive;
         bool                  bitstream;
         bool                  realtime;
@@ -50,6 +51,7 @@ namespace SaneAudioRenderer
         SharedWaveFormat GetWaveFormat()     const { return m_backend->waveFormat; }
         DspFormat        GetDspFormat()      const { return m_backend->dspFormat; }
         uint32_t         GetBufferDuration() const { return m_backend->bufferDuration; }
+        REFERENCE_TIME   GetStreamLatency()  const { return m_backend->latency; }
 
         bool IsExclusive() const { return m_backend->exclusive; }
         bool IsBitstream() const { return m_backend->bitstream; }
