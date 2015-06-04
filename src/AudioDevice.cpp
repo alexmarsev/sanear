@@ -28,40 +28,52 @@ namespace SaneAudioRenderer
 
                     while (!m_exit)
                     {
-                        m_wake.Wait(1);
-
                         DspChunk chunk;
-                        RetrieveFromBuffer(chunk);
 
-                        if (chunk.IsEmpty() &&
-                            GetEnd() - GetPosition() < MILLISECONDS_TO_100NS_UNITS(10))
                         {
-                            try
+                            CAutoLock lock(&m_bufferMutex);
+                            if (!m_buffer.empty())
                             {
-                                PushSilenceToDevice(m_backend->waveFormat->nSamplesPerSec / 100);
-                                DebugOut("AudioDevice 10ms of silence");
+                                chunk = std::move(m_buffer.front());
+                                m_buffer.pop_front();
+                                m_bufferFrameCount -= chunk.GetFrameCount();
                             }
-                            catch (HRESULT)
-                            {
-                                m_exit = true;
-                            }
-
-                            continue;
                         }
 
-                        while (!chunk.IsEmpty())
+                        try
                         {
-                            try
+                            if (chunk.IsEmpty())
+                            {
+                                if (GetEnd() - GetPosition() < MILLISECONDS_TO_100NS_UNITS(10))
+                                {
+                                    PushSilenceToDevice(m_backend->waveFormat->nSamplesPerSec / 100);
+                                    DebugOut("AudioDevice 10ms of silence");
+                                }
+                            }
+                            else
                             {
                                 PushToDevice(chunk, nullptr);
-                                Sleep(1); // TODO: sleep less if the chunk is <1ms
-                            }
-                            catch (HRESULT)
-                            {
-                                m_exit = true;
-                                break;
+
+                                if (!chunk.IsEmpty())
+                                {
+                                    CAutoLock lock(&m_bufferMutex);
+                                    m_bufferFrameCount += chunk.GetFrameCount();
+                                    m_buffer.emplace_front(std::move(chunk));
+                                }
                             }
                         }
+                        catch (HRESULT)
+                        {
+                            m_exit = true;
+                            break;
+                        }
+                        catch (std::bad_alloc&)
+                        {
+                            m_exit = true;
+                            break;
+                        }
+
+                        m_wake.Wait(1);
                     }
                 }
             );
@@ -220,23 +232,5 @@ namespace SaneAudioRenderer
             m_exit = true;
             throw E_OUTOFMEMORY;
         }
-    }
-
-    void AudioDevice::RetrieveFromBuffer(DspChunk& chunk)
-    {
-        assert(chunk.IsEmpty());
-
-        CAutoLock lock(&m_bufferMutex);
-
-        if (m_buffer.empty())
-            return;
-
-        do
-        {
-            chunk = std::move(m_buffer.front());
-            m_buffer.pop_front();
-            m_bufferFrameCount -= chunk.GetFrameCount();
-        }
-        while (m_bufferFrameCount > (m_backend->waveFormat->nSamplesPerSec / 100));
     }
 }
