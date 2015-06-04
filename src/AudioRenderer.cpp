@@ -100,8 +100,6 @@ namespace SaneAudioRenderer
                 if (!m_live && m_device && m_state == State_Running)
                     ApplyClockCorrection();
 
-                // TODO: rate matching with DspVaribleRate
-
                 // Apply dsp chain.
                 if (m_device && !m_device->IsBitstream())
                 {
@@ -115,9 +113,17 @@ namespace SaneAudioRenderer
                     DspChunk::ToFormat(m_device->GetDspFormat(), chunk);
                 }
 
+                // Apply rate corrections (rate matching or external clock).
+                if (m_device && m_device->IsRealtime() && m_state == State_Running)
+                    ApplyRateCorrection(chunk);
+
                 // Don't deny the allocator to reuse IMediaSample while the chunk is hanging in the buffer.
                 if (m_device && m_device->IsRealtime())
                     chunk.FreeMediaSample();
+            }
+            catch (HRESULT)
+            {
+                ClearDevice();
             }
             catch (std::bad_alloc&)
             {
@@ -417,7 +423,6 @@ namespace SaneAudioRenderer
     void AudioRenderer::ApplyClockCorrection()
     {
         CAutoLock objectLock(this);
-        assert(m_inputFormat);
         assert(m_device);
         assert(m_state == State_Running);
 
@@ -429,6 +434,44 @@ namespace SaneAudioRenderer
                 m_myClock->OffsetSlavedClock(offset);
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
+        }
+    }
+
+    void AudioRenderer::ApplyRateCorrection(DspChunk& chunk)
+    {
+        CAutoLock objectLock(this);
+        assert(m_device);
+        assert(m_state == State_Running);
+
+        if (chunk.IsEmpty())
+            return;
+
+        if (m_live)
+        {
+            // Rate matching.
+
+            REFERENCE_TIME latency = llMulDiv(chunk.GetFrameCount(), OneSecond, chunk.GetRate(), 0) +
+                                     m_device->GetStreamLatency() + OneMillisecond * 10;
+
+            REFERENCE_TIME remaining = m_device->GetEnd() - m_device->GetPosition();
+
+            if (remaining > latency)
+            {
+                size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
+                                                     remaining - latency, OneSecond, 0);
+
+                dropFrames = std::min(chunk.GetFrameCount(), dropFrames);
+                chunk.ShrinkHead(dropFrames);
+
+                DebugOut("AudioRenderer drop", dropFrames, "frames for rate matching");
+            }
+        }
+        else
+        {
+            // Clock matching.
+            assert(m_externalClock);
+
+            // TODO: write it.
         }
 
         /*

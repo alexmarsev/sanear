@@ -65,6 +65,8 @@ namespace SaneAudioRenderer
 
         void ApplyClockCorrection();
 
+        void ApplyRateCorrection(DspChunk& chunk);
+
         HRESULT GetGraphTime(REFERENCE_TIME& time);
 
         void InitializeProcessors();

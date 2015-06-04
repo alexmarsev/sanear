@@ -126,15 +126,12 @@ namespace SaneAudioRenderer
             {
                 if (chunk.IsEmpty())
                 {
-                    REFERENCE_TIME latency = std::max(m_backend->latency, OneMillisecond * 5) + OneMillisecond;
+                    REFERENCE_TIME latency = GetStreamLatency() + OneMillisecond * 2;
                     REFERENCE_TIME remaining = GetEnd() - GetPosition();
 
                     if (remaining < latency)
-                    {
-                        PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec, OneSecond,
-                                                             latency - remaining, 0));
-                        DebugOut("AudioDevice inserting", (latency - remaining) / 10000., "ms of silence");
-                    }
+                        PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
+                                                             latency - remaining, OneSecond, 0));
                 }
                 else
                 {
@@ -213,6 +210,8 @@ namespace SaneAudioRenderer
         BYTE* deviceBuffer;
         ThrowIfFailed(m_backend->audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
         ThrowIfFailed(m_backend->audioRenderClient->ReleaseBuffer(doFrames, AUDCLNT_BUFFERFLAGS_SILENT));
+
+        DebugOut("AudioDevice push", 1000. * doFrames / m_backend->waveFormat->nSamplesPerSec, "ms of silence");
 
         m_pushedFrames += doFrames;
     }
