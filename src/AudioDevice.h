@@ -60,6 +60,8 @@ namespace SaneAudioRenderer
 
     private:
 
+        void RealtimeFeed();
+
         void PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent);
         void PushSilenceToDevice(UINT32 frames);
         void PushToBuffer(DspChunk& chunk);

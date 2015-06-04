@@ -226,7 +226,7 @@ namespace SaneAudioRenderer
                 ThrowIfFailed(backend->audioClient->Initialize(
                                          backend->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
                                          AUDCLNT_STREAMFLAGS_NOPERSIST,
-                                         MILLISECONDS_TO_100NS_UNITS(backend->bufferDuration),
+                                         OneMillisecond * backend->bufferDuration,
                                          0, &(*backend->waveFormat), nullptr));
 
                 ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioRenderClient)));

@@ -20,68 +20,7 @@ namespace SaneAudioRenderer
         assert(m_backend);
 
         if (m_backend->realtime)
-            m_thread = std::thread(
-                [this]
-                {
-                    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-                    TimePeriodHelper timePeriodHelper(1);
-
-                    while (!m_exit)
-                    {
-                        DspChunk chunk;
-
-                        {
-                            CAutoLock lock(&m_bufferMutex);
-                            if (!m_buffer.empty())
-                            {
-                                chunk = std::move(m_buffer.front());
-                                m_buffer.pop_front();
-                                m_bufferFrameCount -= chunk.GetFrameCount();
-                            }
-                        }
-
-                        try
-                        {
-                            if (chunk.IsEmpty())
-                            {
-                                REFERENCE_TIME latency = std::max(m_backend->latency, MILLISECONDS_TO_100NS_UNITS(5)) +
-                                                         MILLISECONDS_TO_100NS_UNITS(1);
-                                REFERENCE_TIME remaining = GetEnd() - GetPosition();
-
-                                if (remaining < latency)
-                                {
-                                    PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
-                                                                         OneSecond, latency - remaining, 0));
-                                    DebugOut("AudioDevice inserting", (latency - remaining) / 10000., "ms of silence");
-                                }
-                            }
-                            else
-                            {
-                                PushToDevice(chunk, nullptr);
-
-                                if (!chunk.IsEmpty())
-                                {
-                                    CAutoLock lock(&m_bufferMutex);
-                                    m_bufferFrameCount += chunk.GetFrameCount();
-                                    m_buffer.emplace_front(std::move(chunk));
-                                }
-                            }
-                        }
-                        catch (HRESULT)
-                        {
-                            m_exit = true;
-                            break;
-                        }
-                        catch (std::bad_alloc&)
-                        {
-                            m_exit = true;
-                            break;
-                        }
-
-                        m_wake.Wait(1);
-                    }
-                }
-            );
+            m_thread = std::thread(std::bind(&AudioDevice::RealtimeFeed, this));
     }
 
     AudioDevice::~AudioDevice()
@@ -162,6 +101,66 @@ namespace SaneAudioRenderer
     {
         m_backend->audioClient->Reset();
         m_pushedFrames = 0;
+    }
+
+    void AudioDevice::RealtimeFeed()
+    {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+        TimePeriodHelper timePeriodHelper(1);
+
+        while (!m_exit)
+        {
+            DspChunk chunk;
+
+            {
+                CAutoLock lock(&m_bufferMutex);
+                if (!m_buffer.empty())
+                {
+                    chunk = std::move(m_buffer.front());
+                    m_buffer.pop_front();
+                    m_bufferFrameCount -= chunk.GetFrameCount();
+                }
+            }
+
+            try
+            {
+                if (chunk.IsEmpty())
+                {
+                    REFERENCE_TIME latency = std::max(m_backend->latency, OneMillisecond * 5) + OneMillisecond;
+                    REFERENCE_TIME remaining = GetEnd() - GetPosition();
+
+                    if (remaining < latency)
+                    {
+                        PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec, OneSecond,
+                                                             latency - remaining, 0));
+                        DebugOut("AudioDevice inserting", (latency - remaining) / 10000., "ms of silence");
+                    }
+                }
+                else
+                {
+                    PushToDevice(chunk, nullptr);
+
+                    if (!chunk.IsEmpty())
+                    {
+                        CAutoLock lock(&m_bufferMutex);
+                        m_bufferFrameCount += chunk.GetFrameCount();
+                        m_buffer.emplace_front(std::move(chunk));
+                    }
+                }
+            }
+            catch (HRESULT)
+            {
+                m_exit = true;
+                break;
+            }
+            catch (std::bad_alloc&)
+            {
+                m_exit = true;
+                break;
+            }
+
+            m_wake.Wait(1);
+        }
     }
 
     void AudioDevice::PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent)
