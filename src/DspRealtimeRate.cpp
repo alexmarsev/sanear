@@ -12,7 +12,8 @@ namespace SaneAudioRenderer
 
         if (realtime)
         {
-            m_resampler.setup((double)outputRate / inputRate, channels, 48);
+            m_resampler.setup((double)outputRate / inputRate, channels,
+                              std::min(inputRate, outputRate) > 44100 ? 32 : 48);
 
             // Insert silence to align input
 
