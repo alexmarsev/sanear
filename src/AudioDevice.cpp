@@ -44,10 +44,15 @@ namespace SaneAudioRenderer
                         {
                             if (chunk.IsEmpty())
                             {
-                                if (GetEnd() - GetPosition() < MILLISECONDS_TO_100NS_UNITS(10))
+                                REFERENCE_TIME latency = std::max(m_backend->latency, MILLISECONDS_TO_100NS_UNITS(5)) +
+                                                         MILLISECONDS_TO_100NS_UNITS(1);
+                                REFERENCE_TIME remaining = GetEnd() - GetPosition();
+
+                                if (remaining < latency)
                                 {
-                                    PushSilenceToDevice(m_backend->waveFormat->nSamplesPerSec / 100);
-                                    DebugOut("AudioDevice 10ms of silence");
+                                    PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
+                                                                         OneSecond, latency - remaining, 0));
+                                    DebugOut("AudioDevice inserting", (latency - remaining) / 10000., "ms of silence");
                                 }
                             }
                             else
