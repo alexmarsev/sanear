@@ -93,6 +93,7 @@ namespace SaneAudioRenderer
         FILTER_STATE m_state = State_Stopped;
 
         SampleCorrection m_sampleCorrection;
+        REFERENCE_TIME m_clockCorrection = 0;
 
         IMyClockPtr m_myClock;
         IReferenceClockPtr m_myGraphClock;

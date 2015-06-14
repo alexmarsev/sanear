@@ -378,9 +378,8 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            if (!m_live)
-                m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
-
+            m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
+            m_clockCorrection = 0;
             m_device->Start();
         }
     }
@@ -428,10 +427,11 @@ namespace SaneAudioRenderer
 
         // Apply corrections to internal clock.
         {
-            REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_myClock->GetSlavedClockOffset();
+            REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_clockCorrection;
             if (std::abs(offset) > 100)
             {
                 m_myClock->OffsetSlavedClock(offset);
+                m_clockCorrection += offset;
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
         }
@@ -441,27 +441,30 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
         assert(m_device);
+        assert(!m_device->IsBitstream());
         assert(m_state == State_Running);
 
         if (chunk.IsEmpty())
             return;
 
+        const REFERENCE_TIME latency = llMulDiv(chunk.GetFrameCount(), OneSecond, chunk.GetRate(), 0) +
+                                       m_device->GetStreamLatency() + OneMillisecond * 10;
+
+        const REFERENCE_TIME remaining = m_device->GetEnd() - m_device->GetPosition();
+
+        REFERENCE_TIME deltaTime = 0;
+
         if (m_live)
         {
             // Rate matching.
-
-            REFERENCE_TIME latency = llMulDiv(chunk.GetFrameCount(), OneSecond, chunk.GetRate(), 0) +
-                                     m_device->GetStreamLatency() + OneMillisecond * 10;
-
-            REFERENCE_TIME remaining = m_device->GetEnd() - m_device->GetPosition();
-
             if (remaining > latency)
             {
                 size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
                                                      remaining - latency, OneSecond, 0);
 
-                dropFrames = std::min(chunk.GetFrameCount(), dropFrames);
-                chunk.ShrinkHead(dropFrames);
+                dropFrames = std::min(dropFrames, chunk.GetFrameCount());
+
+                chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
                 DebugOut("AudioRenderer drop", dropFrames, "frames for rate matching");
             }
@@ -471,31 +474,61 @@ namespace SaneAudioRenderer
             // Clock matching.
             assert(m_externalClock);
 
-            // TODO: write it.
-        }
-
-        /*
-        // Try to match internal clock with graph clock if they're different.
-        // We do it in the roundabout way by dynamically changing audio sampling rate.
-        if (m_externalClock && !m_device->bitstream)
-        {
-            assert(m_dspRate.Active());
             REFERENCE_TIME graphTime, myTime, myStartTime;
             if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
                 SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
                 SUCCEEDED(GetGraphTime(graphTime)) &&
                 myTime > myStartTime)
             {
-                REFERENCE_TIME offset = graphTime - myTime - m_correctedWithRateDsp;
-                if (std::abs(offset) > MILLISECONDS_TO_100NS_UNITS(2))
+                myTime -= m_device->GetSilence();
+
+                if (myTime > graphTime)
                 {
-                    m_dspRate.Adjust(offset);
-                    m_correctedWithRateDsp += offset;
-                    DebugOut("AudioRenderer offset internal clock indirectly by", offset / 10000., "ms");
+                    // Pad and adjust backwards.
+                    size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
+                                                        myTime - graphTime, OneSecond, 0);
+
+                    if (padFrames > m_device->GetWaveFormat()->nSamplesPerSec / 2000)
+                    {
+                        DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
+                                           chunk.GetFrameCount() + padFrames, chunk.GetRate());
+
+                        size_t padBytes = tempChunk.GetFrameSize() * padFrames;
+                        ZeroMemory(tempChunk.GetData(), padBytes);
+                        memcpy(tempChunk.GetData() + padBytes, chunk.GetData(), chunk.GetSize());
+
+                        chunk = std::move(tempChunk);
+
+                        m_myClock->OffsetSlavedClock(-llMulDiv(padFrames, OneSecond,
+                                                               m_device->GetWaveFormat()->nSamplesPerSec, 0));
+
+                        DebugOut("AudioRenderer pad", padFrames, "frames for clock matching", m_sampleCorrection.GetLastSampleEnd() / 10000., (myTime - graphTime) / 10000.);
+                    }
                 }
+                else if (remaining > latency)
+                {
+                    // Crop and adjust forwards.
+                    REFERENCE_TIME dropTime = std::min(graphTime - myTime, remaining - latency);
+
+                    size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
+                                                         dropTime, OneSecond, 0);
+
+                    dropFrames = std::min(dropFrames, chunk.GetFrameCount());
+
+                    if (dropFrames > m_device->GetWaveFormat()->nSamplesPerSec / 2000)
+                    {
+
+                        chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
+
+                        m_myClock->OffsetSlavedClock(llMulDiv(dropFrames, OneSecond,
+                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0));
+
+                        DebugOut("AudioRenderer drop", dropFrames, "frames for clock matching", m_sampleCorrection.GetLastSampleEnd() / 10000., (myTime - graphTime) / 10000.);
+                    }
+                }
+
             }
         }
-        */
     }
 
     HRESULT AudioRenderer::GetGraphTime(REFERENCE_TIME& time)

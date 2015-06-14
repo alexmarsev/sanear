@@ -64,7 +64,7 @@ namespace SaneAudioRenderer
 
             m_wake.Set();
 
-            if (pFilledEvent)
+            if (pFilledEvent && !chunk.IsEmpty())
                 pFilledEvent->Set();
         }
         else
@@ -87,6 +87,11 @@ namespace SaneAudioRenderer
         return llMulDiv(m_pushedFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
     }
 
+    int64_t AudioDevice::GetSilence()
+    {
+        return llMulDiv(m_silenceFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+    }
+
     void AudioDevice::Start()
     {
         m_backend->audioClient->Start();
@@ -101,6 +106,11 @@ namespace SaneAudioRenderer
     {
         m_backend->audioClient->Reset();
         m_pushedFrames = 0;
+        m_silenceFrames = 0;
+
+        CAutoLock lock(&m_bufferMutex);
+        m_bufferFrameCount = 0;
+        m_buffer.clear();
     }
 
     void AudioDevice::RealtimeFeed()
@@ -130,8 +140,8 @@ namespace SaneAudioRenderer
                     REFERENCE_TIME remaining = GetEnd() - GetPosition();
 
                     if (remaining < latency)
-                        PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
-                                                             latency - remaining, OneSecond, 0));
+                        m_silenceFrames += PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
+                                                                                latency - remaining, OneSecond, 0));
                 }
                 else
                 {
@@ -193,7 +203,7 @@ namespace SaneAudioRenderer
         m_pushedFrames += doFrames;
     }
 
-    void AudioDevice::PushSilenceToDevice(UINT32 frames)
+    UINT32 AudioDevice::PushSilenceToDevice(UINT32 frames)
     {
         // Get up-to-date information on the device buffer.
         UINT32 bufferFrames, bufferPadding;
@@ -204,7 +214,7 @@ namespace SaneAudioRenderer
         const UINT32 doFrames = std::min(bufferFrames - bufferPadding, frames);
 
         if (doFrames == 0)
-            return;
+            return 0;
 
         // Write frames to the device buffer.
         BYTE* deviceBuffer;
@@ -214,6 +224,8 @@ namespace SaneAudioRenderer
         DebugOut("AudioDevice push", 1000. * doFrames / m_backend->waveFormat->nSamplesPerSec, "ms of silence");
 
         m_pushedFrames += doFrames;
+
+        return doFrames;
     }
 
     void AudioDevice::PushToBuffer(DspChunk& chunk)
@@ -227,6 +239,10 @@ namespace SaneAudioRenderer
         try
         {
             CAutoLock lock(&m_bufferMutex);
+
+            if (m_bufferFrameCount > m_backend->waveFormat->nSamplesPerSec / 3)
+                return;
+
             m_bufferFrameCount += chunk.GetFrameCount();
             m_buffer.emplace_back(std::move(chunk));
         }
