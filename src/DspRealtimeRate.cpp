@@ -69,7 +69,7 @@ namespace SaneAudioRenderer
             return;
 
         // Insert silence to align output
-        if (chunk.IsEmpty())
+        if (!chunk.IsEmpty())
         {
             DspChunk::ToFloat(chunk);
 
