@@ -349,7 +349,7 @@ namespace SaneAudioRenderer
         , m_rate(other.m_rate)
         , m_dataSize(other.m_dataSize)
         , m_mediaData(other.m_mediaData)
-        , m_dataOffset(0)
+        , m_dataOffset(other.m_dataOffset)
     {
         other.m_mediaSample = nullptr;
         std::swap(m_data, other.m_data);
