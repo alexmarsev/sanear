@@ -55,6 +55,12 @@ namespace SaneAudioRenderer
             // Drop the sample.
             assert(chunk.IsEmpty());
             DebugOut("SampleCorrection drop [", sampleProps.tStart, sampleProps.tStop, "]");
+
+            if (m_bitstream && !m_freshSegment)
+            {
+                assert(m_freshBuffer);
+                m_segmentFramesInCurrentFormat += sampleProps.lActual * 8 / m_format->wBitsPerSample / m_format->nChannels;
+            }
         }
         else if (!m_bitstream && m_freshSegment && sampleProps.tStart < 0)
         {
@@ -164,12 +170,9 @@ namespace SaneAudioRenderer
             m_freshSegment = false;
         }
 
-        if (!m_freshSegment)
-            m_lastSampleEnd = sampleProps.tStop;
+        m_lastSampleEnd = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
 
-        REFERENCE_TIME time = m_segmentTimeInPreviousFormats + FramesToTime(m_segmentFramesInCurrentFormat);
-
-        m_timingsError = sampleProps.tStart - time;
+        m_timingsError = sampleProps.tStart - m_lastSampleEnd;
 
         m_segmentFramesInCurrentFormat += frames;
 
