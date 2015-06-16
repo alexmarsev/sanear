@@ -58,7 +58,7 @@ namespace SaneAudioRenderer
 
     void AudioDevice::Push(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
-        if (IsRealtime())
+        if (m_backend->realtime)
         {
             PushToBuffer(chunk);
 
