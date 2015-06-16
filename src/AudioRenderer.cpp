@@ -220,12 +220,17 @@ namespace SaneAudioRenderer
     void AudioRenderer::EndFlush()
     {
         CAutoLock objectLock(this);
-        assert(m_state != State_Running);
 
         if (m_device)
         {
+            if (m_state == State_Running)
+                m_device->Stop();
+
             m_device->Reset();
             m_sampleCorrection.NewDeviceBuffer();
+
+            if (m_state == State_Running)
+                m_device->Start();
         }
 
         m_flush.Reset();

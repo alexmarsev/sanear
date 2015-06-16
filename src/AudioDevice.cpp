@@ -108,9 +108,16 @@ namespace SaneAudioRenderer
         m_pushedFrames = 0;
         m_silenceFrames = 0;
 
-        CAutoLock lock(&m_bufferMutex);
-        m_bufferFrameCount = 0;
-        m_buffer.clear();
+        if (m_backend->realtime)
+        {
+            {
+                CAutoLock lock(&m_bufferMutex);
+                m_bufferFrameCount = 0;
+                m_buffer.clear();
+            }
+
+            m_wake.Set();
+        }
     }
 
     void AudioDevice::RealtimeFeed()
