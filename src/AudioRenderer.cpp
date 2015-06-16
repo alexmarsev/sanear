@@ -224,13 +224,20 @@ namespace SaneAudioRenderer
         if (m_device)
         {
             if (m_state == State_Running)
+            {
+                m_myClock->UnslaveClockFromAudio();
                 m_device->Stop();
-
-            m_device->Reset();
-            m_sampleCorrection.NewDeviceBuffer();
-
-            if (m_state == State_Running)
-                m_device->Start();
+                m_device->Reset();
+                m_sampleCorrection.NewDeviceBuffer();
+                InitializeProcessors();
+                m_startClockOffset = m_sampleCorrection.GetLastSampleEnd();
+                StartDevice();
+            }
+            else
+            {
+                m_device->Reset();
+                m_sampleCorrection.NewDeviceBuffer();
+            }
         }
 
         m_flush.Reset();
