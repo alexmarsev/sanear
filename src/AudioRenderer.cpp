@@ -269,7 +269,7 @@ namespace SaneAudioRenderer
 
         CAutoLock objectLock(this);
 
-        return m_deviceManager.BitstreamFormatSupported(inputFormat, m_settings);
+        return m_deviceManager.BitstreamFormatSupported(inputFormat, m_settings) && !m_externalClock;
     }
 
     void AudioRenderer::SetFormat(SharedWaveFormat inputFormat, bool live)
