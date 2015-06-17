@@ -44,19 +44,14 @@ namespace SaneAudioRenderer
         // Analyze samples
         float peak = 0.0f;
         for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
-        {
-            const float absSample = std::fabs(data[i]);
-
-            if (std::fabs(absSample) > 1.0f)
-                peak = std::fmax(peak, absSample);
-        }
+            peak = std::max(peak, std::abs(data[i]));
 
         // Configure limiter
         if (peak > 1.0f)
         {
             if (m_holdWindow <= 0)
             {
-                NewTreshold(std::fmax(peak, 1.4f));
+                NewTreshold(std::max(peak, 1.4f));
             }
             else if (peak > m_peak)
             {
@@ -72,12 +67,12 @@ namespace SaneAudioRenderer
             for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
             {
                 float& sample = data[i];
-                const float absSample = std::fabs(sample);
+                const float absSample = std::abs(sample);
 
                 if (absSample > m_threshold)
-                    sample *= pow(m_threshold / absSample, slope);
+                    sample *= std::pow(m_threshold / absSample, slope);
 
-                assert(std::fabs(sample) <= 1.0f);
+                assert(std::abs(sample) <= 1.0f);
             }
 
             m_holdWindow -= chunk.GetSampleCount();
@@ -92,7 +87,7 @@ namespace SaneAudioRenderer
     void DspLimiter::NewTreshold(float peak)
     {
         m_peak = peak;
-        m_threshold = pow(1.0f / peak, 1.0f / slope - 1.0f) - 0.0001f;
+        m_threshold = std::pow(1.0f / peak, 1.0f / slope - 1.0f) - 0.0001f;
         DebugOut("DspLimiter active with", m_peak, "peak and", m_threshold, "threshold");
     }
 }
