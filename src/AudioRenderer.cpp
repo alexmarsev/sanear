@@ -622,7 +622,7 @@ namespace SaneAudioRenderer
                 REFERENCE_TIME graphTime;
                 if (m_state == State_Running &&
                     SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                    graphTime > m_startTime + m_sampleCorrection.GetLastSampleEnd())
+                    graphTime > m_startTime + m_sampleCorrection.GetLastSampleEnd() + m_sampleCorrection.GetTimingsError())
                 {
                     break;
                 }
