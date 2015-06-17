@@ -5,52 +5,78 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        std::map<DWORD, size_t> ChannelMap()
+        std::array<DWORD, 18> Channels()
         {
-            return {
-                {SPEAKER_FRONT_LEFT, 0},
-                {SPEAKER_FRONT_RIGHT, 1},
-                {SPEAKER_FRONT_CENTER, 2},
-                {SPEAKER_LOW_FREQUENCY, 3},
-                {SPEAKER_BACK_LEFT, 4},
-                {SPEAKER_BACK_RIGHT, 5},
-                {SPEAKER_FRONT_LEFT_OF_CENTER, 6},
-                {SPEAKER_FRONT_RIGHT_OF_CENTER, 7},
-                {SPEAKER_BACK_CENTER, 8},
-                {SPEAKER_SIDE_LEFT, 9},
-                {SPEAKER_SIDE_RIGHT, 10},
-                {SPEAKER_TOP_CENTER, 11},
-                {SPEAKER_TOP_FRONT_LEFT, 12},
-                {SPEAKER_TOP_FRONT_CENTER, 13},
-                {SPEAKER_TOP_FRONT_RIGHT, 14},
-                {SPEAKER_TOP_BACK_LEFT, 15},
-                {SPEAKER_TOP_BACK_CENTER, 16},
-                {SPEAKER_TOP_BACK_RIGHT, 17},
-            };
-        };
+            return make_array<DWORD>(
+                SPEAKER_FRONT_LEFT,
+                SPEAKER_FRONT_RIGHT,
+                SPEAKER_FRONT_CENTER,
+                SPEAKER_LOW_FREQUENCY,
+                SPEAKER_BACK_LEFT,
+                SPEAKER_BACK_RIGHT,
+                SPEAKER_FRONT_LEFT_OF_CENTER,
+                SPEAKER_FRONT_RIGHT_OF_CENTER,
+                SPEAKER_BACK_CENTER,
+                SPEAKER_SIDE_LEFT,
+                SPEAKER_SIDE_RIGHT,
+                SPEAKER_TOP_CENTER,
+                SPEAKER_TOP_FRONT_LEFT,
+                SPEAKER_TOP_FRONT_CENTER,
+                SPEAKER_TOP_FRONT_RIGHT,
+                SPEAKER_TOP_BACK_LEFT,
+                SPEAKER_TOP_BACK_CENTER,
+                SPEAKER_TOP_BACK_RIGHT
+            );
+        }
+
+        size_t IndexForChannel(DWORD channel)
+        {
+            switch (channel)
+            {
+                case SPEAKER_FRONT_LEFT:            return 0;
+                case SPEAKER_FRONT_RIGHT:           return 1;
+                case SPEAKER_FRONT_CENTER:          return 2;
+                case SPEAKER_LOW_FREQUENCY:         return 3;
+                case SPEAKER_BACK_LEFT:             return 4;
+                case SPEAKER_BACK_RIGHT:            return 5;
+                case SPEAKER_FRONT_LEFT_OF_CENTER:  return 6;
+                case SPEAKER_FRONT_RIGHT_OF_CENTER: return 7;
+                case SPEAKER_BACK_CENTER:           return 8;
+                case SPEAKER_SIDE_LEFT:             return 9;
+                case SPEAKER_SIDE_RIGHT:            return 10;
+                case SPEAKER_TOP_CENTER:            return 11;
+                case SPEAKER_TOP_FRONT_LEFT:        return 12;
+                case SPEAKER_TOP_FRONT_CENTER:      return 13;
+                case SPEAKER_TOP_FRONT_RIGHT:       return 14;
+                case SPEAKER_TOP_BACK_LEFT:         return 15;
+                case SPEAKER_TOP_BACK_CENTER:       return 16;
+                case SPEAKER_TOP_BACK_RIGHT:        return 17;
+            }
+
+            throw std::logic_error("");
+        }
 
         std::array<float, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
         {
-            const auto channelMap = ChannelMap();
             std::array<float, 18 * 18> matrix{};
 
-            for (auto& p : channelMap)
+            for (auto& c : Channels())
             {
-                if (inputMask & p.first)
-                    matrix[18 * p.second + p.second] = 1.0f;
+                if (inputMask & c)
+                    matrix[18 * IndexForChannel(c) + IndexForChannel(c)] = 1.0f;
             }
 
             auto feed = [&](DWORD sourceChannel, DWORD targetChannel, float multiplier)
             {
-                float* source = matrix.data() + 18 * channelMap.at(sourceChannel);
-                float* target = matrix.data() + 18 * channelMap.at(targetChannel);
+                float* source = matrix.data() + 18 * IndexForChannel(sourceChannel);
+                float* target = matrix.data() + 18 * IndexForChannel(targetChannel);
                 for (int i = 0; i < 18; i++)
                     target[i] += source[i] * multiplier;
             };
 
             auto clear = [&](DWORD targetChannel)
             {
-                float* target = matrix.data() + 18 * channelMap.at(targetChannel);
+                float* target = matrix.data() + 18 * IndexForChannel(targetChannel);
                 for (int i = 0; i < 18; i++)
                     target[i] = 0.0f;
             };
@@ -141,25 +167,24 @@ namespace SaneAudioRenderer
             return matrix;
         }
 
-        std::unique_ptr<float[]> BuildMatrix(size_t inputChannels, DWORD inputMask,
-                                             size_t outputChannels, DWORD outputMask)
+        std::array<float, 18 * 18> BuildMatrix(size_t inputChannels, DWORD inputMask,
+                                               size_t outputChannels, DWORD outputMask)
         {
-            const auto channelMap = ChannelMap();
-            const auto fullMatrix = BuildFullMatrix(inputMask, outputMask);
-            auto matrix = std::make_unique<float[]>(inputChannels * outputChannels);
-            ZeroMemory(matrix.get(), sizeof(float) * inputChannels * outputChannels);
+            std::array<float, 18 * 18> fullMatrix = BuildFullMatrix(inputMask, outputMask);
+            std::array<float, 18 * 18> matrix{};
 
             size_t y = 0;
-            for (auto& yp : channelMap)
+            for (auto& yc : Channels())
             {
-                if (outputMask & yp.first)
+                if (outputMask & yc)
                 {
                     size_t x = 0;
-                    for (auto& xp : channelMap)
+                    for (auto& xc : Channels())
                     {
-                        if (inputMask & xp.first)
+                        if (inputMask & xc)
                         {
-                            matrix[y * inputChannels + x] = fullMatrix[yp.second * 18 + xp.second];
+                            matrix[y * inputChannels + x] = fullMatrix[IndexForChannel(yc) * 18 +
+                                                                       IndexForChannel(xc)];
 
                             if (++x == inputChannels)
                                 break;
@@ -216,10 +241,13 @@ namespace SaneAudioRenderer
     void DspMatrix::Initialize(uint32_t inputChannels, DWORD inputMask,
                                uint32_t outputChannels, DWORD outputMask)
     {
-        m_matrix = nullptr;
+        m_active = false;
 
         if (inputChannels != outputChannels || inputMask != outputMask)
+        {
             m_matrix = BuildMatrix(inputChannels, inputMask, outputChannels, outputMask);
+            m_active = true;
+        }
 
         m_inputChannels = inputChannels;
         m_outputChannels = outputChannels;
@@ -227,12 +255,12 @@ namespace SaneAudioRenderer
 
     bool DspMatrix::Active()
     {
-        return !!m_matrix;
+        return m_active;
     }
 
     void DspMatrix::Process(DspChunk& chunk)
     {
-        if (!m_matrix || chunk.IsEmpty())
+        if (!m_active || chunk.IsEmpty())
             return;
 
         assert(chunk.GetChannelCount() == m_inputChannels);
@@ -246,19 +274,19 @@ namespace SaneAudioRenderer
 
         if (m_inputChannels == 6 && m_outputChannels == 2)
         {
-            Mix<6, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
+            Mix<6, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
         }
         else if (m_inputChannels == 7 && m_outputChannels == 2)
         {
-            Mix<7, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
+            Mix<7, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
         }
         else if (m_inputChannels == 8 && m_outputChannels == 2)
         {
-            Mix<8, 2>(inputData, outputData, m_matrix.get(), chunk.GetFrameCount());
+            Mix<8, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
         }
         else
         {
-            Mix(m_inputChannels, inputData, m_outputChannels, outputData, m_matrix.get(), chunk.GetFrameCount());
+            Mix(m_inputChannels, inputData, m_outputChannels, outputData, m_matrix.data(), chunk.GetFrameCount());
         }
 
         chunk = std::move(output);
