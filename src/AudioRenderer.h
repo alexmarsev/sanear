@@ -67,8 +67,6 @@ namespace SaneAudioRenderer
 
         void ApplyRateCorrection(DspChunk& chunk);
 
-        HRESULT GetGraphTime(REFERENCE_TIME& time);
-
         void InitializeProcessors();
 
         template <typename F>
