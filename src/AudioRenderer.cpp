@@ -558,8 +558,6 @@ namespace SaneAudioRenderer
         assert(m_inputFormat);
         assert(m_device);
 
-        m_correctedWithRateDsp = 0;
-
         if (m_device->IsBitstream())
             return;
 

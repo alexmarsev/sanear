@@ -97,7 +97,6 @@ namespace SaneAudioRenderer
         IReferenceClockPtr m_myGraphClock;
         IReferenceClockPtr m_graphClock;
         bool m_externalClock = false;
-        REFERENCE_TIME m_correctedWithRateDsp = 0;
 
         SharedWaveFormat m_inputFormat;
         bool m_live = false;
