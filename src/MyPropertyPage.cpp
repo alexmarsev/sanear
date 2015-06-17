@@ -138,7 +138,7 @@ namespace SaneAudioRenderer
 
         std::wstring bitstreamingField = (inputFormat ? (bitstreaming ? L"Yes" : L"No") : L"-");
 
-        std::wstring slavingField = live ? L"Data Rate" : externalClock ? L"Graph Clock" : L"No";
+        std::wstring slavingField = live ? L"Live Source" : externalClock ? L"Graph Clock" : L"Audio Device";
 
         std::wstring channelsInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-";
