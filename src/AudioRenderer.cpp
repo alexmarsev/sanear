@@ -247,6 +247,15 @@ namespace SaneAudioRenderer
     {
         assert(inputFormat);
 
+        if (inputFormat->nChannels == 0 ||
+            inputFormat->nSamplesPerSec == 0 ||
+            inputFormat->wBitsPerSample == 0 ||
+            inputFormat->nBlockAlign * 8 != inputFormat->nChannels * inputFormat->wBitsPerSample ||
+            inputFormat->nChannels > 18)
+        {
+            return false;
+        }
+
         if (DspFormatFromWaveFormat(*inputFormat) != DspFormat::Unknown)
             return true;
 
