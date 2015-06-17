@@ -58,6 +58,8 @@ namespace SaneAudioRenderer
 
     void AudioDevice::Push(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
+        assert(m_eos == 0);
+
         if (m_backend->realtime)
         {
             PushToBuffer(chunk);
@@ -71,6 +73,32 @@ namespace SaneAudioRenderer
         {
             PushToDevice(chunk, pFilledEvent);
         }
+    }
+
+    REFERENCE_TIME AudioDevice::Finish(CAMEvent* pFilledEvent)
+    {
+        if (m_eos == 0)
+        {
+            m_eos = GetEnd();
+
+            try
+            {
+                if (!m_thread.joinable())
+                {
+                    assert(!m_exit);
+                    m_thread = std::thread(std::bind(&AudioDevice::RealtimeFeed, this));
+                }
+            }
+            catch (std::system_error&)
+            {
+                throw E_OUTOFMEMORY;
+            }
+        }
+
+        if (pFilledEvent)
+            pFilledEvent->Set();
+
+        return m_eos - GetPosition();
     }
 
     int64_t AudioDevice::GetPosition()
@@ -104,9 +132,18 @@ namespace SaneAudioRenderer
 
     void AudioDevice::Reset()
     {
+        if (!m_backend->realtime && m_thread.joinable())
+        {
+            m_exit = true;
+            m_wake.Set();
+            m_thread.join();
+            m_exit = false;
+        }
+
         m_backend->audioClient->Reset();
         m_pushedFrames = 0;
         m_silenceFrames = 0;
+        m_eos = 0;
 
         if (m_backend->realtime)
         {

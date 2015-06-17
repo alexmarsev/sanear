@@ -170,45 +170,42 @@ namespace SaneAudioRenderer
             }
         }
 
-        auto doBlock = [this]
+        auto doBlock = [&]
         {
             // Increase system timer resolution.
             TimePeriodHelper timePeriodHelper(1);
 
-            // Unslave the clock because no more samples are going to be pushed.
-            m_myClock->UnslaveClockFromAudio();
-
             for (;;)
             {
-                int64_t actual = INT64_MAX;
-                int64_t target;
+                REFERENCE_TIME remaining = 0;
 
                 {
                     CAutoLock objectLock(this);
 
-                    if (!m_device)
-                        return true;
-
-                    const auto previous = actual;
-                    actual = m_device->GetPosition();
-                    target = m_device->GetEnd();
-
-                    // Return if the end of stream is reached.
-                    if (actual == target)
-                        return true;
-
-                    // Stalling protection.
-                    if (actual == previous && m_state == State_Running)
-                        return true;
+                    if (m_device)
+                    {
+                        try
+                        {
+                            remaining = m_device->Finish(pFilledEvent);
+                        }
+                        catch (HRESULT)
+                        {
+                            ClearDevice();
+                        }
+                    }
                 }
 
+                // The end of stream is reached.
+                if (remaining <= 0)
+                    return true;
+
                 // Sleep until predicted end of stream.
-                if (m_flush.Wait(std::max(1, (int32_t)((target - actual) * 1000 / OneSecond))))
+                if (m_flush.Wait(std::max(1, (int32_t)(remaining / OneMillisecond))))
                     return false;
             }
         };
 
-        // Send processed sample to the device, and block until the buffer is drained (if requested).
+        // Send processed sample to the device, and block until the end of stream (if requested).
         return PushToDevice(chunk, pFilledEvent) && (!blockUntilEnd || doBlock());
     }
 

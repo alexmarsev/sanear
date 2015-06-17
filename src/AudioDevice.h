@@ -35,6 +35,8 @@ namespace SaneAudioRenderer
         ~AudioDevice();
 
         void Push(DspChunk& chunk, CAMEvent* pFilledEvent);
+        REFERENCE_TIME Finish(CAMEvent* pFilledEvent);
+
         int64_t GetPosition();
         int64_t GetEnd();
         int64_t GetSilence();
@@ -71,6 +73,7 @@ namespace SaneAudioRenderer
         std::shared_ptr<AudioDeviceBackend> m_backend;
         std::atomic<uint64_t> m_pushedFrames = 0;
         std::atomic<uint64_t> m_silenceFrames = 0;
+        int64_t m_eos = 0;
 
         std::thread m_thread;
         CAMEvent m_wake;

@@ -1,7 +1,6 @@
  - implement low-latency rendering path for realtime capture playback
  - implement proper low-latency clock matching (mainly for DVB)
  - make sure that frame-stepping works alright
- - stop wasapi on eos more gracefully
 
  - maybe some other stuff
 
