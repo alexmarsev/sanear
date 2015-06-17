@@ -111,6 +111,9 @@ namespace SaneAudioRenderer
                 if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DOLBY_MLP)
                     return L"TrueHD";
 
+                if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_DOLBY_DIGITAL_PLUS)
+                    return L"EAC3";
+
                 if (pFormatExt->SubFormat == KSDATAFORMAT_SUBTYPE_IEC61937_WMA_PRO)
                     return L"WMA Pro";
             }
