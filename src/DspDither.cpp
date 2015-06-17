@@ -20,8 +20,6 @@ namespace SaneAudioRenderer
         if (!m_active || chunk.IsEmpty() || chunk.GetFormatSize() <= DspFormatSize(DspFormat::Pcm16))
             return;
 
-        // TODO: handle >18 channels situation gracefully (both here and in DspMatrix)
-
         DspChunk::ToFloat(chunk);
 
         DspChunk output(DspFormat::Pcm16, chunk.GetChannelCount(), chunk.GetFrameCount(), chunk.GetRate());
