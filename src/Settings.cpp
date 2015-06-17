@@ -92,25 +92,6 @@ namespace SaneAudioRenderer
             *pbAllowBitstreaming = m_allowBitstreaming;
     }
 
-    STDMETHODIMP_(void) Settings::SetSharedModePeakLimiterEnabled(BOOL bEnable)
-    {
-        CAutoLock lock(this);
-
-        if (m_sharedModePeakLimiterEnabled != bEnable)
-        {
-            m_sharedModePeakLimiterEnabled = bEnable;
-            m_serial++;
-        }
-    }
-
-    STDMETHODIMP_(void) Settings::GetSharedModePeakLimiterEnabled(BOOL* pbEnabled)
-    {
-        CAutoLock lock(this);
-
-        if (pbEnabled)
-            *pbEnabled = m_sharedModePeakLimiterEnabled;
-    }
-
     STDMETHODIMP_(void) Settings::SetCrossfeedEnabled(BOOL bEnable)
     {
         CAutoLock lock(this);

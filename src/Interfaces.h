@@ -5,7 +5,7 @@
 
 namespace SaneAudioRenderer
 {
-    struct __declspec(uuid("AFA2A9DB-16FC-4B63-86CB-E38803D8BE7A"))
+    struct __declspec(uuid("6A5DD5AC-A1BF-4FB7-9C04-2A89970F8132"))
     ISettings : IUnknown
     {
         STDMETHOD_(UINT32, GetSerial)() = 0;
@@ -19,9 +19,6 @@ namespace SaneAudioRenderer
 
         STDMETHOD_(void, SetAllowBitstreaming)(BOOL bAllowBitstreaming) = 0;
         STDMETHOD_(void, GetAllowBitstreaming)(BOOL* pbAllowBitstreaming) = 0;
-
-        STDMETHOD_(void, SetSharedModePeakLimiterEnabled)(BOOL bEnable) = 0;
-        STDMETHOD_(void, GetSharedModePeakLimiterEnabled)(BOOL* pbEnabled) = 0;
 
         STDMETHOD_(void, SetCrossfeedEnabled)(BOOL bEnable) = 0;
         STDMETHOD_(void, GetCrossfeedEnabled)(BOOL* pbEnabled) = 0;

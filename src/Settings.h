@@ -27,9 +27,6 @@ namespace SaneAudioRenderer
         STDMETHODIMP_(void) SetAllowBitstreaming(BOOL bAllowBitstreaming) override;
         STDMETHODIMP_(void) GetAllowBitstreaming(BOOL* pbAllowBitstreaming) override;
 
-        STDMETHODIMP_(void) SetSharedModePeakLimiterEnabled(BOOL bEnable) override;
-        STDMETHODIMP_(void) GetSharedModePeakLimiterEnabled(BOOL* pbEnabled) override;
-
         STDMETHODIMP_(void) SetCrossfeedEnabled(BOOL bEnable) override;
         STDMETHODIMP_(void) GetCrossfeedEnabled(BOOL* pbEnabled) override;
 
