@@ -75,7 +75,7 @@ namespace SaneAudioRenderer
         return m_live;
     }
 
-    bool AudioRenderer::Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
+    bool AudioRenderer::Push(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
     {
         DspChunk chunk;
 
@@ -133,7 +133,7 @@ namespace SaneAudioRenderer
         }
 
         // Send processed sample to the device.
-        return Push(chunk, pFilledEvent);
+        return PushToDevice(chunk, pFilledEvent);
     }
 
     bool AudioRenderer::Finish(bool blockUntilEnd, CAMEvent* pFilledEvent)
@@ -209,7 +209,7 @@ namespace SaneAudioRenderer
         };
 
         // Send processed sample to the device, and block until the buffer is drained (if requested).
-        return Push(chunk, pFilledEvent) && (!blockUntilEnd || doBlock());
+        return PushToDevice(chunk, pFilledEvent) && (!blockUntilEnd || doBlock());
     }
 
     void AudioRenderer::BeginFlush()
@@ -579,7 +579,7 @@ namespace SaneAudioRenderer
         m_dspDither.Initialize(m_device->GetDspFormat());
     }
 
-    bool AudioRenderer::Push(DspChunk& chunk, CAMEvent* pFilledEvent)
+    bool AudioRenderer::PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
         bool firstIteration = true;
         uint32_t sleepDuration = 0;

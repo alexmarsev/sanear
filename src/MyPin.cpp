@@ -126,8 +126,8 @@ namespace SaneAudioRenderer
                 SetThreadPriority(m_hReceiveThread, THREAD_PRIORITY_ABOVE_NORMAL);
         }
 
-        // Enqueue() returns 'false' in case of interruption.
-        return m_renderer.Enqueue(pSample, m_SampleProps, &m_bufferFilled) ? S_OK : S_FALSE;
+        // Push() returns 'false' in case of interruption.
+        return m_renderer.Push(pSample, m_SampleProps, &m_bufferFilled) ? S_OK : S_FALSE;
     }
 
     STDMETHODIMP MyPin::EndOfStream()

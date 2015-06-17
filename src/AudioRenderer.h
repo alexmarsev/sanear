@@ -32,7 +32,7 @@ namespace SaneAudioRenderer
 
         bool IsLive();
 
-        bool Enqueue(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
+        bool Push(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
         bool Finish(bool blockUntilEnd, CAMEvent* pFilledEvent);
 
         void BeginFlush();
@@ -83,7 +83,7 @@ namespace SaneAudioRenderer
             f(&m_dspDither);
         }
 
-        bool Push(DspChunk& chunk, CAMEvent* pFilledEvent);
+        bool PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent);
 
         AudioDeviceManager m_deviceManager;
         std::unique_ptr<AudioDevice> m_device;
