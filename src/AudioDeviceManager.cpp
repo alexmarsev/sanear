@@ -122,11 +122,9 @@ namespace SaneAudioRenderer
                 CreateAudioClient(device);
 
                 if (!device.audioClient)
-                    return 1;
+                    return E_FAIL;
 
-                ThrowIfFailed(device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &(*format), nullptr));
-
-                return S_OK;
+                return device.audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &(*format), nullptr);
             }
             catch (HRESULT ex)
             {
@@ -162,7 +160,7 @@ namespace SaneAudioRenderer
                 CreateAudioClient(*backend);
 
                 if (!backend->audioClient)
-                    return 1;
+                    return E_FAIL;
 
                 WAVEFORMATEX* pFormat;
                 ThrowIfFailed(backend->audioClient->GetMixFormat(&pFormat));
@@ -174,7 +172,7 @@ namespace SaneAudioRenderer
                 {
                     // Exclusive bitstreaming.
                     if (!backend->exclusive)
-                        return 1;
+                        return E_FAIL;
 
                     backend->dspFormat = DspFormat::Unknown;
                     backend->waveFormat = format;
