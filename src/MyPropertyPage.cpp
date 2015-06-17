@@ -134,15 +134,16 @@ namespace SaneAudioRenderer
 
         std::wstring bufferField = (pDevice ? std::to_wstring(pDevice->GetBufferDuration()) + L"ms" : L"-");
 
-        std::wstring bitstreamingField = (inputFormat ? (DspFormatFromWaveFormat(*inputFormat) ==
-                                                         DspFormat::Unknown ? L"Yes" : L"No") : L"-");
+        const bool bitstreaming = (inputFormat && DspFormatFromWaveFormat(*inputFormat) == DspFormat::Unknown);
+
+        std::wstring bitstreamingField = (inputFormat ? (bitstreaming ? L"Yes" : L"No") : L"-");
 
         std::wstring slavingField = live ? L"Data Rate" : externalClock ? L"Graph Clock" : L"No";
 
-        std::wstring channelsInputField = (inputFormat ? std::to_wstring(inputFormat->nChannels) +
-                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-");
-        std::wstring channelsDeviceField = (pDevice ? std::to_wstring(pDevice->GetWaveFormat()->nChannels) +
-                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pDevice->GetWaveFormat())) + L")" : L"-");
+        std::wstring channelsInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-";
+        std::wstring channelsDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetWaveFormat()->nChannels) +
+                                              L" (" + GetHexString(DspMatrix::GetChannelMask(*pDevice->GetWaveFormat())) + L")" : L"-";
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;
 
@@ -151,8 +152,8 @@ namespace SaneAudioRenderer
         std::wstring formatField = (formatInputField == formatDeviceField) ?
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 
-        std::wstring rateInputField = (inputFormat ? std::to_wstring(inputFormat->nSamplesPerSec) : L"-");
-        std::wstring rateDeviceField = (pDevice ? std::to_wstring(pDevice->GetWaveFormat()->nSamplesPerSec) : L"-");
+        std::wstring rateInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nSamplesPerSec) : L"-";
+        std::wstring rateDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetWaveFormat()->nSamplesPerSec) : L"-";
         std::wstring rateField = (rateInputField == rateDeviceField) ?
                                       rateInputField : rateInputField + L" -> " + rateDeviceField;
 
