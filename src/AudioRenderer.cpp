@@ -114,7 +114,7 @@ namespace SaneAudioRenderer
                 }
 
                 // Apply rate corrections (rate matching or external clock).
-                if (m_device && m_device->IsRealtime() && m_state == State_Running)
+                if (m_device && !m_device->IsBitstream() && m_device->IsRealtime() && m_state == State_Running)
                     ApplyRateCorrection(chunk);
 
                 // Don't deny the allocator to reuse IMediaSample while the chunk is hanging in the buffer.
