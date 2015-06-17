@@ -54,13 +54,6 @@ namespace SaneAudioRenderer
         m_audioOffset += offsetTime;
     }
 
-    STDMETHODIMP_(REFERENCE_TIME) MyClock::GetSlavedClockOffset()
-    {
-        CAutoLock lock(this);
-
-        return m_audioOffset;
-    }
-
     STDMETHODIMP MyClock::GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime)
     {
         CheckPointer(pAudioTime, E_POINTER);
