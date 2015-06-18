@@ -509,10 +509,13 @@ namespace SaneAudioRenderer
                 if (myTime > graphTime)
                 {
                     // Pad and adjust backwards.
-                    size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                        myTime - graphTime, OneSecond, 0);
+                    REFERENCE_TIME padTime = myTime - graphTime;
+                    assert(padTime >= 0);
 
-                    if (padFrames > m_device->GetWaveFormat()->nSamplesPerSec / 2000)
+                    size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
+                                                        padTime, OneSecond, 0);
+
+                    if (padFrames > m_device->GetWaveFormat()->nSamplesPerSec / 33) // ~30ms threshold
                     {
                         DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
                                            chunk.GetFrameCount() + padFrames, chunk.GetRate());
@@ -523,34 +526,63 @@ namespace SaneAudioRenderer
 
                         chunk = std::move(tempChunk);
 
-                        m_myClock->OffsetSlavedClock(-llMulDiv(padFrames, OneSecond,
-                                                               m_device->GetWaveFormat()->nSamplesPerSec, 0));
+                        REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond,
+                                                             m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        DebugOut("AudioRenderer pad", padFrames, "frames for clock matching", m_sampleCorrection.GetLastFrameEnd() / 10000., (myTime - graphTime) / 10000.);
+                        m_myClock->OffsetSlavedClock(-paddedTime);
+                        padTime -= paddedTime;
+                        assert(padTime >= 0);
+
+                        DebugOut("AudioRenderer pad", paddedTime / 10000., "ms for clock matching at",
+                                 m_sampleCorrection.GetLastFrameEnd() / 10000., "frame position");
                     }
+
+                    // Correct the rest with variable rate.
+                    m_dspRealtimeRate.Adjust(padTime);
+                    m_myClock->OffsetSlavedClock(-padTime);
                 }
                 else if (remaining > latency)
                 {
                     // Crop and adjust forwards.
+                    assert(myTime <= graphTime);
                     REFERENCE_TIME dropTime = std::min(graphTime - myTime, remaining - latency);
+                    assert(dropTime >= 0);
 
                     size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
                                                          dropTime, OneSecond, 0);
 
                     dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 
-                    if (dropFrames > m_device->GetWaveFormat()->nSamplesPerSec / 2000)
+                    if (dropFrames > m_device->GetWaveFormat()->nSamplesPerSec / 33) // ~30ms threshold
                     {
-
                         chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
-                        m_myClock->OffsetSlavedClock(llMulDiv(dropFrames, OneSecond,
-                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0));
+                        REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond,
+                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        DebugOut("AudioRenderer drop", dropFrames, "frames for clock matching", m_sampleCorrection.GetLastFrameEnd() / 10000., (myTime - graphTime) / 10000.);
+                        m_myClock->OffsetSlavedClock(droppedTime);
+                        dropTime -= droppedTime;
+                        assert(dropTime >= 0);
+
+                        DebugOut("AudioRenderer drop", droppedTime / 10000., "ms for clock matching at",
+                                 m_sampleCorrection.GetLastFrameEnd() / 10000., "frame position");
                     }
-                }
 
+                    // Correct the rest with variable rate.
+                    m_dspRealtimeRate.Adjust(-dropTime);
+                    m_myClock->OffsetSlavedClock(dropTime);
+                }
+                else if (remaining < latency)
+                {
+                    // Try to maintain minimal latency if we can't keep the clocks in full sync.
+                    assert(myTime <= graphTime);
+
+                    REFERENCE_TIME time = latency - remaining;
+                    assert(time > 0);
+
+                    m_dspRealtimeRate.Adjust(-time);
+                    m_myClock->OffsetSlavedClock(time);
+                }
             }
         }
     }
@@ -573,7 +605,7 @@ namespace SaneAudioRenderer
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
-        m_dspVariableRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
+        m_dspRealtimeRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());
