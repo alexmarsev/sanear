@@ -93,10 +93,10 @@ namespace SaneAudioRenderer
                 if (!m_device)
                     CreateDevice();
 
-                // Apply sample corrections (pad, crop, guess timings).
+                // Establish time/frame relation.
                 chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps);
 
-                // Apply clock corrections (what we couldn't correct with sample correction).
+                // Apply clock corrections.
                 if (!m_live && m_device && m_state == State_Running)
                     ApplyClockCorrection();
 
@@ -113,11 +113,11 @@ namespace SaneAudioRenderer
                     DspChunk::ToFormat(m_device->GetDspFormat(), chunk);
                 }
 
-                // Apply rate corrections (rate matching or external clock).
+                // Apply rate corrections (rate matching and clock slaving).
                 if (m_device && !m_device->IsBitstream() && m_device->IsRealtime() && m_state == State_Running)
                     ApplyRateCorrection(chunk);
 
-                // Don't deny the allocator to reuse IMediaSample while the chunk is hanging in the buffer.
+                // Don't deny the allocator its right to reuse IMediaSample while the chunk is hanging in the buffer.
                 if (m_device && m_device->IsRealtime())
                     chunk.FreeMediaSample();
             }
@@ -227,7 +227,7 @@ namespace SaneAudioRenderer
                 m_device->Reset();
                 m_sampleCorrection.NewDeviceBuffer();
                 InitializeProcessors();
-                m_startClockOffset = m_sampleCorrection.GetLastSampleEnd();
+                m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
                 StartDevice();
             }
             else
@@ -285,14 +285,19 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
+        if (m_rate != rate)
+        {
+            m_rate = rate;
+
+            if (m_device)
+                (m_device->GetEnd() > 0) ? ClearDevice() : InitializeProcessors();
+        }
+
         m_startClockOffset = 0;
-        m_rate = rate;
+
+        m_clockCorrection += m_sampleCorrection.GetLastFrameEnd();
 
         m_sampleCorrection.NewSegment(m_rate);
-
-        assert(m_inputFormat);
-        if (m_device)
-            InitializeProcessors();
     }
 
     void AudioRenderer::Play(REFERENCE_TIME startTime)
@@ -418,7 +423,7 @@ namespace SaneAudioRenderer
 
             InitializeProcessors();
 
-            m_startClockOffset = m_sampleCorrection.GetLastSampleEnd();
+            m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
 
             if (m_state == State_Running)
                 StartDevice();
@@ -445,7 +450,7 @@ namespace SaneAudioRenderer
 
         // Apply corrections to internal clock.
         {
-            REFERENCE_TIME offset = m_sampleCorrection.GetTimingsError() - m_clockCorrection;
+            REFERENCE_TIME offset = m_sampleCorrection.GetTimeDivergence() - m_clockCorrection;
             if (std::abs(offset) > 100)
             {
                 m_myClock->OffsetSlavedClock(offset);
@@ -520,7 +525,7 @@ namespace SaneAudioRenderer
                         m_myClock->OffsetSlavedClock(-llMulDiv(padFrames, OneSecond,
                                                                m_device->GetWaveFormat()->nSamplesPerSec, 0));
 
-                        DebugOut("AudioRenderer pad", padFrames, "frames for clock matching", m_sampleCorrection.GetLastSampleEnd() / 10000., (myTime - graphTime) / 10000.);
+                        DebugOut("AudioRenderer pad", padFrames, "frames for clock matching", m_sampleCorrection.GetLastFrameEnd() / 10000., (myTime - graphTime) / 10000.);
                     }
                 }
                 else if (remaining > latency)
@@ -541,7 +546,7 @@ namespace SaneAudioRenderer
                         m_myClock->OffsetSlavedClock(llMulDiv(dropFrames, OneSecond,
                                                               m_device->GetWaveFormat()->nSamplesPerSec, 0));
 
-                        DebugOut("AudioRenderer drop", dropFrames, "frames for clock matching", m_sampleCorrection.GetLastSampleEnd() / 10000., (myTime - graphTime) / 10000.);
+                        DebugOut("AudioRenderer drop", dropFrames, "frames for clock matching", m_sampleCorrection.GetLastFrameEnd() / 10000., (myTime - graphTime) / 10000.);
                     }
                 }
 
@@ -617,7 +622,7 @@ namespace SaneAudioRenderer
                 REFERENCE_TIME graphTime;
                 if (m_state == State_Running &&
                     SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                    graphTime > m_startTime + m_sampleCorrection.GetLastSampleEnd() + m_sampleCorrection.GetTimingsError())
+                    graphTime > m_startTime + m_sampleCorrection.GetLastFrameEnd() + m_sampleCorrection.GetTimeDivergence())
                 {
                     break;
                 }

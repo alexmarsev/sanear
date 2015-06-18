@@ -16,8 +16,8 @@ namespace SaneAudioRenderer
 
         DspChunk ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
 
-        REFERENCE_TIME GetLastSampleEnd() { return m_lastSampleEnd; }
-        REFERENCE_TIME GetTimingsError() { return m_timingsError; }
+        REFERENCE_TIME GetLastFrameEnd()   const { return m_lastFrameEnd; }
+        REFERENCE_TIME GetTimeDivergence() const { return m_timeDivergence; }
 
     private:
 
@@ -32,14 +32,12 @@ namespace SaneAudioRenderer
 
         double m_rate = 1.0;
 
-        bool m_freshSegment = true;
-        REFERENCE_TIME m_segmentStartTimestamp = 0;
         REFERENCE_TIME m_segmentTimeInPreviousFormats = 0;
         uint64_t m_segmentFramesInCurrentFormat = 0;
 
-        REFERENCE_TIME m_lastSampleEnd = 0;
+        REFERENCE_TIME m_lastFrameEnd = 0;
 
-        REFERENCE_TIME m_timingsError = 0;
+        REFERENCE_TIME m_timeDivergence = 0;
 
         bool m_freshBuffer = true;
     };
