@@ -25,6 +25,8 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
 
+        void Adjust(REFERENCE_TIME time);
+
     private:
 
         bool m_active = false;
@@ -32,5 +34,8 @@ namespace SaneAudioRenderer
         uint32_t m_inputRate = 0;
         uint32_t m_outputRate = 0;
         uint32_t m_channels = 0;
+        REFERENCE_TIME m_adjustTime = 0;
+        int64_t m_inputFrames = 0;
+        int64_t m_outputFrames = 0;
     };
 }

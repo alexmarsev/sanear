@@ -9,6 +9,9 @@ namespace SaneAudioRenderer
         m_inputRate = inputRate;
         m_outputRate = outputRate;
         m_channels = channels;
+        m_adjustTime = 0;
+        m_inputFrames = 0;
+        m_outputFrames = 0;
 
         if (realtime)
         {
@@ -47,6 +50,26 @@ namespace SaneAudioRenderer
 
         DspChunk::ToFloat(chunk);
 
+        {
+            REFERENCE_TIME adjustTime = m_adjustTime;
+
+            if (m_inputFrames > m_resampler.inpsize() / 2)
+            {
+                int64_t adjustedFrames = llMulDiv(m_inputFrames - m_resampler.inpsize() / 2,
+                                                  m_outputRate, m_inputRate, 0) - m_outputFrames;
+
+                adjustTime += llMulDiv(adjustedFrames, OneSecond, m_outputRate, 0);
+            }
+
+            double ratio = (double)m_outputRate / m_inputRate;
+            double adjustRatio = 1.0 + (double)adjustTime / OneSecond / ratio;
+
+            // Stay within 5 cents.
+            adjustRatio = std::min(1.003, std::max(0.997, adjustRatio));
+
+            m_resampler.set_rratio(adjustRatio);
+        }
+
         uint32_t outputFrames = (uint32_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
         DspChunk output(DspFormat::Float, m_channels, outputFrames, m_outputRate);
 
@@ -59,6 +82,9 @@ namespace SaneAudioRenderer
 
         assert(m_resampler.inp_count == 0);
         output.ShrinkTail(outputFrames - m_resampler.out_count);
+
+        m_inputFrames += chunk.GetFrameCount();
+        m_outputFrames += output.GetFrameCount();
 
         chunk = std::move(output);
     }
@@ -89,5 +115,10 @@ namespace SaneAudioRenderer
         }
 
         Process(chunk);
+    }
+
+    void DspRealtimeRate::Adjust(REFERENCE_TIME time)
+    {
+        m_adjustTime += time;
     }
 }
