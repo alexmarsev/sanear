@@ -276,7 +276,7 @@ namespace SaneAudioRenderer
         {
             CAutoLock objectLock(this);
 
-            if (!IsConnected() || m_state == State_Stopped)
+            if (!IsConnected() || m_state != State_Paused)
                 return true;
         }
 
