@@ -39,7 +39,7 @@ namespace SaneAudioRenderer
 
         std::wstring m_device;
         BOOL m_exclusive = FALSE;
-        UINT32 m_buffer = OUTPUT_DEVICE_DEFAULT_BUFFER_MS;
+        UINT32 m_buffer = OUTPUT_DEVICE_BUFFER_DEFAULT_MS;
 
         BOOL m_allowBitstreaming = TRUE;
 

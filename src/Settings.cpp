@@ -22,7 +22,7 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP Settings::SetOuputDevice(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS)
     {
-        if (uBufferMS == 0)
+        if (uBufferMS < OUTPUT_DEVICE_BUFFER_MIN_MS || uBufferMS > OUTPUT_DEVICE_BUFFER_MAX_MS)
             return E_INVALIDARG;
 
         CAutoLock lock(this);

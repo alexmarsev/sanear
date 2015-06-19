@@ -12,7 +12,9 @@ namespace SaneAudioRenderer
 
         enum
         {
-            OUTPUT_DEVICE_DEFAULT_BUFFER_MS = 200,
+            OUTPUT_DEVICE_BUFFER_MIN_MS = 60,
+            OUTPUT_DEVICE_BUFFER_MAX_MS = 1000,
+            OUTPUT_DEVICE_BUFFER_DEFAULT_MS = 200,
         };
         STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS) = 0;
         STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceName, BOOL* pbExclusive, UINT32* puBufferMS) = 0;
