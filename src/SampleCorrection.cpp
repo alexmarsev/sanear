@@ -81,7 +81,7 @@ namespace SaneAudioRenderer
                 const size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastFrameEnd);
 
                 if (padFrames > 0 &&
-                    FramesToTime(padFrames) < 50 * OneMillisecond)
+                    FramesToTime(padFrames) < 100 * OneMillisecond)
                 {
                     DebugOut("SampleCorrection pad", padFrames, "frames before [",
                              sampleProps.tStart, sampleProps.tStop, "]");
