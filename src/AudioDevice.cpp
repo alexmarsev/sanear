@@ -96,7 +96,7 @@ namespace SaneAudioRenderer
                 if (!m_thread.joinable())
                 {
                     assert(!m_exit);
-                    m_thread = std::thread(std::bind(&AudioDevice::RealtimeFeed, this));
+                    m_thread = std::thread(std::bind(&AudioDevice::SilenceFeed, this));
                 }
             }
             catch (std::system_error&)
@@ -250,6 +250,32 @@ namespace SaneAudioRenderer
             }
 
             m_wake.Wait(sleepDuration);
+        }
+    }
+
+    void AudioDevice::SilenceFeed()
+    {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+        while (!m_exit && !m_error)
+        {
+            try
+            {
+                REFERENCE_TIME remaining = GetEnd() - GetPosition();
+                REFERENCE_TIME buffer = m_backend->bufferDuration * OneMillisecond;
+
+                if (remaining < buffer)
+                {
+                    m_silenceFrames += PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
+                                                                            buffer - remaining, OneSecond, 0));
+                }
+
+                m_wake.Wait(m_backend->bufferDuration / 4);
+            }
+            catch (HRESULT)
+            {
+                m_error = true;
+            }
         }
     }
 
