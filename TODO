@@ -1,6 +1,4 @@
- - final polishing (mainly in realtime path)
- - maybe some other stuff
-
+ - final testing
  - first release
 
  - detect default audio device modification in exclusive mode
