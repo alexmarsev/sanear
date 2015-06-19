@@ -15,6 +15,7 @@ namespace SaneAudioRenderer
 
         if (realtime)
         {
+            m_resampler.reset();
             m_resampler.setup((double)outputRate / inputRate, channels,
                               std::min(inputRate, outputRate) > 44100 ? 32 : 48);
 
