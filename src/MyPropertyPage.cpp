@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MyPropertyPage.h"
 
+#include "AudioDevice.h"
 #include "DspMatrix.h"
 
 namespace SaneAudioRenderer

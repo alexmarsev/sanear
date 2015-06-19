@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DspBase.h"
-#include "Interfaces.h"
 
 namespace SaneAudioRenderer
 {

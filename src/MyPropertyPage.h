@@ -1,9 +1,9 @@
 #pragma once
 
-#include "AudioDeviceManager.h"
-
 namespace SaneAudioRenderer
 {
+    class AudioDevice;
+
     class _declspec(uuid("7EEEDEC8-8B8E-4220-AF12-08BC0CE844F0"))
     MyPropertyPage final
         : public CUnknown
