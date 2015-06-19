@@ -572,17 +572,6 @@ namespace SaneAudioRenderer
                     m_dspRealtimeRate.Adjust(-dropTime);
                     m_myClock->OffsetSlavedClock(dropTime);
                 }
-                else if (remaining < latency)
-                {
-                    // Try to maintain minimal latency if we can't keep the clocks in full sync.
-                    assert(myTime <= graphTime);
-
-                    REFERENCE_TIME time = latency - remaining;
-                    assert(time > 0);
-
-                    m_dspRealtimeRate.Adjust(-time);
-                    m_myClock->OffsetSlavedClock(time);
-                }
             }
         }
     }
