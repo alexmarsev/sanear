@@ -1,10 +1,6 @@
- - implement low-latency rendering path for realtime capture playback
- - implement proper low-latency clock matching (mainly for DVB)
- - make sure that frame-stepping works alright
-
+ - final polishing (mainly in realtime path)
  - maybe some other stuff
 
- - resolve licensing issues
  - first release
 
  - detect default audio device modification in exclusive mode
