@@ -234,6 +234,7 @@ namespace SaneAudioRenderer
             {
                 m_device->Reset();
                 m_sampleCorrection.NewDeviceBuffer();
+                InitializeProcessors();
             }
         }
 
