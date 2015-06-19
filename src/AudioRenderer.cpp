@@ -623,7 +623,7 @@ namespace SaneAudioRenderer
                 try
                 {
                     m_device->Push(chunk, pFilledEvent);
-                    sleepDuration = m_device->GetBufferDuration() / 4;
+                    sleepDuration = (m_device->IsRealtime() ? 50 : m_device->GetBufferDuration() / 4);
                 }
                 catch (HRESULT)
                 {

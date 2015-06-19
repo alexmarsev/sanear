@@ -16,8 +16,15 @@ namespace SaneAudioRenderer
 
     AudioDevice::AudioDevice(std::shared_ptr<AudioDeviceBackend> backend)
         : m_backend(backend)
+        , m_woken(TRUE/*manual reset*/)
     {
         assert(m_backend);
+
+        if (static_cast<HANDLE>(m_wake) == NULL ||
+            static_cast<HANDLE>(m_woken) == NULL)
+        {
+            throw E_OUTOFMEMORY;
+        }
 
         if (m_backend->realtime)
             m_thread = std::thread(std::bind(&AudioDevice::RealtimeFeed, this));
@@ -77,6 +84,9 @@ namespace SaneAudioRenderer
 
     REFERENCE_TIME AudioDevice::Finish(CAMEvent* pFilledEvent)
     {
+        if (m_error)
+            throw E_FAIL;
+
         if (m_eos == 0)
         {
             m_eos = GetEnd();
@@ -140,20 +150,28 @@ namespace SaneAudioRenderer
             m_exit = false;
         }
 
-        m_backend->audioClient->Reset();
-        m_pushedFrames = 0;
-        m_silenceFrames = 0;
-        m_eos = 0;
-
-        if (m_backend->realtime)
         {
+            CAutoLock threadBusyLock(&m_threadBusyMutex);
+
+            m_backend->audioClient->Reset();
+            m_pushedFrames = 0;
+            m_silenceFrames = 0;
+            m_eos = 0;
+
+            if (m_backend->realtime)
             {
+                m_woken.Reset();
+
                 CAutoLock lock(&m_bufferMutex);
                 m_bufferFrameCount = 0;
                 m_buffer.clear();
             }
+        }
 
+        if (m_backend->realtime)
+        {
             m_wake.Set();
+            m_woken.Wait();
         }
     }
 
@@ -164,53 +182,74 @@ namespace SaneAudioRenderer
 
         while (!m_exit)
         {
-            DspChunk chunk;
+            uint32_t sleepDuration = 0;
 
             {
-                CAutoLock lock(&m_bufferMutex);
-                if (!m_buffer.empty())
-                {
-                    chunk = std::move(m_buffer.front());
-                    m_buffer.pop_front();
-                    m_bufferFrameCount -= chunk.GetFrameCount();
-                }
-            }
+                CAutoLock busyLock(&m_threadBusyMutex);
 
-            try
-            {
-                if (chunk.IsEmpty())
+                if (m_error)
                 {
-                    REFERENCE_TIME latency = GetStreamLatency() + OneMillisecond * 2;
-                    REFERENCE_TIME remaining = GetEnd() - GetPosition();
-
-                    if (remaining < latency)
-                        m_silenceFrames += PushSilenceToDevice((UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
-                                                                                latency - remaining, OneSecond, 0));
+                    sleepDuration = INFINITE;
                 }
                 else
                 {
-                    PushToDevice(chunk, nullptr);
-
-                    if (!chunk.IsEmpty())
+                    try
                     {
-                        CAutoLock lock(&m_bufferMutex);
-                        m_bufferFrameCount += chunk.GetFrameCount();
-                        m_buffer.emplace_front(std::move(chunk));
+                        DspChunk chunk;
+
+                        {
+                            CAutoLock lock(&m_bufferMutex);
+
+                            if (!m_buffer.empty())
+                            {
+                                chunk = std::move(m_buffer.front());
+                                m_buffer.pop_front();
+                                m_bufferFrameCount -= chunk.GetFrameCount();
+                            }
+                        }
+
+                        if (chunk.IsEmpty())
+                        {
+                            REFERENCE_TIME latency = GetStreamLatency() + OneMillisecond * 2;
+                            REFERENCE_TIME remaining = GetEnd() - GetPosition();
+
+                            if (remaining < latency)
+                                m_silenceFrames += PushSilenceToDevice(
+                                    (UINT32)llMulDiv(m_backend->waveFormat->nSamplesPerSec,
+                                                     latency - remaining, OneSecond, 0));
+
+                            sleepDuration = 1;
+                        }
+                        else
+                        {
+                            PushToDevice(chunk, nullptr);
+
+                            if (!chunk.IsEmpty())
+                            {
+                                {
+                                    CAutoLock lock(&m_bufferMutex);
+                                    m_bufferFrameCount += chunk.GetFrameCount();
+                                    m_buffer.emplace_front(std::move(chunk));
+                                }
+
+                                sleepDuration = 1;
+                            }
+                        }
+                    }
+                    catch (HRESULT)
+                    {
+                        m_error = true;
+                    }
+                    catch (std::bad_alloc&)
+                    {
+                        m_error = true;
                     }
                 }
-            }
-            catch (HRESULT)
-            {
-                m_exit = true;
-                break;
-            }
-            catch (std::bad_alloc&)
-            {
-                m_exit = true;
-                break;
+
+                m_woken.Set();
             }
 
-            m_wake.Wait(1);
+            m_wake.Wait(sleepDuration);
         }
     }
 
@@ -274,7 +313,7 @@ namespace SaneAudioRenderer
 
     void AudioDevice::PushToBuffer(DspChunk& chunk)
     {
-        if (m_exit)
+        if (m_error)
             throw E_FAIL;
 
         if (chunk.IsEmpty())
@@ -284,7 +323,7 @@ namespace SaneAudioRenderer
         {
             CAutoLock lock(&m_bufferMutex);
 
-            if (m_bufferFrameCount > m_backend->waveFormat->nSamplesPerSec / 3)
+            if (m_bufferFrameCount > m_backend->waveFormat->nSamplesPerSec / 4) // 250ms
                 return;
 
             m_bufferFrameCount += chunk.GetFrameCount();
@@ -292,7 +331,7 @@ namespace SaneAudioRenderer
         }
         catch (std::bad_alloc&)
         {
-            m_exit = true;
+            m_error = true;
             throw E_OUTOFMEMORY;
         }
     }

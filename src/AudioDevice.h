@@ -77,7 +77,10 @@ namespace SaneAudioRenderer
 
         std::thread m_thread;
         CAMEvent m_wake;
+        CAMEvent m_woken;
+        CCritSec m_threadBusyMutex;
         std::atomic<bool> m_exit = false;
+        std::atomic<bool> m_error = false;
 
         std::deque<DspChunk> m_buffer;
         size_t m_bufferFrameCount = 0;
