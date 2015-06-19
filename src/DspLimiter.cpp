@@ -6,6 +6,32 @@ namespace SaneAudioRenderer
     namespace
     {
         const float slope = 1.0f - 1.0f / 20.0f; // 20:1 ratio
+
+        template <typename T>
+        T GetPeak(const T* data, size_t n)
+        {
+            T peak = 0;
+
+            for (size_t i = 0; i < n; i++)
+                peak = std::max(peak, std::abs(data[i]));
+
+            return peak;
+        }
+
+        template <typename T>
+        void ApplyLimiter(T* data, size_t n, T threshold)
+        {
+            for (size_t i = 0; i < n; i++)
+            {
+                T& sample = data[i];
+                const T absSample = std::abs(sample);
+
+                if (absSample > threshold)
+                    sample *= std::pow(threshold / absSample, slope);
+
+                assert(std::abs(sample) <= 1);
+            }
+        }
     }
 
     void DspLimiter::Initialize(uint32_t rate, uint32_t channels, bool exclusive)
@@ -30,8 +56,8 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty())
             return;
 
-        if (!m_exclusive ||
-            chunk.GetFormat() != DspFormat::Float)
+        if (!m_exclusive || (chunk.GetFormat() != DspFormat::Float &&
+                             chunk.GetFormat() != DspFormat::Double))
         {
             m_active = false;
             return;
@@ -39,12 +65,18 @@ namespace SaneAudioRenderer
 
         m_active = true;
 
-        auto data = reinterpret_cast<float*>(chunk.GetData());
-
         // Analyze samples
-        float peak = 0.0f;
-        for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
-            peak = std::max(peak, std::abs(data[i]));
+        float peak;
+        if (chunk.GetFormat() == DspFormat::Double)
+        {
+            double largePeak = GetPeak((double*)chunk.GetData(), chunk.GetSampleCount());
+            peak = std::nexttoward((float)largePeak, largePeak);
+        }
+        else
+        {
+            assert(chunk.GetFormat() == DspFormat::Float);
+            peak = GetPeak((float*)chunk.GetData(), chunk.GetSampleCount());
+        }
 
         // Configure limiter
         if (peak > 1.0f)
@@ -64,15 +96,14 @@ namespace SaneAudioRenderer
         // Apply limiter
         if (m_holdWindow > 0)
         {
-            for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
+            if (chunk.GetFormat() == DspFormat::Double)
             {
-                float& sample = data[i];
-                const float absSample = std::abs(sample);
-
-                if (absSample > m_threshold)
-                    sample *= std::pow(m_threshold / absSample, slope);
-
-                assert(std::abs(sample) <= 1.0f);
+                ApplyLimiter<double>((double*)chunk.GetData(), chunk.GetSampleCount(), m_threshold);
+            }
+            else
+            {
+                assert(chunk.GetFormat() == DspFormat::Float);
+                ApplyLimiter((float*)chunk.GetData(), chunk.GetSampleCount(), m_threshold);
             }
 
             m_holdWindow -= chunk.GetSampleCount();
