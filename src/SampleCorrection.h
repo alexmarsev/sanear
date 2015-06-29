@@ -14,7 +14,7 @@ namespace SaneAudioRenderer
         void NewSegment(double rate);
         void NewDeviceBuffer();
 
-        DspChunk ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps);
+        DspChunk ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, bool realtimeDevice);
 
         REFERENCE_TIME GetLastFrameEnd()   const { return m_lastFrameEnd; }
         REFERENCE_TIME GetTimeDivergence() const { return m_timeDivergence; }

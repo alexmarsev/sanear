@@ -94,7 +94,7 @@ namespace SaneAudioRenderer
                     CreateDevice();
 
                 // Establish time/frame relation.
-                chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps);
+                chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps, m_live || m_externalClock);
 
                 // Apply clock corrections.
                 if (!m_live && m_device && m_state == State_Running)

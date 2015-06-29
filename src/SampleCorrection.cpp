@@ -37,7 +37,7 @@ namespace SaneAudioRenderer
         m_freshBuffer = true;
     }
 
-    DspChunk SampleCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps)
+    DspChunk SampleCorrection::ProcessSample(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, bool realtimeDevice)
     {
         assert(m_format);
 
@@ -53,7 +53,7 @@ namespace SaneAudioRenderer
                 assert(chunk.IsEmpty());
             }
         }
-        else if (m_lastFrameEnd == 0)
+        else if (m_lastFrameEnd == 0 && !realtimeDevice)
         {
             if ((sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID) && sampleProps.tStop <= 0)
             {
@@ -81,7 +81,7 @@ namespace SaneAudioRenderer
                 const size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastFrameEnd);
 
                 if (padFrames > 0 &&
-                    FramesToTime(padFrames) < 100 * OneMillisecond)
+                    FramesToTime(padFrames) < 600 * OneSecond)
                 {
                     DebugOut("SampleCorrection pad", padFrames, "frames before [",
                              sampleProps.tStart, sampleProps.tStop, "]");
