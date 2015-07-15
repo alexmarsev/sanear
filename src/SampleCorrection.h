@@ -21,7 +21,6 @@ namespace SaneAudioRenderer
 
     private:
 
-        void FillMissingTimings(AM_SAMPLE2_PROPERTIES& sampleProps);
         void AccumulateTimings(AM_SAMPLE2_PROPERTIES& sampleProps, size_t frames);
 
         uint64_t TimeToFrames(REFERENCE_TIME time);
