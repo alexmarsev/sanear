@@ -60,7 +60,7 @@ namespace SaneAudioRenderer
             if (!backend.friendlyName || backend.friendlyName->empty())
             {
                 backend.default = true;
-                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device));
+                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
                 ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
                 backend.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
             }
