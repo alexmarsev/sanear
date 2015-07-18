@@ -55,18 +55,20 @@ namespace SaneAudioRenderer
                                            CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
 
             IMMDevicePtr device;
-            IPropertyStorePtr devicePropertyStore;
 
-            if (!backend.friendlyName || backend.friendlyName->empty())
+            if (!backend.id || backend.id->empty())
             {
                 backend.default = true;
+
                 ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
-                ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                backend.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
+
+                LPWSTR pDeviceId = nullptr;
+                ThrowIfFailed(device->GetId(&pDeviceId));
+                std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
+                backend.id = std::make_shared<std::wstring>(pDeviceId);
             }
             else
             {
-                auto targetName = backend.friendlyName;
                 backend.default = false;
 
                 IMMDeviceCollectionPtr collection;
@@ -78,22 +80,25 @@ namespace SaneAudioRenderer
                 for (UINT i = 0; i < count; i++)
                 {
                     ThrowIfFailed(collection->Item(i, &device));
-                    ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
-                    backend.friendlyName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_FriendlyName);
 
-                    if (*targetName == *backend.friendlyName)
+                    LPWSTR pDeviceId = nullptr;
+                    ThrowIfFailed(device->GetId(&pDeviceId));
+                    std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
+
+                    if (*backend.id == pDeviceId)
                         break;
 
                     device = nullptr;
-                    devicePropertyStore = nullptr;
-                    backend.friendlyName = nullptr;
                 }
             }
 
             if (!device)
                 return;
 
-            backend.adapterName = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
+            IPropertyStorePtr devicePropertyStore;
+            ThrowIfFailed(device->OpenPropertyStore(STGM_READ, &devicePropertyStore));
+
+            backend.adapterName  = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
             backend.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
 
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
@@ -110,13 +115,11 @@ namespace SaneAudioRenderer
                 AudioDeviceBackend device = {};
 
                 {
-                    LPWSTR pDeviceName = nullptr;
-                    ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceName, nullptr, nullptr));
+                    LPWSTR pDeviceId = nullptr;
+                    ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceId, nullptr, nullptr));
+                    std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
 
-                    std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
-                    deviceName.reset(pDeviceName);
-
-                    device.friendlyName = std::make_shared<std::wstring>(deviceName.get());
+                    device.id = std::make_shared<std::wstring>(pDeviceId);
                 }
 
                 CreateAudioClient(device);
@@ -143,15 +146,13 @@ namespace SaneAudioRenderer
                 backend = std::make_shared<AudioDeviceBackend>();
 
                 {
-                    LPWSTR pDeviceName = nullptr;
+                    LPWSTR pDeviceId = nullptr;
                     BOOL exclusive;
                     UINT32 buffer;
-                    ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceName, &exclusive, &buffer));
+                    ThrowIfFailed(pSettings->GetOuputDevice(&pDeviceId, &exclusive, &buffer));
+                    std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
 
-                    std::unique_ptr<wchar_t, CoTaskMemFreeDeleter> deviceName;
-                    deviceName.reset(pDeviceName);
-
-                    backend->friendlyName = std::make_shared<std::wstring>(deviceName.get());
+                    backend->id = std::make_shared<std::wstring>(pDeviceId);
                     backend->exclusive = !!exclusive;
                     backend->realtime = realtime;
                     backend->bufferDuration = buffer;

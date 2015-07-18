@@ -373,15 +373,17 @@ namespace SaneAudioRenderer
 
         if (m_device && m_deviceSettingsSerial != serial)
         {
-            LPWSTR pDeviceName = nullptr;
+            LPWSTR pDeviceId = nullptr;
             BOOL exclusive;
             UINT32 buffer;
-            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceName, &exclusive, &buffer)))
+            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceId, &exclusive, &buffer)))
             {
+                std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
+
                 if (m_device->IsExclusive() != !!exclusive ||
                     m_device->GetBufferDuration() != buffer ||
-                    (pDeviceName && *pDeviceName && wcscmp(pDeviceName, m_device->GetFriendlyName()->c_str())) ||
-                    ((!pDeviceName || !*pDeviceName) && !m_device->IsDefault()))
+                    (pDeviceId && *pDeviceId && (m_device->IsDefault() || *m_device->GetId() != pDeviceId)) ||
+                    ((!pDeviceId || !*pDeviceId) && !m_device->IsDefault()))
                 {
                     ClearDevice();
                     assert(!m_device);
@@ -390,7 +392,6 @@ namespace SaneAudioRenderer
                 {
                     m_deviceSettingsSerial = serial;
                 }
-                CoTaskMemFree(pDeviceName);
             }
         }
     }

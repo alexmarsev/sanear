@@ -7,7 +7,7 @@ namespace SaneAudioRenderer
 {
     struct AudioDeviceBackend final
     {
-        SharedString          friendlyName;
+        SharedString          id;
         SharedString          adapterName;
         SharedString          endpointName;
 
@@ -45,7 +45,7 @@ namespace SaneAudioRenderer
         void Stop();
         void Reset();
 
-        SharedString GetFriendlyName() const { return m_backend->friendlyName; }
+        SharedString GetId()           const { return m_backend->id; }
         SharedString GetAdapterName()  const { return m_backend->adapterName; }
         SharedString GetEndpointName() const { return m_backend->endpointName; }
 

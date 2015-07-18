@@ -20,7 +20,7 @@ namespace SaneAudioRenderer
         return m_serial;
     }
 
-    STDMETHODIMP Settings::SetOuputDevice(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS)
+    STDMETHODIMP Settings::SetOuputDevice(LPCWSTR pDeviceId, BOOL bExclusive, UINT32 uBufferMS)
     {
         if (uBufferMS < OUTPUT_DEVICE_BUFFER_MIN_MS || uBufferMS > OUTPUT_DEVICE_BUFFER_MAX_MS)
             return E_INVALIDARG;
@@ -29,12 +29,12 @@ namespace SaneAudioRenderer
 
         if (m_exclusive != bExclusive ||
             m_buffer != uBufferMS ||
-            (pDeviceName && wcscmp(pDeviceName, m_device.c_str())) ||
-            (!pDeviceName && !m_device.empty()))
+            (pDeviceId && m_deviceId != pDeviceId) ||
+            (!pDeviceId && !m_deviceId.empty()))
         {
             try
             {
-                m_device = pDeviceName ? pDeviceName : L"";
+                m_deviceId = pDeviceId ? pDeviceId : L"";
                 m_exclusive = bExclusive;
                 m_buffer = uBufferMS;
                 m_serial++;
@@ -48,23 +48,23 @@ namespace SaneAudioRenderer
         return S_OK;
     }
 
-    STDMETHODIMP Settings::GetOuputDevice(LPWSTR* ppDeviceName, BOOL* pbExclusive, UINT32* puBufferMS)
+    STDMETHODIMP Settings::GetOuputDevice(LPWSTR* ppDeviceId, BOOL* pbExclusive, UINT32* puBufferMS)
     {
         CAutoLock lock(this);
 
         if (pbExclusive)
             *pbExclusive = m_exclusive;
 
-        if (ppDeviceName)
+        if (ppDeviceId)
         {
-            size_t size = sizeof(wchar_t) * (m_device.length() + 1);
+            size_t size = sizeof(wchar_t) * (m_deviceId.length() + 1);
 
-            *ppDeviceName = static_cast<LPWSTR>(CoTaskMemAlloc(size));
+            *ppDeviceId = static_cast<LPWSTR>(CoTaskMemAlloc(size));
 
-            if (!*ppDeviceName)
+            if (!*ppDeviceId)
                 return E_OUTOFMEMORY;
 
-            memcpy(*ppDeviceName, m_device.c_str(), size);
+            memcpy(*ppDeviceId, m_deviceId.c_str(), size);
         }
 
         if (puBufferMS)

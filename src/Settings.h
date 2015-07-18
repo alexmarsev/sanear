@@ -21,8 +21,8 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP_(UINT32) GetSerial() override;
 
-        STDMETHODIMP SetOuputDevice(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS) override;
-        STDMETHODIMP GetOuputDevice(LPWSTR* ppDeviceName, BOOL* pbExclusive, UINT32* puBufferMS) override;
+        STDMETHODIMP SetOuputDevice(LPCWSTR pDeviceId, BOOL bExclusive, UINT32 uBufferMS) override;
+        STDMETHODIMP GetOuputDevice(LPWSTR* ppDeviceId, BOOL* pbExclusive, UINT32* puBufferMS) override;
 
         STDMETHODIMP_(void) SetAllowBitstreaming(BOOL bAllowBitstreaming) override;
         STDMETHODIMP_(void) GetAllowBitstreaming(BOOL* pbAllowBitstreaming) override;
@@ -37,7 +37,7 @@ namespace SaneAudioRenderer
 
         std::atomic<UINT32> m_serial = 0;
 
-        std::wstring m_device;
+        std::wstring m_deviceId;
         BOOL m_exclusive = FALSE;
         UINT32 m_buffer = OUTPUT_DEVICE_BUFFER_DEFAULT_MS;
 

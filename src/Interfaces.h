@@ -16,8 +16,8 @@ namespace SaneAudioRenderer
             OUTPUT_DEVICE_BUFFER_MAX_MS = 1000,
             OUTPUT_DEVICE_BUFFER_DEFAULT_MS = 200,
         };
-        STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceName, BOOL bExclusive, UINT32 uBufferMS) = 0;
-        STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceName, BOOL* pbExclusive, UINT32* puBufferMS) = 0;
+        STDMETHOD(SetOuputDevice)(LPCWSTR pDeviceId, BOOL bExclusive, UINT32 uBufferMS) = 0;
+        STDMETHOD(GetOuputDevice)(LPWSTR* ppDeviceId, BOOL* pbExclusive, UINT32* puBufferMS) = 0;
 
         STDMETHOD_(void, SetAllowBitstreaming)(BOOL bAllowBitstreaming) = 0;
         STDMETHOD_(void, GetAllowBitstreaming)(BOOL* pbAllowBitstreaming) = 0;
