@@ -1,4 +1,6 @@
-#include "pch.h"
+#pragma once
+
+#include "RegistryKey.h"
 
 #include "../../../src/Factory.h"
 
@@ -10,6 +12,7 @@ namespace SaneAudioRenderer
     public:
 
         OuterFilter(IUnknown* pUnknown, const GUID& guid);
+        ~OuterFilter();
         OuterFilter(const OuterFilter&) = delete;
         OuterFilter& operator=(const OuterFilter&) = delete;
 
@@ -23,6 +26,7 @@ namespace SaneAudioRenderer
 
         const GUID& m_guid;
         bool m_initialized = false;
+        RegistryKey m_registryKey;
         ISettingsPtr m_settings;
         IUnknownPtr m_innerFilter;
     };

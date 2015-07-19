@@ -132,10 +132,12 @@
     <ClCompile Include="sanear-dll\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="sanear-dll\RegistryKey.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sanear-dll\OuterFilter.h" />
     <ClInclude Include="sanear-dll\pch.h" />
+    <ClInclude Include="sanear-dll\RegistryKey.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sanear-dll\sanear.def" />
