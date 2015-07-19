@@ -11,7 +11,7 @@ namespace SaneAudioRenderer
         RegistryKey(const RegistryKey&) = delete;
         RegistryKey& operator=(const RegistryKey&) = delete;
 
-        HRESULT Open(const wchar_t* key);
+        HRESULT Open(HKEY key, const wchar_t* subkey);
         void Close();
 
         bool SetString(const wchar_t* name, const wchar_t* value);

@@ -63,7 +63,7 @@ namespace SaneAudioRenderer
 
         ReturnIfFailed(Factory::CreateSettings(&m_settings))
         ReturnIfFailed(Factory::CreateFilterAggregated(GetOwner(), m_guid, m_settings, &m_innerFilter));
-        ReturnIfFailed(m_registryKey.Open(L"Software\\sanear"));
+        ReturnIfFailed(m_registryKey.Open(HKEY_CURRENT_USER, L"Software\\sanear"));
 
         m_initialized = true;
 

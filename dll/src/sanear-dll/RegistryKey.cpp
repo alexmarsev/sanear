@@ -3,11 +3,11 @@
 
 namespace SaneAudioRenderer
 {
-    HRESULT RegistryKey::Open(const wchar_t* section)
+    HRESULT RegistryKey::Open(HKEY key, const wchar_t* subkey)
     {
         Close();
 
-        return RegCreateKeyEx(HKEY_CURRENT_USER, section, 0, nullptr, REG_OPTION_NON_VOLATILE,
+        return RegCreateKeyEx(key, subkey, 0, nullptr, REG_OPTION_NON_VOLATILE,
                               KEY_READ | KEY_WRITE, nullptr, &m_hKey, nullptr);
     }
 
