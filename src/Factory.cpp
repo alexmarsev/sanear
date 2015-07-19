@@ -19,7 +19,7 @@ namespace SaneAudioRenderer
 
         *ppOut = nullptr;
 
-        auto pSettings =  new(std::nothrow) Settings(pOwner);
+        auto pSettings = new(std::nothrow) Settings(pOwner);
 
         if (!pSettings)
             return E_OUTOFMEMORY;
