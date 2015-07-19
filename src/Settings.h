@@ -13,7 +13,7 @@ namespace SaneAudioRenderer
 
         DECLARE_IUNKNOWN
 
-        Settings();
+        Settings(IUnknown* pUnknown);
         Settings(const Settings&) = delete;
         Settings& operator=(const Settings&) = delete;
 

@@ -8,25 +8,40 @@ namespace SaneAudioRenderer
 {
     HRESULT Factory::CreateSettings(ISettings** ppOut)
     {
+        IUnknownPtr unknown;
+        ReturnIfFailed(CreateSettingsAggregated(nullptr, &unknown));
+        return unknown->QueryInterface(IID_PPV_ARGS(ppOut));
+    }
+
+    HRESULT Factory::CreateSettingsAggregated(IUnknown* pOwner, IUnknown** ppOut)
+    {
         CheckPointer(ppOut, E_POINTER);
 
         *ppOut = nullptr;
 
-        auto pSettings = new(std::nothrow) Settings();
+        auto pSettings =  new(std::nothrow) Settings(pOwner);
 
         if (!pSettings)
             return E_OUTOFMEMORY;
 
-        pSettings->AddRef();
+        pSettings->NonDelegatingAddRef();
 
-        HRESULT result = pSettings->QueryInterface(IID_PPV_ARGS(ppOut));
+        HRESULT result = pSettings->NonDelegatingQueryInterface(IID_PPV_ARGS(ppOut));
 
-        pSettings->Release();
+        pSettings->NonDelegatingRelease();
 
         return result;
     }
 
     HRESULT Factory::CreateFilter(ISettings* pSettings, IBaseFilter** ppOut)
+    {
+        IUnknownPtr unknown;
+        ReturnIfFailed(CreateFilterAggregated(nullptr, GetFilterGuid(), pSettings, &unknown));
+        return unknown->QueryInterface(IID_PPV_ARGS(ppOut));
+    }
+
+    HRESULT Factory::CreateFilterAggregated(IUnknown* pOwner, const GUID& guid,
+                                            ISettings* pSettings, IUnknown** ppOut)
     {
         CheckPointer(ppOut, E_POINTER);
         CheckPointer(pSettings, E_POINTER);
@@ -35,17 +50,17 @@ namespace SaneAudioRenderer
 
         HRESULT result = S_OK;
 
-        auto pFilter = new(std::nothrow) MyFilter(pSettings, result);
+        auto pFilter = new(std::nothrow) MyFilter(pOwner, pSettings, guid, result);
 
         if (!pFilter)
             return E_OUTOFMEMORY;
 
-        pFilter->AddRef();
+        pFilter->NonDelegatingAddRef();
 
         if (SUCCEEDED(result))
-            result = pFilter->QueryInterface(IID_PPV_ARGS(ppOut));
+            result = pFilter->NonDelegatingQueryInterface(IID_PPV_ARGS(ppOut));
 
-        pFilter->Release();
+        pFilter->NonDelegatingRelease();
 
         return result;
     }

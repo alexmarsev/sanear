@@ -3,8 +3,8 @@
 
 namespace SaneAudioRenderer
 {
-    Settings::Settings()
-        : CUnknown("Audio Renderer Settings", nullptr)
+    Settings::Settings(IUnknown* pUnknown)
+        : CUnknown("Audio Renderer Settings", pUnknown)
     {
     }
 

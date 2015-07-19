@@ -16,7 +16,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyFilter(ISettings* pSettings, HRESULT& result);
+        MyFilter(IUnknown* pUnknown, ISettings* pSettings, REFIID guid, HRESULT& result);
         MyFilter(const MyFilter&) = delete;
         MyFilter& operator=(const MyFilter&) = delete;
 

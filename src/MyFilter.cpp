@@ -9,8 +9,8 @@
 
 namespace SaneAudioRenderer
 {
-    MyFilter::MyFilter(ISettings* pSettings, HRESULT& result)
-        : CBaseFilter(L"SaneAudioRenderer::MyFilter", nullptr, this, Factory::GetFilterGuid())
+    MyFilter::MyFilter(IUnknown* pUnknown, ISettings* pSettings, REFIID guid, HRESULT& result)
+        : CBaseFilter(L"SaneAudioRenderer::MyFilter", pUnknown, this, guid)
         , m_bufferFilled(TRUE/*manual reset*/)
     {
         assert(result == S_OK);
