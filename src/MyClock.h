@@ -2,22 +2,8 @@
 
 namespace SaneAudioRenderer
 {
-    // This is an internal interface, and can be changed anytime.
-    struct __declspec(uuid("B6E42D80-6CAB-4D9B-91F4-F6FE5C4C64E6"))
-    IMyClock : IUnknown
-    {
-        STDMETHOD_(void, SlaveClockToAudio)(IAudioClock* pAudioClock, int64_t audioStart) = 0;
-        STDMETHOD_(void, UnslaveClockFromAudio)() = 0;
-        STDMETHOD_(void, OffsetSlavedClock)(REFERENCE_TIME offsetTime) = 0;
-        STDMETHOD(GetAudioClockTime)(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) = 0;
-        STDMETHOD(GetAudioClockStartTime)(REFERENCE_TIME* pStartTime) = 0;
-
-    };
-    _COM_SMARTPTR_TYPEDEF(IMyClock, __uuidof(IMyClock));
-
     class MyClock final
         : public CBaseReferenceClock
-        , public IMyClock
     {
     public:
 
@@ -31,11 +17,11 @@ namespace SaneAudioRenderer
 
         REFERENCE_TIME GetPrivateTime() override;
 
-        STDMETHODIMP_(void) SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart) override;
-        STDMETHODIMP_(void) UnslaveClockFromAudio() override;
-        STDMETHODIMP_(void) OffsetSlavedClock(REFERENCE_TIME offsetTime) override;
-        STDMETHODIMP GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime) override;
-        STDMETHODIMP GetAudioClockStartTime(REFERENCE_TIME* pStartTime) override;
+        void SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart);
+        void UnslaveClockFromAudio();
+        void OffsetSlavedClock(REFERENCE_TIME offsetTime);
+        HRESULT GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime);
+        HRESULT GetAudioClockStartTime(REFERENCE_TIME* pStartTime);
 
     private:
 

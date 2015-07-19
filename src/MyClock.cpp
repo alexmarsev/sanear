@@ -11,9 +11,6 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyClock::NonDelegatingQueryInterface(REFIID riid, void** ppv)
     {
-        if (riid == __uuidof(IMyClock))
-            return GetInterface(static_cast<IMyClock*>(this), ppv);
-
         return CBaseReferenceClock::NonDelegatingQueryInterface(riid, ppv);
     }
 
@@ -31,7 +28,7 @@ namespace SaneAudioRenderer
         return m_counterOffset + llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
     }
 
-    STDMETHODIMP_(void) MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
+    void MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
     {
         CAutoLock lock(this);
 
@@ -40,21 +37,21 @@ namespace SaneAudioRenderer
         m_audioOffset = 0;
     }
 
-    STDMETHODIMP_(void) MyClock::UnslaveClockFromAudio()
+    void MyClock::UnslaveClockFromAudio()
     {
         CAutoLock lock(this);
 
         m_audioClock = nullptr;
     }
 
-    STDMETHODIMP_(void) MyClock::OffsetSlavedClock(REFERENCE_TIME offsetTime)
+    void MyClock::OffsetSlavedClock(REFERENCE_TIME offsetTime)
     {
         CAutoLock lock(this);
 
         m_audioOffset += offsetTime;
     }
 
-    STDMETHODIMP MyClock::GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime)
+    HRESULT MyClock::GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime)
     {
         CheckPointer(pAudioTime, E_POINTER);
 
@@ -82,7 +79,7 @@ namespace SaneAudioRenderer
         return E_FAIL;
     }
 
-    STDMETHODIMP MyClock::GetAudioClockStartTime(REFERENCE_TIME* pStartTime)
+    HRESULT MyClock::GetAudioClockStartTime(REFERENCE_TIME* pStartTime)
     {
         CheckPointer(pStartTime, E_POINTER);
 
