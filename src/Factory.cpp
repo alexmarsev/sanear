@@ -48,14 +48,14 @@ namespace SaneAudioRenderer
 
         *ppOut = nullptr;
 
-        HRESULT result = S_OK;
-
-        auto pFilter = new(std::nothrow) MyFilter(pOwner, pSettings, guid, result);
+        auto pFilter = new(std::nothrow) MyFilter(pOwner, guid);
 
         if (!pFilter)
             return E_OUTOFMEMORY;
 
         pFilter->NonDelegatingAddRef();
+
+        HRESULT result = pFilter->Init(pSettings);
 
         if (SUCCEEDED(result))
             result = pFilter->NonDelegatingQueryInterface(IID_PPV_ARGS(ppOut));

@@ -7,7 +7,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyTestClock(HRESULT& result);
+        MyTestClock(IUnknown* pUnknown, HRESULT& result);
         MyTestClock(const MyTestClock&) = delete;
         MyTestClock& operator=(const MyTestClock&) = delete;
 

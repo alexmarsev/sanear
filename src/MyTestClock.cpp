@@ -3,8 +3,8 @@
 
 namespace SaneAudioRenderer
 {
-    MyTestClock::MyTestClock(HRESULT& result)
-        : CBaseReferenceClock(L"SaneAudioRenderer::MyTestClock", nullptr, &result)
+    MyTestClock::MyTestClock(IUnknown* pUnknown, HRESULT& result)
+        : CBaseReferenceClock(L"SaneAudioRenderer::MyTestClock", pUnknown, &result)
         , m_performanceFrequency(GetPerformanceFrequency())
     {
     }

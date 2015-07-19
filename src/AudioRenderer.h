@@ -12,17 +12,18 @@
 #include "DspRealtimeRate.h"
 #include "DspVolume.h"
 #include "Interfaces.h"
-#include "MyClock.h"
 #include "SampleCorrection.h"
 
 namespace SaneAudioRenderer
 {
+    class MyClock;
+
     class AudioRenderer final
         : public CCritSec
     {
     public:
 
-        AudioRenderer(ISettings* pSettings, IMyClock* pClock, HRESULT& result);
+        AudioRenderer(ISettings* pSettings, MyClock& clock, HRESULT& result);
         AudioRenderer(const AudioRenderer&) = delete;
         AudioRenderer& operator=(const AudioRenderer&) = delete;
         ~AudioRenderer();
@@ -93,8 +94,7 @@ namespace SaneAudioRenderer
         SampleCorrection m_sampleCorrection;
         REFERENCE_TIME m_clockCorrection = 0;
 
-        IMyClockPtr m_myClock;
-        IReferenceClockPtr m_myGraphClock;
+        MyClock& m_myClock;
         IReferenceClockPtr m_graphClock;
         bool m_externalClock = false;
 

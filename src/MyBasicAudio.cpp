@@ -5,8 +5,8 @@
 
 namespace SaneAudioRenderer
 {
-    MyBasicAudio::MyBasicAudio(AudioRenderer& renderer)
-        : CBasicAudio(L"SaneAudioRenderer::MyBasicAudio", nullptr)
+    MyBasicAudio::MyBasicAudio(IUnknown* pUnknown, AudioRenderer& renderer)
+        : CBasicAudio(L"SaneAudioRenderer::MyBasicAudio", pUnknown)
         , m_renderer(renderer)
     {
     }

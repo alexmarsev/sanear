@@ -4,53 +4,64 @@
 #include "AudioRenderer.h"
 #include "Factory.h"
 #include "MyBasicAudio.h"
+#include "MyClock.h"
+#include "MyTestClock.h"
 #include "MyPin.h"
 #include "MyPropertyPage.h"
 
 namespace SaneAudioRenderer
 {
-    MyFilter::MyFilter(IUnknown* pUnknown, ISettings* pSettings, REFIID guid, HRESULT& result)
+    MyFilter::MyFilter(IUnknown* pUnknown, REFIID guid)
         : CBaseFilter(L"SaneAudioRenderer::MyFilter", pUnknown, this, guid)
         , m_bufferFilled(TRUE/*manual reset*/)
     {
-        assert(result == S_OK);
+    }
+
+    HRESULT MyFilter::Init(ISettings* pSettings)
+    {
+        HRESULT result = S_OK;
 
         try
         {
             if (SUCCEEDED(result))
-                m_clock = new MyClock(result);
+                m_clock = std::make_unique<MyClock>(GetOwner(), result);
 
             //if (SUCCEEDED(result))
-            //    m_testClock = new MyTestClock(result);
+            //    m_testClock = new MyTestClock(nullptr, result);
 
             if (SUCCEEDED(result))
-                m_renderer = std::make_unique<AudioRenderer>(pSettings, m_clock, result);
+                m_renderer = std::make_unique<AudioRenderer>(pSettings, *m_clock, result);
 
             if (SUCCEEDED(result))
-                m_basicAudio = new MyBasicAudio(*m_renderer);
+                m_basicAudio = std::make_unique<MyBasicAudio>(GetOwner(), *m_renderer);
 
             if (SUCCEEDED(result))
                 m_pin = std::make_unique<MyPin>(*m_renderer, this, result);
 
             if (SUCCEEDED(result))
-                result = CreatePosPassThru(nullptr, FALSE, m_pin.get(), &m_seeking);
+                result = CreatePosPassThru(GetOwner(), FALSE, m_pin.get(), &m_seeking);
         }
         catch (std::bad_alloc&)
         {
             result = E_OUTOFMEMORY;
         }
+
+        return result;
     }
 
     STDMETHODIMP MyFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
     {
+        if (riid == IID_IUnknown)
+            return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+
         //if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
         //    return m_testClock->QueryInterface(riid, ppv);
 
         if (riid == IID_IReferenceClock || riid == IID_IReferenceClockTimerControl)
-            return m_clock->QueryInterface(riid, ppv);
+            return m_clock->NonDelegatingQueryInterface(riid, ppv);
 
         if (riid == IID_IBasicAudio)
-            return m_basicAudio->QueryInterface(riid, ppv);
+            return m_basicAudio->NonDelegatingQueryInterface(riid, ppv);
 
         if (riid == IID_IMediaSeeking)
             return m_seeking->QueryInterface(riid, ppv);

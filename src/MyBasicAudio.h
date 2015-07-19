@@ -9,7 +9,7 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyBasicAudio(AudioRenderer& renderer);
+        MyBasicAudio(IUnknown* pUnknown, AudioRenderer& renderer);
         MyBasicAudio(const MyBasicAudio&) = delete;
         MyBasicAudio& operator=(const MyBasicAudio&) = delete;
 

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Interfaces.h"
-#include "MyClock.h"
-#include "MyTestClock.h"
 
 namespace SaneAudioRenderer
 {
+    class MyClock;
     class AudioRenderer;
+    class MyBasicAudio;
     class MyPin;
 
     class MyFilter final
@@ -16,9 +16,11 @@ namespace SaneAudioRenderer
     {
     public:
 
-        MyFilter(IUnknown* pUnknown, ISettings* pSettings, REFIID guid, HRESULT& result);
+        MyFilter(IUnknown* pUnknown, REFIID guid);
         MyFilter(const MyFilter&) = delete;
         MyFilter& operator=(const MyFilter&) = delete;
+
+        HRESULT Init(ISettings* pSettings);
 
         DECLARE_IUNKNOWN
 
@@ -43,11 +45,11 @@ namespace SaneAudioRenderer
         template <FILTER_STATE NewState, typename PinFunction>
         STDMETHODIMP ChangeState(PinFunction pinFunction);
 
-        IMyClockPtr m_clock;
+        std::unique_ptr<MyClock> m_clock;
         //IReferenceClockPtr m_testClock;
         CAMEvent m_bufferFilled;
         std::unique_ptr<AudioRenderer> m_renderer;
-        IBasicAudioPtr m_basicAudio;
+        std::unique_ptr<MyBasicAudio> m_basicAudio;
         std::unique_ptr<MyPin> m_pin;
         IUnknownPtr m_seeking;
     };

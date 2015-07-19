@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "AudioRenderer.h"
 
+#include "MyClock.h"
+
 namespace SaneAudioRenderer
 {
-    AudioRenderer::AudioRenderer(ISettings* pSettings, IMyClock* pClock, HRESULT& result)
+    AudioRenderer::AudioRenderer(ISettings* pSettings, MyClock& clock, HRESULT& result)
         : m_deviceManager(result)
-        , m_myClock(pClock)
+        , m_myClock(clock)
         , m_flush(TRUE/*manual reset*/)
         , m_dspVolume(*this)
         , m_dspBalance(*this)
@@ -16,10 +18,8 @@ namespace SaneAudioRenderer
 
         try
         {
-            if (!m_settings || !m_myClock)
+            if (!m_settings)
                 throw E_UNEXPECTED;
-
-            ThrowIfFailed(m_myClock->QueryInterface(IID_PPV_ARGS(&m_myGraphClock)));
 
             if (static_cast<HANDLE>(m_flush) == NULL)
             {
@@ -45,7 +45,7 @@ namespace SaneAudioRenderer
 
         m_graphClock = pClock;
 
-        if (m_graphClock && m_graphClock != m_myGraphClock)
+        if (m_graphClock && !IsEqualObject(m_graphClock, m_myClock.GetOwner()))
         {
             if (!m_externalClock)
                 ClearDevice();
@@ -222,7 +222,7 @@ namespace SaneAudioRenderer
         {
             if (m_state == State_Running)
             {
-                m_myClock->UnslaveClockFromAudio();
+                m_myClock.UnslaveClockFromAudio();
                 m_device->Stop();
                 m_device->Reset();
                 m_sampleCorrection.NewDeviceBuffer();
@@ -318,7 +318,7 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            m_myClock->UnslaveClockFromAudio();
+            m_myClock.UnslaveClockFromAudio();
             m_device->Stop();
         }
     }
@@ -403,7 +403,7 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            m_myClock->SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
+            m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
             m_clockCorrection = 0;
             m_device->Start();
         }
@@ -438,7 +438,7 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            m_myClock->UnslaveClockFromAudio();
+            m_myClock.UnslaveClockFromAudio();
             m_device->Stop();
             m_device = nullptr;
         }
@@ -455,7 +455,7 @@ namespace SaneAudioRenderer
             REFERENCE_TIME offset = m_sampleCorrection.GetTimeDivergence() - m_clockCorrection;
             if (std::abs(offset) > 100)
             {
-                m_myClock->OffsetSlavedClock(offset);
+                m_myClock.OffsetSlavedClock(offset);
                 m_clockCorrection += offset;
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
@@ -500,8 +500,8 @@ namespace SaneAudioRenderer
             assert(m_externalClock);
 
             REFERENCE_TIME graphTime, myTime, myStartTime;
-            if (SUCCEEDED(m_myClock->GetAudioClockStartTime(&myStartTime)) &&
-                SUCCEEDED(m_myClock->GetAudioClockTime(&myTime, nullptr)) &&
+            if (SUCCEEDED(m_myClock.GetAudioClockStartTime(&myStartTime)) &&
+                SUCCEEDED(m_myClock.GetAudioClockTime(&myTime, nullptr)) &&
                 SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
                 myTime > myStartTime)
             {
@@ -530,7 +530,7 @@ namespace SaneAudioRenderer
                         REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond,
                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        m_myClock->OffsetSlavedClock(-paddedTime);
+                        m_myClock.OffsetSlavedClock(-paddedTime);
                         padTime -= paddedTime;
                         assert(padTime >= 0);
 
@@ -540,7 +540,7 @@ namespace SaneAudioRenderer
 
                     // Correct the rest with variable rate.
                     m_dspRealtimeRate.Adjust(padTime);
-                    m_myClock->OffsetSlavedClock(-padTime);
+                    m_myClock.OffsetSlavedClock(-padTime);
                 }
                 else if (remaining > latency)
                 {
@@ -561,7 +561,7 @@ namespace SaneAudioRenderer
                         REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond,
                                                               m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        m_myClock->OffsetSlavedClock(droppedTime);
+                        m_myClock.OffsetSlavedClock(droppedTime);
                         dropTime -= droppedTime;
                         assert(dropTime >= 0);
 
@@ -571,7 +571,7 @@ namespace SaneAudioRenderer
 
                     // Correct the rest with variable rate.
                     m_dspRealtimeRate.Adjust(-dropTime);
-                    m_myClock->OffsetSlavedClock(dropTime);
+                    m_myClock.OffsetSlavedClock(dropTime);
                 }
             }
         }

@@ -45,7 +45,6 @@ namespace SaneAudioRenderer
     _COM_SMARTPTR_TYPEDEF(IPropertyStore, __uuidof(IPropertyStore));
 
     _COM_SMARTPTR_TYPEDEF(IMediaSample, __uuidof(IMediaSample));
-    _COM_SMARTPTR_TYPEDEF(IBasicAudio, __uuidof(IBasicAudio));
     _COM_SMARTPTR_TYPEDEF(IPropertyPageSite, __uuidof(IPropertyPageSite));
     _COM_SMARTPTR_TYPEDEF(IReferenceClock, __uuidof(IReferenceClock));
     _COM_SMARTPTR_TYPEDEF(IAMGraphStreams, __uuidof(IAMGraphStreams));
