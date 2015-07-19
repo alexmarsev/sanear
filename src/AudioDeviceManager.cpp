@@ -199,8 +199,8 @@ namespace SaneAudioRenderer
                         BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 24, mixRate, mixChannels, mixMask),
                         BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 16, 16, mixRate, mixChannels, mixMask),
 
-                        WAVEFORMATEXTENSIBLE{ BuildWaveFormat(WAVE_FORMAT_PCM, 16, inputRate, mixChannels) },
-                        WAVEFORMATEXTENSIBLE{ BuildWaveFormat(WAVE_FORMAT_PCM, 16, mixRate, mixChannels) }
+                        WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, inputRate, mixChannels)},
+                        WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, mixRate, mixChannels)}
                     );
 
                     for (const auto& f : priorities)
