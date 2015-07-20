@@ -2,6 +2,8 @@
 
 #include "../../../src/pch.h"
 
+#include <VersionHelpers.h>
+
 namespace SaneAudioRenderer
 {
     template <class T, DWORD(T::*ThreadProc)() = &T::ThreadProc>
