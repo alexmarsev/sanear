@@ -26,12 +26,12 @@
     <When Condition="'$(SanearPropsPath)' != ''" />
     <When Condition="'$(SolutionDir)' != '' And Exists('$(SolutionDir)sanear.props')">
       <PropertyGroup>
-         <SanearPropsPath>$(SolutionDir)sanear.props</SanearPropsPath>
+        <SanearPropsPath>$(SolutionDir)sanear.props</SanearPropsPath>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
-         <SanearPropsPath>..\sanear.props</SanearPropsPath>
+        <SanearPropsPath>..\sanear.props</SanearPropsPath>
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -76,7 +76,6 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
