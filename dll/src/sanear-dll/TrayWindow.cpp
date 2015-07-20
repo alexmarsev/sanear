@@ -86,6 +86,70 @@ namespace SaneAudioRenderer
         return S_OK;
     }
 
+    DWORD TrayWindow::ThreadProc()
+    {
+        CoInitializeHelper coInitializeHelper(COINIT_MULTITHREADED);
+
+        if (!coInitializeHelper.Initialized())
+        {
+            m_windowCreated.set_value(false);
+            return 0;
+        }
+
+        WNDCLASSEX windowClass = {
+            sizeof(windowClass), 0, StaticWindowProc<TrayWindow>, 0, 0, g_hInst,
+            NULL, NULL, NULL, nullptr, WindowClass, NULL
+        };
+
+        RegisterClassEx(&windowClass);
+
+        m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, g_hInst, this);
+
+        if (m_hWindow == NULL)
+        {
+            m_windowCreated.set_value(false);
+            return 0;
+        }
+
+        m_windowCreated.set_value(true);
+
+        m_taskbarCreatedMessage = RegisterWindowMessage(L"TaskbarCreated");
+
+        AddIcon();
+
+        RunMessageLoop();
+
+        return 0;
+    }
+
+    LRESULT TrayWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+        if (msg == m_taskbarCreatedMessage)
+        {
+            AddIcon();
+            return 0;
+        }
+
+        switch (msg)
+        {
+            case WM_COMMAND:
+                OnCommand(wParam, lParam);
+                return 0;
+
+            case WM_TRAYNOTIFY:
+                OnTrayNotify(wParam, lParam);
+                return 0;
+
+            case WM_DESTROY:
+                RemoveMenu();
+                RemoveIcon();
+                PostQuitMessage(0);
+                return 0;
+        }
+
+        return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+
     void TrayWindow::Destroy()
     {
         if (m_hThread != NULL)
@@ -320,69 +384,5 @@ namespace SaneAudioRenderer
                     m_settings->SetOuputDevice(selection.c_str(), exclusive, buffer);
             }
         }
-    }
-
-    DWORD TrayWindow::ThreadProc()
-    {
-        CoInitializeHelper coInitializeHelper(COINIT_MULTITHREADED);
-
-        if (!coInitializeHelper.Initialized())
-        {
-            m_windowCreated.set_value(false);
-            return 0;
-        }
-
-        WNDCLASSEX windowClass = {
-            sizeof(windowClass), 0, StaticWindowProc<TrayWindow>, 0, 0, g_hInst,
-            NULL, NULL, NULL, nullptr, WindowClass, NULL
-        };
-
-        RegisterClassEx(&windowClass);
-
-        m_hWindow = CreateWindowEx(0, WindowClass, WindowTitle, 0, 0, 0, 0, 0, 0, NULL, g_hInst, this);
-
-        if (m_hWindow == NULL)
-        {
-            m_windowCreated.set_value(false);
-            return 0;
-        }
-
-        m_windowCreated.set_value(true);
-
-        m_taskbarCreatedMessage = RegisterWindowMessage(L"TaskbarCreated");
-
-        AddIcon();
-
-        RunMessageLoop();
-
-        return 0;
-    }
-
-    LRESULT TrayWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-    {
-        if (msg == m_taskbarCreatedMessage)
-        {
-            AddIcon();
-            return 0;
-        }
-
-        switch (msg)
-        {
-            case WM_COMMAND:
-                OnCommand(wParam, lParam);
-                return 0;
-
-            case WM_TRAYNOTIFY:
-                OnTrayNotify(wParam, lParam);
-                return 0;
-
-            case WM_DESTROY:
-                RemoveMenu();
-                RemoveIcon();
-                PostQuitMessage(0);
-                return 0;
-        }
-
-        return DefWindowProc(hWnd, msg, wParam, lParam);
     }
 }

@@ -5,29 +5,26 @@ namespace SaneAudioRenderer
 {
     namespace
     {
-        std::array<DWORD, 18> Channels()
-        {
-            return make_array<DWORD>(
-                SPEAKER_FRONT_LEFT,
-                SPEAKER_FRONT_RIGHT,
-                SPEAKER_FRONT_CENTER,
-                SPEAKER_LOW_FREQUENCY,
-                SPEAKER_BACK_LEFT,
-                SPEAKER_BACK_RIGHT,
-                SPEAKER_FRONT_LEFT_OF_CENTER,
-                SPEAKER_FRONT_RIGHT_OF_CENTER,
-                SPEAKER_BACK_CENTER,
-                SPEAKER_SIDE_LEFT,
-                SPEAKER_SIDE_RIGHT,
-                SPEAKER_TOP_CENTER,
-                SPEAKER_TOP_FRONT_LEFT,
-                SPEAKER_TOP_FRONT_CENTER,
-                SPEAKER_TOP_FRONT_RIGHT,
-                SPEAKER_TOP_BACK_LEFT,
-                SPEAKER_TOP_BACK_CENTER,
-                SPEAKER_TOP_BACK_RIGHT
-            );
-        }
+        const std::array<DWORD, 18> Channels = {
+            SPEAKER_FRONT_LEFT,
+            SPEAKER_FRONT_RIGHT,
+            SPEAKER_FRONT_CENTER,
+            SPEAKER_LOW_FREQUENCY,
+            SPEAKER_BACK_LEFT,
+            SPEAKER_BACK_RIGHT,
+            SPEAKER_FRONT_LEFT_OF_CENTER,
+            SPEAKER_FRONT_RIGHT_OF_CENTER,
+            SPEAKER_BACK_CENTER,
+            SPEAKER_SIDE_LEFT,
+            SPEAKER_SIDE_RIGHT,
+            SPEAKER_TOP_CENTER,
+            SPEAKER_TOP_FRONT_LEFT,
+            SPEAKER_TOP_FRONT_CENTER,
+            SPEAKER_TOP_FRONT_RIGHT,
+            SPEAKER_TOP_BACK_LEFT,
+            SPEAKER_TOP_BACK_CENTER,
+            SPEAKER_TOP_BACK_RIGHT
+        };
 
         size_t IndexForChannel(DWORD channel)
         {
@@ -60,7 +57,7 @@ namespace SaneAudioRenderer
         {
             std::array<float, 18 * 18> matrix{};
 
-            for (auto& c : Channels())
+            for (auto& c : Channels)
             {
                 if (inputMask & c)
                     matrix[18 * IndexForChannel(c) + IndexForChannel(c)] = 1.0f;
@@ -174,12 +171,12 @@ namespace SaneAudioRenderer
             std::array<float, 18 * 18> matrix{};
 
             size_t y = 0;
-            for (auto& yc : Channels())
+            for (auto& yc : Channels)
             {
                 if (outputMask & yc)
                 {
                     size_t x = 0;
-                    for (auto& xc : Channels())
+                    for (auto& xc : Channels)
                     {
                         if (inputMask & xc)
                         {

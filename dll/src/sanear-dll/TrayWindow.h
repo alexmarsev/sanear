@@ -15,6 +15,9 @@ namespace SaneAudioRenderer
 
         HRESULT Init(ISettings* pSettings);
 
+        DWORD ThreadProc();
+        LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
     private:
 
         void Destroy();
@@ -27,9 +30,6 @@ namespace SaneAudioRenderer
 
         void OnTrayNotify(WPARAM wParam, LPARAM lParam);
         void OnCommand(WPARAM wParam, LPARAM lParam);
-
-        DWORD ThreadProc();
-        LRESULT WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
         UINT m_taskbarCreatedMessage = 0;
         NOTIFYICONDATA m_nid;
