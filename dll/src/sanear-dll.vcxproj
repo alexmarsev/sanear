@@ -133,11 +133,13 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="sanear-dll\RegistryKey.cpp" />
+    <ClCompile Include="sanear-dll\TrayWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sanear-dll\OuterFilter.h" />
     <ClInclude Include="sanear-dll\pch.h" />
     <ClInclude Include="sanear-dll\RegistryKey.h" />
+    <ClInclude Include="sanear-dll\TrayWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sanear-dll\sanear.def" />

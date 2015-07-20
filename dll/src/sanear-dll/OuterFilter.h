@@ -1,8 +1,9 @@
 #pragma once
 
 #include "RegistryKey.h"
+#include "TrayWindow.h"
 
-#include "../../../src/Factory.h"
+#include "../../../src/Interfaces.h"
 
 namespace SaneAudioRenderer
 {
@@ -29,5 +30,6 @@ namespace SaneAudioRenderer
         RegistryKey m_registryKey;
         ISettingsPtr m_settings;
         IUnknownPtr m_innerFilter;
+        TrayWindow m_trayWindow;
     };
 }
