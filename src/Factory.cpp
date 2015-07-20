@@ -46,6 +46,9 @@ namespace SaneAudioRenderer
         CheckPointer(ppOut, E_POINTER);
         CheckPointer(pSettings, E_POINTER);
 
+        if (!IsWindowsVistaOrGreater())
+            return E_FAIL;
+
         *ppOut = nullptr;
 
         auto pFilter = new(std::nothrow) MyFilter(pOwner, guid);

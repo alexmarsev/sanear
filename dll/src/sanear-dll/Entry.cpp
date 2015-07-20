@@ -98,6 +98,9 @@ CUnknown* WINAPI CreateFilterInstance(IUnknown* pUnknown, HRESULT* pResult)
 
 STDAPI DllRegisterServer()
 {
+    if (!IsWindowsVistaOrGreater())
+        return E_FAIL;
+
     return DllRegisterServer(true);
 }
 

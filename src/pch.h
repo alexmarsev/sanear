@@ -14,6 +14,7 @@
 #include <mmdeviceapi.h>
 #include <process.h>
 
+#include <VersionHelpers.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 
 #include <algorithm>
