@@ -254,7 +254,7 @@ namespace SaneAudioRenderer
         }
 
         check.wID = Item::EnableCrossfeed;
-        check.dwTypeData = L"Enable stereo crossfeed";
+        check.dwTypeData = L"Enable stereo crossfeed (for headphones)";
         check.fState = (crossfeedEnabled ? MFS_CHECKED : MFS_UNCHECKED);
         InsertMenuItem(hMenu, 0, TRUE, &check);
 
