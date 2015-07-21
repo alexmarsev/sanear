@@ -62,6 +62,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>sanear-dll/sanear.def</ModuleDefinitionFile>
+      <AdditionalDependencies>Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
@@ -139,10 +140,17 @@
     <ClInclude Include="sanear-dll\OuterFilter.h" />
     <ClInclude Include="sanear-dll\pch.h" />
     <ClInclude Include="sanear-dll\RegistryKey.h" />
+    <ClInclude Include="sanear-dll\resource.h" />
     <ClInclude Include="sanear-dll\TrayWindow.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="sanear-dll\sanear.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sanear-dll\sanear.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sanear-dll\sanear.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

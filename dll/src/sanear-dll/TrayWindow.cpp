@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "TrayWindow.h"
 
+#include "resource.h"
+
 namespace SaneAudioRenderer
 {
     namespace
@@ -166,7 +168,7 @@ namespace SaneAudioRenderer
         m_nid.hWnd = m_hWindow;
         m_nid.uVersion = NOTIFYICON_VERSION_4;
         m_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_SHOWTIP;
-        m_nid.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+        LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_ICON1), LIM_SMALL, &m_nid.hIcon);
         m_nid.uCallbackMessage = WM_TRAYNOTIFY;
         lstrcpy(m_nid.szTip, L"sanear");
 

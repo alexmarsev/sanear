@@ -2,6 +2,7 @@
 
 #include "../../../src/pch.h"
 
+#include <Commctrl.h>
 #include <VersionHelpers.h>
 
 namespace SaneAudioRenderer
