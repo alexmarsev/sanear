@@ -56,9 +56,19 @@ namespace
             IFilterMapper2Ptr filterMapper;
             ReturnIfFailed(CoCreateInstance(CLSID_FilterMapper2, nullptr,
                                             CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&filterMapper)));
+            {
+                HRESULT result;
 
-            filterMapper->UnregisterFilter(nullptr, nullptr, *setupFilter.clsID);
-            filterMapper->UnregisterFilter(&CLSID_AudioRendererCategory, nullptr, *setupFilter.clsID);
+                result = filterMapper->UnregisterFilter(nullptr, nullptr, *setupFilter.clsID);
+
+                if (FAILED(result))
+                    ReturnIfNotEquals(result, 0x80070002);
+
+                result = filterMapper->UnregisterFilter(&CLSID_AudioRendererCategory, nullptr, *setupFilter.clsID);
+
+                if (FAILED(result))
+                    ReturnIfNotEquals(result, 0x80070002);
+            }
 
             if (reg)
             {
