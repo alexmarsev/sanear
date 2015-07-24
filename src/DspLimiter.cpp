@@ -90,7 +90,7 @@ namespace SaneAudioRenderer
                 NewTreshold(peak);
             }
 
-            m_holdWindow = m_rate * m_channels * 10; // 10 seconds
+            m_holdWindow = (int64_t)m_rate * m_channels * 10; // 10 seconds
         }
 
         // Apply limiter
