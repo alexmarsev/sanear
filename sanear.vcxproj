@@ -23,19 +23,19 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Choose>
-    <When Condition="'$(SanearPropsPath)' != ''" />
-    <When Condition="'$(SolutionDir)' != '' And Exists('$(SolutionDir)sanear.props')">
+    <When Condition="'$(SanearPlatformPropsPath)' != ''" />
+    <When Condition="'$(SolutionDir)' != '' And Exists('$(SolutionDir)sanear-platform.props')">
       <PropertyGroup>
-        <SanearPropsPath>$(SolutionDir)sanear.props</SanearPropsPath>
+        <SanearPlatformPropsPath>$(SolutionDir)sanear-platform.props</SanearPlatformPropsPath>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
-        <SanearPropsPath>..\sanear.props</SanearPropsPath>
+        <SanearPlatformPropsPath>..\sanear-platform.props</SanearPlatformPropsPath>
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  <Import Project="$(SanearPropsPath)" />
+  <Import Project="$(SanearPlatformPropsPath)" />
   <PropertyGroup Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -53,6 +53,20 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <Choose>
+    <When Condition="'$(SanearPropsPath)' != ''" />
+    <When Condition="'$(SolutionDir)' != '' And Exists('$(SolutionDir)sanear.props')">
+      <PropertyGroup>
+        <SanearPropsPath>$(SolutionDir)sanear.props</SanearPropsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <SanearPropsPath>..\sanear.props</SanearPropsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(SanearPropsPath)" />
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
