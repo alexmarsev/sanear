@@ -153,9 +153,6 @@
     <ClCompile Include="src\Settings.cpp" />
     <ClCompile Include="src\SampleCorrection.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\sanear.props" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -145,6 +145,10 @@
     <ClInclude Include="sanear-dll\TrayWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\base.props" />
+    <None Include="..\platform.props" />
+    <None Include="..\sanear-platform.props" />
+    <None Include="..\sanear.props" />
     <None Include="sanear-dll\sanear.def" />
   </ItemGroup>
   <ItemGroup>
