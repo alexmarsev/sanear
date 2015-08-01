@@ -25,8 +25,8 @@ namespace SaneAudioRenderer
     private:
 
         bool m_active = false;
-        std::array<float, 18> m_error1;
-        std::array<float, 18> m_error2;
-        std::minstd_rand m_rand;
+        std::array<float, 18> m_previous;
+        std::array<std::minstd_rand, 18> m_generator;
+        std::array<std::uniform_real_distribution<float>, 18> m_distributor;
     };
 }

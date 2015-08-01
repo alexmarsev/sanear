@@ -6,8 +6,13 @@ namespace SaneAudioRenderer
     void DspDither::Initialize(DspFormat outputFormat)
     {
         m_active = (outputFormat == DspFormat::Pcm16);
-        m_error1 = {};
-        m_error2 = {};
+
+        for (size_t i = 0; i < 18; i++)
+        {
+            m_previous[i] = 0.0f;
+            m_generator[i].seed((uint32_t)(GetPerformanceCounter() + i));
+            m_distributor[i] = std::uniform_real_distribution<float>(0, 1.0f);
+        }
     }
 
     bool DspDither::Active()
@@ -32,12 +37,14 @@ namespace SaneAudioRenderer
         {
             for (size_t channel = 0; channel < channels; channel++)
             {
-                // Rectangular dither with simple second-order noise shaping.
-                float inputSample = inputData[frame * channels + channel] * (INT16_MAX - 4);
-                float noise = (float)m_rand() / m_rand.max() + 0.5f * m_error1[channel] - m_error2[channel];
-                float outputSample = round(inputSample + noise);
-                m_error2[channel] = m_error1[channel];
-                m_error1[channel] = outputSample - inputSample;
+                float inputSample = inputData[frame * channels + channel] * (INT16_MAX - 1);
+
+                // High-pass TPDF, 2 LSB amplitude.
+                float r = m_distributor[channel](m_generator[channel]);
+                float noise = r - m_previous[channel];
+                m_previous[channel] = r;
+
+                float outputSample = std::round(inputSample + noise);
                 assert(outputSample >= INT16_MIN && outputSample <= INT16_MAX);
                 outputData[frame * channels + channel] = (int16_t)outputSample;
             }
