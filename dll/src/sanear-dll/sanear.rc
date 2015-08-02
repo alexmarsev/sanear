@@ -78,7 +78,7 @@ BEGIN
         BEGIN
             VALUE "FileDescription", "Robust DirectShow audio renderer"
             VALUE "FileVersion", "0.1.0.0"
-            VALUE "ProductName", "sanear"
+            VALUE "ProductName", "Sanear Audio Renderer"
             VALUE "ProductVersion", "0.1.0.0"
         END
     END
