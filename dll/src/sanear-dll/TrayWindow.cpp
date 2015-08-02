@@ -170,7 +170,7 @@ namespace SaneAudioRenderer
         m_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_SHOWTIP;
         LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_ICON1), LIM_SMALL, &m_nid.hIcon);
         m_nid.uCallbackMessage = WM_TRAYNOTIFY;
-        lstrcpy(m_nid.szTip, L"sanear");
+        lstrcpy(m_nid.szTip, L"Sanear Audio Renderer");
 
         Shell_NotifyIcon(NIM_ADD, &m_nid);
         Shell_NotifyIcon(NIM_SETVERSION, &m_nid);

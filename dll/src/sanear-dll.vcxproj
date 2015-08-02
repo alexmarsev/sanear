@@ -22,7 +22,7 @@
     <ProjectGuid>{E02FD084-ED17-46C7-B5A6-F0BBB7966BBB}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="..\base.props" />
+  <Import Project="..\platform.props" />
   <PropertyGroup Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -40,6 +40,7 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <Import Project="..\base.props" />
   <PropertyGroup>
     <OutDir>$(BinDir)</OutDir>
     <TargetExt>.ax</TargetExt>
@@ -144,6 +145,10 @@
     <ClInclude Include="sanear-dll\TrayWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\base.props" />
+    <None Include="..\platform.props" />
+    <None Include="..\sanear-platform.props" />
+    <None Include="..\sanear.props" />
     <None Include="sanear-dll\sanear.def" />
   </ItemGroup>
   <ItemGroup>

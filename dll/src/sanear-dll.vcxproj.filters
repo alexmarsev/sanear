@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="sanear-dll\Entry.cpp" />
+    <ClCompile Include="sanear-dll\pch.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="sanear-dll\OuterFilter.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="sanear-dll\RegistryKey.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+    <ClCompile Include="sanear-dll\TrayWindow.cpp">
+      <Filter>Filter</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sanear-dll\resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="sanear-dll\pch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="sanear-dll\OuterFilter.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="sanear-dll\RegistryKey.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+    <ClInclude Include="sanear-dll\TrayWindow.h">
+      <Filter>Filter</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{c31c72e9-891d-4f49-8964-60ac80d2db08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{57b1ee7d-f0ca-499f-b0fd-57fe76f3012d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Filter">
+      <UniqueIdentifier>{8215adc6-5660-48db-98c3-2627cc6f8b77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Props">
+      <UniqueIdentifier>{575443ed-3498-4000-aec4-9cfc20cb4a2f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\base.props">
+      <Filter>Props</Filter>
+    </None>
+    <None Include="..\platform.props">
+      <Filter>Props</Filter>
+    </None>
+    <None Include="..\sanear.props">
+      <Filter>Props</Filter>
+    </None>
+    <None Include="..\sanear-platform.props">
+      <Filter>Props</Filter>
+    </None>
+    <None Include="sanear-dll\sanear.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sanear-dll\sanear.ico">
+      <Filter>Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sanear-dll\sanear.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

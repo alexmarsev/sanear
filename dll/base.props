@@ -5,9 +5,6 @@
     <BinDir>$(SolutionDir)bin\$(Configuration)$(PlatformArchitecture)\</BinDir>
     <IntDir>$(SolutionDir)bin\$(Configuration)$(PlatformArchitecture)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Label="Configuration">
-    <PlatformToolset>v140</PlatformToolset>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>

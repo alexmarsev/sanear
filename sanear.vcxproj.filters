@@ -165,9 +165,4 @@
       <UniqueIdentifier>{a3828985-2937-4570-8aa1-110935fd6227}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\sanear.props">
-      <Filter>Common</Filter>
-    </None>
-  </ItemGroup>
 </Project>

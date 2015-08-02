@@ -7,7 +7,7 @@ namespace
     // {DF557071-C9FD-433A-9627-81E0D3640ED9}
     const GUID filterGuid = {0xdf557071, 0xc9fd, 0x433a, {0x96, 0x27, 0x81, 0xe0, 0xd3, 0x64, 0xe, 0xd9}};
 
-    const WCHAR filterName[] = L"sanear";
+    const WCHAR filterName[] = L"Sanear Audio Renderer";
 
     const AMOVIESETUP_MEDIATYPE pinTypes[] = {
         {&MEDIATYPE_Audio, &CLSID_NULL},
