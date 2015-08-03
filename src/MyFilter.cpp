@@ -129,10 +129,18 @@ namespace SaneAudioRenderer
     {
         CheckPointer(pPages, E_POINTER);
 
-        pPages->cElems = 1;
-        pPages->pElems = (GUID*)CoTaskMemAlloc(sizeof(GUID));
-        CheckPointer(pPages->pElems, E_OUTOFMEMORY);
-        *pPages->pElems = __uuidof(MyPropertyPage);
+        if (m_pin->IsConnected())
+        {
+            pPages->cElems = 1;
+            pPages->pElems = (GUID*)CoTaskMemAlloc(sizeof(GUID));
+            CheckPointer(pPages->pElems, E_OUTOFMEMORY);
+            pPages->pElems[0] = __uuidof(MyPropertyPage);
+        }
+        else
+        {
+            pPages->cElems = 0;
+            pPages->pElems = nullptr;
+        }
 
         return S_OK;
     }
