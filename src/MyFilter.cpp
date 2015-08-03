@@ -69,9 +69,6 @@ namespace SaneAudioRenderer
         if (riid == __uuidof(ISpecifyPropertyPages2))
             return GetInterface(static_cast<ISpecifyPropertyPages2*>(this), ppv);
 
-        if (riid == IID_ISpecifyPropertyPages)
-            return GetInterface(static_cast<ISpecifyPropertyPages*>(this), ppv);
-
         return CBaseFilter::NonDelegatingQueryInterface(riid, ppv);
     }
 
