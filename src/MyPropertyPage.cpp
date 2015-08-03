@@ -127,6 +127,27 @@ namespace SaneAudioRenderer
                                    std::vector<std::wstring> processors, bool externalClock, bool live)
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
     {
+        short curValueFieldWidth = 100;
+        HFONT hFont = CreateFont(8, 0, 0, 0, FW_NORMAL, FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                                    CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"MS Shell Dlg");
+        HDC hDC = GetDC(nullptr);
+        HGDIOBJ hOldFont = SelectObject(hDC, hFont);
+
+        SIZE fontSize = { 215, 8 };
+        GetTextExtentPoint32(hDC, L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 52, &fontSize);
+
+        auto GetStrWidth = [&](const std::wstring& str, bool updateCur) {
+            SIZE strSize;
+            if (!GetTextExtentPoint32(hDC, str.c_str(), static_cast<int>(str.length()), &strSize))
+                return curValueFieldWidth;
+
+            // 215 is reference width with System Font.
+            const auto strWidth = static_cast<short>(MulDiv(strSize.cx, 215, fontSize.cx));
+            if (updateCur)
+                curValueFieldWidth = std::max(curValueFieldWidth, strWidth);
+            return strWidth;
+        };
+
         std::wstring adapterField = (pDevice && pDevice->GetAdapterName()) ? *pDevice->GetAdapterName() : L"-";
 
         std::wstring endpointField = (pDevice && pDevice->GetEndpointName()) ? *pDevice->GetEndpointName() : L"-";
@@ -170,27 +191,31 @@ namespace SaneAudioRenderer
             processorsField = L"-";
 
         WriteDialogHeader(m_dialogData, L"MS Shell Dlg", 8);
-        WriteDialogItem(m_dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 210, 150, L"Renderer Status");
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20,  60,  8, L"Adapter:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20,  130, 8, adapterField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20,  GetStrWidth(adapterField, true),      8, adapterField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 32,  60,  8, L"Endpoint:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 32,  130, 8, endpointField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 32,  GetStrWidth(endpointField, true),     8, endpointField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 44,  60,  8, L"Exclusive:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44,  130, 8, exclusiveField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44,  GetStrWidth(exclusiveField, true),    8, exclusiveField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 56,  60,  8, L"Buffer:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  130, 8, bufferField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  GetStrWidth(bufferField, true),       8, bufferField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68,  60,  8, L"Bitstreaming:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  130, 8, bitstreamingField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  GetStrWidth(bitstreamingField, true), 8, bitstreamingField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"Slaving:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  130, 8, slavingField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  GetStrWidth(slavingField, true),      8, slavingField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92,  60,  8, L"Format:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  130, 8, formatField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  GetStrWidth(formatField, true),       8, formatField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 104, 60,  8, L"Channels:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 104, 130, 8, channelsField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 104, GetStrWidth(channelsField, true),     8, channelsField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 116, 60,  8, L"Rate:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 116, 130, 8, rateField);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 116, GetStrWidth(rateField, true),         8, rateField);
         WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 128, 60,  8, L"Processors:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 128, 130, 24, processorsField);
+        const short processorsHeight = 8 * ((GetStrWidth(processorsField, false) / curValueFieldWidth) + 1);
+        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 128, curValueFieldWidth, processorsHeight, processorsField);
+        WriteDialogItem(m_dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 60 + curValueFieldWidth + 20, 130 + processorsHeight, L"Renderer Status");
+
+        DeleteObject(SelectObject(hDC, hOldFont));
+        ReleaseDC(nullptr, hDC);
     }
 
     STDMETHODIMP MyPropertyPage::NonDelegatingQueryInterface(REFIID riid, void** ppv)
