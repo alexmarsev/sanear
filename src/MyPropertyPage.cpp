@@ -27,7 +27,7 @@ namespace SaneAudioRenderer
             Write(out, (void*)str.c_str(), sizeof(wchar_t) * (str.length() + 1));
         }
 
-        void WriteDialogHeader(std::vector<char>& out, const std::wstring& font, WORD fontSize)
+        void WriteDialogHeader(std::vector<char>& out, const std::wstring& font, WORD fontSize, short w, short h)
         {
             assert(out.empty());
 
@@ -36,8 +36,8 @@ namespace SaneAudioRenderer
             Write<WORD>(out, 0);
             Write<short>(out, 0);
             Write<short>(out, 0);
-            Write<short>(out, 0);
-            Write<short>(out, 0);
+            Write<short>(out, w);
+            Write<short>(out, h);
             Write<WORD>(out, 0);
             Write<WORD>(out, 0);
             WriteString(out, L"");
@@ -123,9 +123,8 @@ namespace SaneAudioRenderer
         }
     }
 
-    MyPropertyPage::MyPropertyPage(SharedWaveFormat inputFormat, const AudioDevice* pDevice,
-                                   std::vector<std::wstring> processors, bool externalClock, bool live)
-        : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
+    std::vector<char> MyPropertyPage::CreateDialogData(SharedWaveFormat inputFormat, const AudioDevice* pDevice,
+                                                       std::vector<std::wstring> processors, bool externalClock, bool live)
     {
         std::wstring adapterField = (pDevice && pDevice->GetAdapterName()) ? *pDevice->GetAdapterName() : L"-";
 
@@ -169,28 +168,38 @@ namespace SaneAudioRenderer
         if (processorsField.empty())
             processorsField = L"-";
 
-        WriteDialogHeader(m_dialogData, L"MS Shell Dlg", 8);
-        WriteDialogItem(m_dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 210, 150, L"Renderer Status");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20,  60,  8, L"Adapter:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20,  130, 8, adapterField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 32,  60,  8, L"Endpoint:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 32,  130, 8, endpointField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 44,  60,  8, L"Exclusive:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44,  130, 8, exclusiveField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 56,  60,  8, L"Buffer:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  130, 8, bufferField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68,  60,  8, L"Bitstreaming:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  130, 8, bitstreamingField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"Slaving:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  130, 8, slavingField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92,  60,  8, L"Format:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  130, 8, formatField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 104, 60,  8, L"Channels:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 104, 130, 8, channelsField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 116, 60,  8, L"Rate:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 116, 130, 8, rateField);
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 128, 60,  8, L"Processors:");
-        WriteDialogItem(m_dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 128, 130, 24, processorsField);
+        std::vector<char> dialogData;
+
+        WriteDialogHeader(dialogData, L"MS Shell Dlg", 8, 220, 160);
+        WriteDialogItem(dialogData, BS_GROUPBOX, 0x0080FFFF, 5, 5, 210, 150, L"Renderer Status");
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 20,  60,  8, L"Adapter:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 20,  130, 8, adapterField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 32,  60,  8, L"Endpoint:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 32,  130, 8, endpointField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 44,  60,  8, L"Exclusive:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 44,  130, 8, exclusiveField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 56,  60,  8, L"Buffer:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 56,  130, 8, bufferField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 68,  60,  8, L"Bitstreaming:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 68,  130, 8, bitstreamingField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 80,  60,  8, L"Slaving:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 80,  130, 8, slavingField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 92,  60,  8, L"Format:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 92,  130, 8, formatField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 104, 60,  8, L"Channels:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 104, 130, 8, channelsField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 116, 60,  8, L"Rate:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 116, 130, 8, rateField);
+        WriteDialogItem(dialogData, BS_TEXT | SS_RIGHT, 0x0082FFFF, 10, 128, 60,  8, L"Processors:");
+        WriteDialogItem(dialogData, BS_TEXT | SS_LEFT,  0x0082FFFF, 73, 128, 130, 24, processorsField);
+
+        return dialogData;
+    }
+
+    MyPropertyPage::MyPropertyPage()
+        : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
+    {
+        m_dialogData = CreateDialogData(nullptr, nullptr, {}, false, false);
     }
 
     STDMETHODIMP MyPropertyPage::NonDelegatingQueryInterface(REFIID riid, void** ppv)
@@ -215,9 +224,17 @@ namespace SaneAudioRenderer
     {
         CheckPointer(pRect, E_POINTER);
 
+        if (m_hWindow)
+            return E_UNEXPECTED;
+
         m_hWindow = CreateDialogIndirect(GetModuleHandle(nullptr), (LPCDLGTEMPLATE)m_dialogData.data(), hParent, nullptr);
 
-        return (m_hWindow != NULL) ? S_OK : E_UNEXPECTED;
+        if (!m_hWindow)
+            return E_OUTOFMEMORY;
+
+        Move(pRect);
+
+        return S_OK;
     }
 
     STDMETHODIMP MyPropertyPage::Deactivate()
@@ -242,6 +259,36 @@ namespace SaneAudioRenderer
         pPageInfo->pszDocString = nullptr;
         pPageInfo->pszHelpFile = nullptr;
         pPageInfo->dwHelpContext = 0;
+
+        // This is how GetDialogSize() from DirectShow Base Classes does it.
+        HWND hWindow = CreateDialogIndirect(GetModuleHandle(nullptr), (LPCDLGTEMPLATE)m_dialogData.data(), GetDesktopWindow(), nullptr);
+        if (hWindow)
+        {
+            RECT rect;
+            if (GetWindowRect(hWindow, &rect))
+            {
+                pPageInfo->size.cx = rect.right - rect.left;
+                pPageInfo->size.cy = rect.bottom - rect.top;
+            }
+
+            DestroyWindow(hWindow);
+        }
+
+        return S_OK;
+    }
+
+    STDMETHODIMP MyPropertyPage::SetObjects(ULONG nObjects, IUnknown** ppUnk)
+    {
+        if (nObjects != 1)
+            return E_UNEXPECTED;
+
+        CheckPointer(ppUnk, E_POINTER);
+        CheckPointer(ppUnk[0], E_POINTER);
+
+        IStatusPageDataPtr data;
+        ReturnIfFailed(ppUnk[0]->QueryInterface(IID_PPV_ARGS(&data)));
+
+        ReturnIfFailed(data->GetPageData(m_dialogData));
 
         return S_OK;
     }
