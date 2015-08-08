@@ -1,6 +1,10 @@
 Sanear, a robust DirectShow audio renderer
 ==========================================
 
+v0.3 - 2015/08/08
+* Bugfixing release
+* Improves status page compatibility with certain players
+
 v0.2 - 2015/08/02
 * Bugfixing release
 * Fixes audible noise in dithering
