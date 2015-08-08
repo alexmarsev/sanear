@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B8375339-1932-4CC0-AE5B-257672078E41}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\platform.props" />
+  <PropertyGroup Label="Configuration">
+    <CharacterSet>Unicode</CharacterSet>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <Import Project="..\base.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>streams.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>baseclasses</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="baseclasses\amextra.h" />
+    <ClInclude Include="baseclasses\amfilter.h" />
+    <ClInclude Include="baseclasses\cache.h" />
+    <ClInclude Include="baseclasses\checkbmi.h" />
+    <ClInclude Include="baseclasses\combase.h" />
+    <ClInclude Include="baseclasses\cprop.h" />
+    <ClInclude Include="baseclasses\ctlutil.h" />
+    <ClInclude Include="baseclasses\ddmm.h" />
+    <ClInclude Include="baseclasses\dllsetup.h" />
+    <ClInclude Include="baseclasses\dxmperf.h" />
+    <ClInclude Include="baseclasses\fourcc.h" />
+    <ClInclude Include="baseclasses\measure.h" />
+    <ClInclude Include="baseclasses\msgthrd.h" />
+    <ClInclude Include="baseclasses\mtype.h" />
+    <ClInclude Include="baseclasses\outputq.h" />
+    <ClInclude Include="baseclasses\perflog.h" />
+    <ClInclude Include="baseclasses\perfstruct.h" />
+    <ClInclude Include="baseclasses\pstream.h" />
+    <ClInclude Include="baseclasses\pullpin.h" />
+    <ClInclude Include="baseclasses\refclock.h" />
+    <ClInclude Include="baseclasses\reftime.h" />
+    <ClInclude Include="baseclasses\renbase.h" />
+    <ClInclude Include="baseclasses\schedule.h" />
+    <ClInclude Include="baseclasses\seekpt.h" />
+    <ClInclude Include="baseclasses\source.h" />
+    <ClInclude Include="baseclasses\streams.h" />
+    <ClInclude Include="baseclasses\strmctl.h" />
+    <ClInclude Include="baseclasses\sysclock.h" />
+    <ClInclude Include="baseclasses\transfrm.h" />
+    <ClInclude Include="baseclasses\transip.h" />
+    <ClInclude Include="baseclasses\videoctl.h" />
+    <ClInclude Include="baseclasses\vtrans.h" />
+    <ClInclude Include="baseclasses\winctrl.h" />
+    <ClInclude Include="baseclasses\winutil.h" />
+    <ClInclude Include="baseclasses\wxdebug.h" />
+    <ClInclude Include="baseclasses\wxlist.h" />
+    <ClInclude Include="baseclasses\wxutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="baseclasses\amextra.cpp" />
+    <ClCompile Include="baseclasses\amfilter.cpp" />
+    <ClCompile Include="baseclasses\amvideo.cpp" />
+    <ClCompile Include="baseclasses\arithutil.cpp" />
+    <ClCompile Include="baseclasses\combase.cpp" />
+    <ClCompile Include="baseclasses\cprop.cpp" />
+    <ClCompile Include="baseclasses\ctlutil.cpp" />
+    <ClCompile Include="baseclasses\ddmm.cpp" />
+    <ClCompile Include="baseclasses\dllentry.cpp" />
+    <ClCompile Include="baseclasses\dllsetup.cpp" />
+    <ClCompile Include="baseclasses\mtype.cpp" />
+    <ClCompile Include="baseclasses\outputq.cpp" />
+    <ClCompile Include="baseclasses\perflog.cpp" />
+    <ClCompile Include="baseclasses\pstream.cpp" />
+    <ClCompile Include="baseclasses\pullpin.cpp" />
+    <ClCompile Include="baseclasses\refclock.cpp" />
+    <ClCompile Include="baseclasses\renbase.cpp" />
+    <ClCompile Include="baseclasses\schedule.cpp" />
+    <ClCompile Include="baseclasses\seekpt.cpp" />
+    <ClCompile Include="baseclasses\source.cpp" />
+    <ClCompile Include="baseclasses\streams.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="baseclasses\strmctl.cpp" />
+    <ClCompile Include="baseclasses\sysclock.cpp" />
+    <ClCompile Include="baseclasses\transfrm.cpp" />
+    <ClCompile Include="baseclasses\transip.cpp" />
+    <ClCompile Include="baseclasses\videoctl.cpp" />
+    <ClCompile Include="baseclasses\vtrans.cpp" />
+    <ClCompile Include="baseclasses\winctrl.cpp" />
+    <ClCompile Include="baseclasses\winutil.cpp" />
+    <ClCompile Include="baseclasses\wxdebug.cpp" />
+    <ClCompile Include="baseclasses\wxlist.cpp" />
+    <ClCompile Include="baseclasses\wxutil.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

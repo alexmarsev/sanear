@@ -1,0 +1,9 @@
+[submodule "libbs2b"]
+	path = dll/src/libbs2b
+	url = git://github.com/alexmarsev/libbs2b.git
+[submodule "soxr"]
+	path = dll/src/soxr
+	url = git://github.com/alexmarsev/soxr.git
+[submodule "soundtouch"]
+	path = dll/src/soundtouch
+	url = git://github.com/alexmarsev/soundtouch.git
