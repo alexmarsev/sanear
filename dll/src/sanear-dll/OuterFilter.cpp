@@ -56,6 +56,9 @@ namespace SaneAudioRenderer
         if (riid == IID_IUnknown)
             return CUnknown::NonDelegatingQueryInterface(riid, ppv);
 
+        if (riid == IID_ISpecifyPropertyPages)
+            return m_innerFilter->QueryInterface(__uuidof(ISpecifyPropertyPages2), ppv);
+
         return m_innerFilter->QueryInterface(riid, ppv);
     }
 

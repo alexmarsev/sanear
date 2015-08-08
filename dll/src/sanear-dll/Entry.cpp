@@ -1,13 +1,16 @@
 #include "pch.h"
 
 #include "OuterFilter.h"
+#include "../../../src/MyPropertyPage.h"
 
 namespace
 {
     // {DF557071-C9FD-433A-9627-81E0D3640ED9}
     const GUID filterGuid = {0xdf557071, 0xc9fd, 0x433a, {0x96, 0x27, 0x81, 0xe0, 0xd3, 0x64, 0xe, 0xd9}};
-
     const WCHAR filterName[] = L"Sanear Audio Renderer";
+
+    const GUID statusPageGuid = __uuidof(SaneAudioRenderer::MyPropertyPage);
+    const WCHAR statusPageName[] = L"Sanear Status Page";
 
     const AMOVIESETUP_MEDIATYPE pinTypes[] = {
         {&MEDIATYPE_Audio, &CLSID_NULL},
@@ -23,9 +26,11 @@ namespace
 }
 
 CUnknown* WINAPI CreateFilterInstance(LPUNKNOWN, HRESULT*);
+CUnknown* WINAPI CreateStatusPageInstance(LPUNKNOWN, HRESULT*);
 
 CFactoryTemplate g_Templates[] = {
     {filterName, &filterGuid, CreateFilterInstance},
+    {statusPageName, &statusPageGuid, CreateStatusPageInstance},
 };
 
 int g_cTemplates = _countof(g_Templates);
@@ -99,6 +104,18 @@ CUnknown* WINAPI CreateFilterInstance(IUnknown* pUnknown, HRESULT* pResult)
     CheckPointer(pResult, nullptr);
 
     auto pFilter = new(std::nothrow) SaneAudioRenderer::OuterFilter(pUnknown, filterGuid);
+
+    if (!pFilter)
+        *pResult = E_OUTOFMEMORY;
+
+    return pFilter;
+}
+
+CUnknown* WINAPI CreateStatusPageInstance(IUnknown* pUnknown, HRESULT* pResult)
+{
+    CheckPointer(pResult, nullptr);
+
+    auto pFilter = new(std::nothrow) SaneAudioRenderer::MyPropertyPage();
 
     if (!pFilter)
         *pResult = E_OUTOFMEMORY;

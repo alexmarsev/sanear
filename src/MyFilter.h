@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interfaces.h"
+#include "MyPropertyPage.h"
 
 namespace SaneAudioRenderer
 {
@@ -13,6 +14,7 @@ namespace SaneAudioRenderer
         : public CCritSec
         , public CBaseFilter
         , public ISpecifyPropertyPages2
+        , public IStatusPageData
     {
     public:
 
@@ -39,6 +41,8 @@ namespace SaneAudioRenderer
 
         STDMETHODIMP GetPages(CAUUID* pPages) override;
         STDMETHODIMP CreatePage(const GUID& guid, IPropertyPage** ppPage) override;
+
+        STDMETHODIMP GetPageData(std::vector<char>& data) override;
 
     private:
 

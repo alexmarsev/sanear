@@ -7,7 +7,6 @@
 #include "MyClock.h"
 #include "MyTestClock.h"
 #include "MyPin.h"
-#include "MyPropertyPage.h"
 
 namespace SaneAudioRenderer
 {
@@ -69,8 +68,8 @@ namespace SaneAudioRenderer
         if (riid == __uuidof(ISpecifyPropertyPages2))
             return GetInterface(static_cast<ISpecifyPropertyPages2*>(this), ppv);
 
-        if (riid == IID_ISpecifyPropertyPages)
-            return GetInterface(static_cast<ISpecifyPropertyPages*>(this), ppv);
+        if (riid == __uuidof(IStatusPageData))
+            return GetInterface(static_cast<IStatusPageData*>(this), ppv);
 
         return CBaseFilter::NonDelegatingQueryInterface(riid, ppv);
     }
@@ -129,10 +128,18 @@ namespace SaneAudioRenderer
     {
         CheckPointer(pPages, E_POINTER);
 
-        pPages->cElems = 1;
-        pPages->pElems = (GUID*)CoTaskMemAlloc(sizeof(GUID));
-        CheckPointer(pPages->pElems, E_OUTOFMEMORY);
-        *pPages->pElems = __uuidof(MyPropertyPage);
+        if (m_pin->IsConnected())
+        {
+            pPages->cElems = 1;
+            pPages->pElems = (GUID*)CoTaskMemAlloc(sizeof(GUID));
+            CheckPointer(pPages->pElems, E_OUTOFMEMORY);
+            pPages->pElems[0] = __uuidof(MyPropertyPage);
+        }
+        else
+        {
+            pPages->cElems = 0;
+            pPages->pElems = nullptr;
+        }
 
         return S_OK;
     }
@@ -146,22 +153,9 @@ namespace SaneAudioRenderer
 
         MyPropertyPage* pPage;
 
-        try
-        {
-            CAutoLock rendererLock(m_renderer.get());
+        pPage = new(std::nothrow) MyPropertyPage();
 
-            auto inputFormat = m_renderer->GetInputFormat();
-            auto audioDevice = m_renderer->GetAudioDevice();
-
-            pPage = new MyPropertyPage(inputFormat, audioDevice,
-                                       m_renderer->GetActiveProcessors(),
-                                       m_renderer->OnExternalClock(),
-                                       m_renderer->IsLive());
-        }
-        catch (std::bad_alloc&)
-        {
-            return E_OUTOFMEMORY;
-        }
+        CheckPointer(pPage, E_OUTOFMEMORY);
 
         pPage->AddRef();
 
@@ -170,6 +164,28 @@ namespace SaneAudioRenderer
         pPage->Release();
 
         return result;
+    }
+
+    STDMETHODIMP MyFilter::GetPageData(std::vector<char>& data)
+    {
+        try
+        {
+            CAutoLock rendererLock(m_renderer.get());
+
+            auto inputFormat = m_renderer->GetInputFormat();
+            auto audioDevice = m_renderer->GetAudioDevice();
+
+            data = MyPropertyPage::CreateDialogData(inputFormat, audioDevice,
+                                                    m_renderer->GetActiveProcessors(),
+                                                    m_renderer->OnExternalClock(),
+                                                    m_renderer->IsLive());
+        }
+        catch (std::bad_alloc&)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+        return S_OK;
     }
 
     template <FILTER_STATE NewState, typename PinFunction>

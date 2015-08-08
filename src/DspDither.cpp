@@ -5,7 +5,8 @@ namespace SaneAudioRenderer
 {
     void DspDither::Initialize(DspFormat outputFormat)
     {
-        m_active = (outputFormat == DspFormat::Pcm16);
+        m_enabled = (outputFormat == DspFormat::Pcm16);
+        m_active = m_enabled;
 
         for (size_t i = 0; i < 18; i++)
         {
@@ -17,13 +18,18 @@ namespace SaneAudioRenderer
 
     bool DspDither::Active()
     {
-        return m_active;
+        return m_enabled && m_active;
     }
 
     void DspDither::Process(DspChunk& chunk)
     {
-        if (!m_active || chunk.IsEmpty() || chunk.GetFormatSize() <= DspFormatSize(DspFormat::Pcm16))
+        if (!m_enabled || chunk.IsEmpty() || chunk.GetFormatSize() <= DspFormatSize(DspFormat::Pcm16))
+        {
+            m_active = false;
             return;
+        }
+
+        m_active = true;
 
         DspChunk::ToFloat(chunk);
 

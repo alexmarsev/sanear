@@ -24,6 +24,7 @@ namespace SaneAudioRenderer
 
     private:
 
+        bool m_enabled = false;
         bool m_active = false;
         std::array<float, 18> m_previous;
         std::array<std::minstd_rand, 18> m_generator;
