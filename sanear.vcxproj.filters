@@ -68,6 +68,9 @@
     <ClCompile Include="src\DspRealtimeRate.cpp">
       <Filter>Processors</Filter>
     </ClCompile>
+    <ClCompile Include="src\MMNotificationClient.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="src\DspRealtimeRate.h">
       <Filter>Processors</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MMNotificationClient.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

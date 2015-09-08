@@ -3,6 +3,7 @@
 
 #include "MyFilter.h"
 #include "Settings.h"
+#include "MMNotificationClient.h"
 
 namespace SaneAudioRenderer
 {
@@ -29,6 +30,37 @@ namespace SaneAudioRenderer
         HRESULT result = pSettings->NonDelegatingQueryInterface(IID_PPV_ARGS(ppOut));
 
         pSettings->NonDelegatingRelease();
+
+        return result;
+    }
+
+    HRESULT Factory::CreateNotificationClient(ISettings* pSettings, IMMNotificationClient** ppOut)
+    {
+        IUnknownPtr unknown;
+        ReturnIfFailed(CreateNotificationClientAggregated(pSettings, &unknown));
+        return unknown->QueryInterface(IID_PPV_ARGS(ppOut));
+    }
+
+    HRESULT Factory::CreateNotificationClientAggregated(ISettings* pSettings, IUnknown** ppOut)
+    {
+        CheckPointer(ppOut, E_POINTER);
+        CheckPointer(pSettings, E_POINTER);
+
+        *ppOut = nullptr;
+
+        auto pNotifclient = new(std::nothrow) CMMNotificationClient;
+
+        if (!pNotifclient)
+            return E_OUTOFMEMORY;
+
+        pNotifclient->AddRef();
+
+        HRESULT result = pNotifclient->Init(pSettings);
+
+        if (SUCCEEDED(result))
+            result = pNotifclient->QueryInterface(IID_PPV_ARGS(ppOut));
+
+        pNotifclient->Release();
 
         return result;
     }
