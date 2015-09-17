@@ -46,6 +46,13 @@ namespace SaneAudioRenderer
         m_settings->GetCrossfeedSettings(&uintValue1, &uintValue2);
         m_registryKey.SetUint(CrossfeedCutoffFrequency, uintValue1);
         m_registryKey.SetUint(CrossfeedLevel, uintValue2);
+
+        //Unregister Notifications
+        IMMDeviceEnumeratorPtr pDeviceEnumerator;
+        if (SUCCEEDED(pDeviceEnumerator.CreateInstance(__uuidof(MMDeviceEnumerator))))
+        {
+            pDeviceEnumerator->UnregisterEndpointNotificationCallback(m_notification);
+        }		
     }
 
     STDMETHODIMP OuterFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
@@ -70,6 +77,13 @@ namespace SaneAudioRenderer
         ReturnIfFailed(Factory::CreateFilterAggregated(GetOwner(), m_guid, m_settings, &m_innerFilter));
         ReturnIfFailed(m_registryKey.Open(HKEY_CURRENT_USER, L"Software\\sanear"));
         ReturnIfFailed(m_trayWindow.Init(m_settings));
+        ReturnIfFailed(Factory::CreateNotificationClient(m_settings, &m_notification));
+
+        //Register Notifications
+        IMMDeviceEnumeratorPtr pDeviceEnumerator;
+        ReturnIfFailed(pDeviceEnumerator.CreateInstance(__uuidof(MMDeviceEnumerator)));
+
+        pDeviceEnumerator->RegisterEndpointNotificationCallback(m_notification);
 
         m_initialized = true;
 
