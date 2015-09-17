@@ -1,5 +1,4 @@
  - design and implement "guided reclock" interface
- - detect default audio device modification in exclusive mode
  - don't recreate the device when media type changes during playback and the old one can be used
  - enable zero-padding after stream discontinuity
  - override advise portion of IReferenceClock interface

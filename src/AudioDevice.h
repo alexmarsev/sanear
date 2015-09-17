@@ -22,7 +22,6 @@ namespace SaneAudioRenderer
         bool                  exclusive;
         bool                  bitstream;
         bool                  realtime;
-        bool                  default;
     };
 
     class AudioDevice final
@@ -59,7 +58,6 @@ namespace SaneAudioRenderer
         bool IsExclusive() const { return m_backend->exclusive; }
         bool IsBitstream() const { return m_backend->bitstream; }
         bool IsRealtime()  const { return m_backend->realtime; }
-        bool IsDefault()   const { return m_backend->default; }
 
     private:
 

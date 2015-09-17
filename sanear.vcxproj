@@ -113,7 +113,6 @@
     <ClInclude Include="src\DspRealtimeRate.h" />
     <ClInclude Include="src\DspVolume.h" />
     <ClInclude Include="src\Interfaces.h" />
-    <ClInclude Include="src\MMNotificationClient.h" />
     <ClInclude Include="src\MyBasicAudio.h" />
     <ClInclude Include="src\MyPropertyPage.h" />
     <ClInclude Include="src\MyTestClock.h" />
@@ -139,7 +138,6 @@
     <ClCompile Include="src\DspTempo.cpp" />
     <ClCompile Include="src\DspRealtimeRate.cpp" />
     <ClCompile Include="src\DspVolume.cpp" />
-    <ClCompile Include="src\MMNotificationClient.cpp" />
     <ClCompile Include="src\MyBasicAudio.cpp" />
     <ClCompile Include="src\MyFilter.cpp" />
     <ClCompile Include="src\MyClock.cpp" />

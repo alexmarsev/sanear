@@ -369,29 +369,48 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
 
-        UINT32 serial = m_settings->GetSerial();
+        UINT32 newSettingsSerial = m_settings->GetSerial();
+        uint32_t newDefaultDeviceSerial = m_deviceManager.GetDefaultDeviceSerial();
 
-        if (m_device && m_deviceSettingsSerial != serial)
+        if (m_device && (m_deviceSettingsSerial != newSettingsSerial ||
+                         m_defaultDeviceSerial != newDefaultDeviceSerial))
         {
-            LPWSTR pDeviceId = nullptr;
-            BOOL exclusive;
-            UINT32 buffer;
-            if (SUCCEEDED(m_settings->GetOuputDevice(&pDeviceId, &exclusive, &buffer)))
-            {
-                std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> holder(pDeviceId);
+            bool settingsDeviceDefault;
+            std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> settingsDeviceId;
+            BOOL settingsDeviceExclusive;
+            UINT32 settingsDeviceBuffer;
 
-                if (m_device->IsExclusive() != !!exclusive ||
-                    m_device->GetBufferDuration() != buffer ||
-                    (pDeviceId && *pDeviceId && (m_device->IsDefault() || *m_device->GetId() != pDeviceId)) ||
-                    ((!pDeviceId || !*pDeviceId) && !m_device->IsDefault()))
-                {
-                    ClearDevice();
-                    assert(!m_device);
-                }
-                else
-                {
-                    m_deviceSettingsSerial = serial;
-                }
+            {
+                LPWSTR pDeviceId = nullptr;
+
+                if (FAILED(m_settings->GetOuputDevice(&pDeviceId, &settingsDeviceExclusive, &settingsDeviceBuffer)))
+                    return;
+
+                settingsDeviceDefault = (!pDeviceId || !*pDeviceId);
+                settingsDeviceId.reset(pDeviceId);
+
+                m_deviceSettingsSerial = newSettingsSerial;
+            }
+
+            std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> systemDeviceId;;
+
+            if (settingsDeviceDefault)
+            {
+                systemDeviceId = m_deviceManager.GetDefaultDeviceId();
+
+                if (!systemDeviceId)
+                    return;
+            }
+
+            m_defaultDeviceSerial = newDefaultDeviceSerial;
+
+            if ((m_device->IsExclusive() != !!settingsDeviceExclusive) ||
+                (m_device->GetBufferDuration() != settingsDeviceBuffer) ||
+                (!settingsDeviceDefault && *m_device->GetId() != settingsDeviceId.get()) ||
+                (settingsDeviceDefault && *m_device->GetId() != systemDeviceId.get()))
+            {
+                ClearDevice();
+                assert(!m_device);
             }
         }
     }
@@ -417,6 +436,7 @@ namespace SaneAudioRenderer
         assert(m_inputFormat);
 
         m_deviceSettingsSerial = m_settings->GetSerial();
+        m_defaultDeviceSerial = m_deviceManager.GetDefaultDeviceSerial();
         m_device = m_deviceManager.CreateDevice(m_inputFormat, m_live || m_externalClock, m_settings);
 
         if (m_device)

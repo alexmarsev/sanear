@@ -4,7 +4,6 @@
 #include "TrayWindow.h"
 
 #include "../../../src/Interfaces.h"
-#include "../../../src/MMNotificationClient.h"
 
 namespace SaneAudioRenderer
 {
@@ -32,6 +31,5 @@ namespace SaneAudioRenderer
         ISettingsPtr m_settings;
         IUnknownPtr m_innerFilter;
         TrayWindow m_trayWindow;
-        IMMNotificationClientPtr m_notification;
     };
 }

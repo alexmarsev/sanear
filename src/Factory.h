@@ -16,9 +16,6 @@ namespace SaneAudioRenderer
         static HRESULT CreateSettings(ISettings** ppOut);
         static HRESULT CreateSettingsAggregated(IUnknown* pOwner, IUnknown** ppOut);
 
-        static HRESULT CreateNotificationClient(__in ISettings* pSettings, __out IMMNotificationClient** ppOut);
-        static HRESULT CreateNotificationClientAggregated(__in ISettings* pSettings, __out IUnknown** ppOut);
-
         static HRESULT CreateFilter(ISettings* pSettings, IBaseFilter** ppOut);
         static HRESULT CreateFilterAggregated(IUnknown* pOwner, const GUID& guid,
                                               ISettings* pSettings, IUnknown** ppOut);

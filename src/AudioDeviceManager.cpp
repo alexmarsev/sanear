@@ -48,19 +48,15 @@ namespace SaneAudioRenderer
             return ret;
         }
 
-        void CreateAudioClient(AudioDeviceBackend& backend)
+        void CreateAudioClient(IMMDeviceEnumerator* pEnumerator, AudioDeviceBackend& backend)
         {
-            IMMDeviceEnumeratorPtr enumerator;
-            ThrowIfFailed(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
-                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&enumerator)));
+            assert(pEnumerator);
 
             IMMDevicePtr device;
 
             if (!backend.id || backend.id->empty())
             {
-                backend.default = true;
-
-                ThrowIfFailed(enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
+                ThrowIfFailed(pEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
 
                 LPWSTR pDeviceId = nullptr;
                 ThrowIfFailed(device->GetId(&pDeviceId));
@@ -69,10 +65,8 @@ namespace SaneAudioRenderer
             }
             else
             {
-                backend.default = false;
-
                 IMMDeviceCollectionPtr collection;
-                ThrowIfFailed(enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
+                ThrowIfFailed(pEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection));
 
                 UINT count = 0;
                 ThrowIfFailed(collection->GetCount(&count));
@@ -105,8 +99,9 @@ namespace SaneAudioRenderer
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&backend.audioClient));
         }
 
-        HRESULT CheckBitstreamFormat(SharedWaveFormat format, ISettings* pSettings)
+        HRESULT CheckBitstreamFormat(IMMDeviceEnumerator* pEnumerator, SharedWaveFormat format, ISettings* pSettings)
         {
+            assert(pEnumerator);
             assert(format);
             assert(pSettings);
 
@@ -122,7 +117,7 @@ namespace SaneAudioRenderer
                     device.id = std::make_shared<std::wstring>(pDeviceId);
                 }
 
-                CreateAudioClient(device);
+                CreateAudioClient(pEnumerator, device);
 
                 if (!device.audioClient)
                     return E_FAIL;
@@ -135,9 +130,11 @@ namespace SaneAudioRenderer
             }
         }
 
-        HRESULT CreateAudioDeviceBackend(SharedWaveFormat format, bool realtime, ISettings* pSettings,
+        HRESULT CreateAudioDeviceBackend(IMMDeviceEnumerator* pEnumerator,
+                                         SharedWaveFormat format, bool realtime, ISettings* pSettings,
                                          std::shared_ptr<AudioDeviceBackend>& backend)
         {
+            assert(pEnumerator);
             assert(format);
             assert(pSettings);
 
@@ -158,7 +155,7 @@ namespace SaneAudioRenderer
                     backend->bufferDuration = buffer;
                 }
 
-                CreateAudioClient(*backend);
+                CreateAudioClient(pEnumerator, *backend);
 
                 if (!backend->audioClient)
                     return E_FAIL;
@@ -249,6 +246,28 @@ namespace SaneAudioRenderer
         }
     }
 
+    AudioDeviceNotificationClient::AudioDeviceNotificationClient(std::atomic<uint32_t>& defaultDeviceSerial)
+        : CUnknown("SaneAudioRenderer::AudioDeviceNotificationClient", nullptr)
+        , m_defaultDeviceSerial(defaultDeviceSerial)
+    {
+    }
+
+    STDMETHODIMP AudioDeviceNotificationClient::NonDelegatingQueryInterface(REFIID riid, void** ppv)
+    {
+        if (riid == __uuidof(IMMNotificationClient))
+            return GetInterface(static_cast<IMMNotificationClient*>(this), ppv);
+
+        return CUnknown::NonDelegatingQueryInterface(riid, ppv);
+    }
+
+    STDMETHODIMP AudioDeviceNotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR)
+    {
+        if (flow == eRender && role == eMultimedia)
+            m_defaultDeviceSerial++;
+
+        return S_OK;
+    }
+
     AudioDeviceManager::AudioDeviceManager(HRESULT& result)
     {
         if (FAILED(result))
@@ -280,6 +299,27 @@ namespace SaneAudioRenderer
                     }
                 }
             );
+
+            {
+                m_function = [&] { return CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr,
+                                                           CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_enumerator)); };
+                m_wake.Set();
+                m_done.Wait();
+                ThrowIfFailed(m_result);
+                assert(m_enumerator);
+            }
+
+            {
+                auto pNotificationClient = new AudioDeviceNotificationClient(m_defaultDeviceSerial);
+
+                pNotificationClient->NonDelegatingAddRef();
+
+                ThrowIfFailed(pNotificationClient->NonDelegatingQueryInterface(IID_PPV_ARGS(&m_notificationClient)));
+
+                pNotificationClient->NonDelegatingRelease();
+
+                ThrowIfFailed(m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient));
+            }
         }
         catch (HRESULT ex)
         {
@@ -293,6 +333,9 @@ namespace SaneAudioRenderer
 
     AudioDeviceManager::~AudioDeviceManager()
     {
+        if (m_enumerator && m_notificationClient)
+            m_enumerator->UnregisterEndpointNotificationCallback(m_notificationClient);
+
         m_exit = true;
         m_wake.Set();
 
@@ -305,7 +348,7 @@ namespace SaneAudioRenderer
         assert(format);
         assert(pSettings);
 
-        m_function = [&] { return CheckBitstreamFormat(format, pSettings); };
+        m_function = [&] { return CheckBitstreamFormat(m_enumerator, format, pSettings); };
         m_wake.Set();
         m_done.Wait();
 
@@ -320,7 +363,7 @@ namespace SaneAudioRenderer
 
         std::shared_ptr<AudioDeviceBackend> backend;
 
-        m_function = [&] { return CreateAudioDeviceBackend(format, realtime, pSettings, backend); };
+        m_function = [&] { return CreateAudioDeviceBackend(m_enumerator, format, realtime, pSettings, backend); };
         m_wake.Set();
         m_done.Wait();
 
@@ -336,6 +379,25 @@ namespace SaneAudioRenderer
             return nullptr;
         }
         catch (std::system_error&)
+        {
+            return nullptr;
+        }
+    }
+
+    std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> AudioDeviceManager::GetDefaultDeviceId()
+    {
+        assert(m_enumerator);
+
+        try
+        {
+            IMMDevicePtr device;
+            ThrowIfFailed(m_enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
+
+            LPWSTR pDeviceId = nullptr;
+            ThrowIfFailed(device->GetId(&pDeviceId));
+            return std::unique_ptr<WCHAR, CoTaskMemFreeDeleter>(pDeviceId);
+        }
+        catch (HRESULT)
         {
             return nullptr;
         }

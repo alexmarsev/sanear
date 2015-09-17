@@ -119,6 +119,8 @@ namespace SaneAudioRenderer
         ISettingsPtr m_settings;
         UINT32 m_deviceSettingsSerial = 0;
 
+        uint32_t m_defaultDeviceSerial = 0;
+
         std::atomic<float> m_volume = 1.0f;
         std::atomic<float> m_balance = 0.0f;
         double m_rate = 1.0;
