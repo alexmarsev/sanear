@@ -12,8 +12,8 @@ namespace SaneAudioRenderer
     {
         inline int32_t UnpackPcm24(const int24_t& input)
         {
-            int32_t x = *(reinterpret_cast<const uint16_t*>(&input));
-            int32_t h = *(reinterpret_cast<const uint8_t*>(&input) + 2);
+            uint32_t x = *(reinterpret_cast<const uint16_t*>(&input));
+            uint32_t h = *(reinterpret_cast<const uint8_t*>(&input) + 2);
             x |= (h << 16);
             x <<= 8;
             return x;
