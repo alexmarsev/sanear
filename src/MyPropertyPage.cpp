@@ -198,10 +198,11 @@ namespace SaneAudioRenderer
 
         std::vector<char> dialogData;
 
-        SHORT valueWidth = 130;
+        SHORT valueWidth = 200;
 
         if (resize)
         {
+            valueWidth = 130;
             valueWidth = std::max(valueWidth, GetTextLogicalWidth(adapterField.c_str(), L"MS Shell Dlg", 8));
             valueWidth = std::max(valueWidth, GetTextLogicalWidth(endpointField.c_str(), L"MS Shell Dlg", 8));
         }
