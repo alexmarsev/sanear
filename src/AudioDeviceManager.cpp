@@ -9,30 +9,30 @@ namespace SaneAudioRenderer
     {
         WAVEFORMATEX BuildWaveFormat(WORD formatTag, uint32_t formatBits, uint32_t rate, uint32_t channelCount)
         {
-            WAVEFORMATEX ret;
+            WAVEFORMATEX format;
 
-            ret.wFormatTag      = formatTag;
-            ret.nChannels       = channelCount;
-            ret.nSamplesPerSec  = rate;
-            ret.nAvgBytesPerSec = formatBits / 8 * channelCount * rate;
-            ret.nBlockAlign     = formatBits / 8 * channelCount;
-            ret.wBitsPerSample  = formatBits;
-            ret.cbSize          = (formatTag == WAVE_FORMAT_EXTENSIBLE) ? 22 : 0;
+            format.wFormatTag      = formatTag;
+            format.nChannels       = channelCount;
+            format.nSamplesPerSec  = rate;
+            format.nAvgBytesPerSec = formatBits / 8 * channelCount * rate;
+            format.nBlockAlign     = formatBits / 8 * channelCount;
+            format.wBitsPerSample  = formatBits;
+            format.cbSize          = (formatTag == WAVE_FORMAT_EXTENSIBLE) ? 22 : 0;
 
-            return ret;
+            return format;
         }
 
         WAVEFORMATEXTENSIBLE BuildWaveFormatExt(GUID formatGuid, uint32_t formatBits, WORD formatExtProps,
                                                 uint32_t rate, uint32_t channelCount, DWORD channelMask)
         {
-            WAVEFORMATEXTENSIBLE ret;
+            WAVEFORMATEXTENSIBLE format;
 
-            ret.Format                      = BuildWaveFormat(WAVE_FORMAT_EXTENSIBLE, formatBits, rate, channelCount);
-            ret.Samples.wValidBitsPerSample = formatExtProps;
-            ret.dwChannelMask               = channelMask;
-            ret.SubFormat                   = formatGuid;
+            format.Format        = BuildWaveFormat(WAVE_FORMAT_EXTENSIBLE, formatBits, rate, channelCount);
+            format.Samples.wValidBitsPerSample = formatExtProps;
+            format.dwChannelMask = channelMask;
+            format.SubFormat     = formatGuid;
 
-            return ret;
+            return format;
         }
 
         template <typename T>
@@ -252,7 +252,8 @@ namespace SaneAudioRenderer
                     {
                         assert(DspFormatFromWaveFormat(f.Format) != DspFormat::Unknown);
 
-                        if (SUCCEEDED(backend->audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &f.Format, nullptr)))
+                        if (SUCCEEDED(backend->audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE,
+                                                                              &f.Format, nullptr)))
                         {
                             backend->dspFormat = DspFormatFromWaveFormat(f.Format);
                             backend->waveFormat = CopyWaveFormat(f.Format);
