@@ -153,20 +153,23 @@ namespace SaneAudioRenderer
 
         MyPropertyPage* pPage;
 
-        pPage = new(std::nothrow) MyPropertyPage();
+        HRESULT result;
+
+        pPage = new(std::nothrow) MyPropertyPage(result, this);
 
         CheckPointer(pPage, E_OUTOFMEMORY);
 
         pPage->AddRef();
 
-        HRESULT result = pPage->QueryInterface(IID_PPV_ARGS(ppPage));
+        if (SUCCEEDED(result))
+            result = pPage->QueryInterface(IID_PPV_ARGS(ppPage));
 
         pPage->Release();
 
         return result;
     }
 
-    STDMETHODIMP MyFilter::GetPageData(std::vector<char>& data)
+    STDMETHODIMP MyFilter::GetPageData(bool resize, std::vector<char>& data)
     {
         try
         {
@@ -175,7 +178,7 @@ namespace SaneAudioRenderer
             auto inputFormat = m_renderer->GetInputFormat();
             auto audioDevice = m_renderer->GetAudioDevice();
 
-            data = MyPropertyPage::CreateDialogData(inputFormat, audioDevice,
+            data = MyPropertyPage::CreateDialogData(resize, inputFormat, audioDevice,
                                                     m_renderer->GetActiveProcessors(),
                                                     m_renderer->OnExternalClock(),
                                                     m_renderer->IsLive());

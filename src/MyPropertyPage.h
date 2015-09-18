@@ -8,7 +8,7 @@ namespace SaneAudioRenderer
     struct __declspec(uuid("361657BC-CC1E-420A-BE7B-21C34E3D9F76"))
     IStatusPageData : IUnknown
     {
-        STDMETHOD(GetPageData)(std::vector<char>& data) = 0;
+        STDMETHOD(GetPageData)(bool resize, std::vector<char>& data) = 0;
     };
     _COM_SMARTPTR_TYPEDEF(IStatusPageData, __uuidof(IStatusPageData));
 
@@ -19,10 +19,11 @@ namespace SaneAudioRenderer
     {
     public:
 
-        static std::vector<char> CreateDialogData(SharedWaveFormat inputFormat, const AudioDevice* device,
+        static std::vector<char> CreateDialogData(bool resize, SharedWaveFormat inputFormat, const AudioDevice* device,
                                                   std::vector<std::wstring> processors, bool externalClock, bool live);
 
         MyPropertyPage();
+        MyPropertyPage(HRESULT& result, IStatusPageData* pData);
         MyPropertyPage(const MyPropertyPage&) = delete;
         MyPropertyPage& operator=(const MyPropertyPage&) = delete;
 
@@ -44,6 +45,7 @@ namespace SaneAudioRenderer
 
     private:
 
+        const bool m_delayedData;
         std::vector<char> m_dialogData;
         IPropertyPageSitePtr m_pageSite;
         HWND m_hWindow = NULL;

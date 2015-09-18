@@ -42,7 +42,7 @@ namespace SaneAudioRenderer
         STDMETHODIMP GetPages(CAUUID* pPages) override;
         STDMETHODIMP CreatePage(const GUID& guid, IPropertyPage** ppPage) override;
 
-        STDMETHODIMP GetPageData(std::vector<char>& data) override;
+        STDMETHODIMP GetPageData(bool resize, std::vector<char>& data) override;
 
     private:
 
