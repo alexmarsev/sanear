@@ -10,6 +10,7 @@ namespace SaneAudioRenderer
         SharedString          id;
         SharedString          adapterName;
         SharedString          endpointName;
+        UINT32                endpointFormFactor;
 
         IAudioClientPtr       audioClient;
         IAudioRenderClientPtr audioRenderClient;

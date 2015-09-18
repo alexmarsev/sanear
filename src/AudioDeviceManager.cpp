@@ -35,6 +35,20 @@ namespace SaneAudioRenderer
             return ret;
         }
 
+        UINT32 GetDevicePropertyUint(IPropertyStore* pStore, REFPROPERTYKEY key)
+        {
+            assert(pStore);
+
+            PROPVARIANT prop;
+            PropVariantInit(&prop);
+            ThrowIfFailed(pStore->GetValue(key, &prop));
+            assert(prop.vt == VT_UI4);
+            UINT32 ret = prop.uintVal;
+            PropVariantClear(&prop);
+
+            return ret;
+        }
+
         SharedString GetDevicePropertyString(IPropertyStore* pStore, REFPROPERTYKEY key)
         {
             assert(pStore);
@@ -95,6 +109,11 @@ namespace SaneAudioRenderer
 
             backend.adapterName  = GetDevicePropertyString(devicePropertyStore, PKEY_DeviceInterface_FriendlyName);
             backend.endpointName = GetDevicePropertyString(devicePropertyStore, PKEY_Device_DeviceDesc);
+
+            static const PROPERTYKEY formFactorKey = { // PKEY_AudioEndpoint_FormFactor
+                {0x1da5d803, 0xd492, 0x4edd, {0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e}}, 0
+            };
+            backend.endpointFormFactor = GetDevicePropertyUint(devicePropertyStore, formFactorKey);
 
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&backend.audioClient));
