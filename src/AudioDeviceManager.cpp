@@ -42,6 +42,7 @@ namespace SaneAudioRenderer
             PROPVARIANT prop;
             PropVariantInit(&prop);
             ThrowIfFailed(pStore->GetValue(key, &prop));
+            assert(prop.vt == VT_LPWSTR);
             auto ret = std::make_shared<std::wstring>(prop.pwszVal);
             PropVariantClear(&prop);
 
