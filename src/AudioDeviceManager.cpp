@@ -419,6 +419,8 @@ namespace SaneAudioRenderer
         if (m_enumerator && m_notificationClient)
             m_enumerator->UnregisterEndpointNotificationCallback(m_notificationClient);
 
+        m_enumerator = nullptr;
+
         m_exit = true;
         m_wake.Set();
 
