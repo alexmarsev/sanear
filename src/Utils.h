@@ -74,12 +74,6 @@ namespace SaneAudioRenderer
         const UINT m_period;
     };
 
-    template <typename... T>
-    inline std::array<typename std::common_type<T...>::type, sizeof...(T)> make_array(T&&... values)
-    {
-        return {std::forward<T>(values)...};
-    }
-
     inline std::wstring GetHexString(uint32_t number)
     {
         std::array<wchar_t, 11> temp;

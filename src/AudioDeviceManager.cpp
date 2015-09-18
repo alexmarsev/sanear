@@ -35,6 +35,18 @@ namespace SaneAudioRenderer
             return ret;
         }
 
+        template <typename T>
+        void AppendPcmFormatPack(T& data, uint32_t rate, uint32_t channelCount, DWORD channelMask)
+        {
+            data.insert(data.cend(), {
+                BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, rate, channelCount, channelMask),
+                BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 32, rate, channelCount, channelMask),
+                BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 24, 24, rate, channelCount, channelMask),
+                BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 24, rate, channelCount, channelMask),
+                BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 16, 16, rate, channelCount, channelMask),
+            });
+        }
+
         UINT32 GetDevicePropertyUint(IPropertyStore* pStore, REFPROPERTYKEY key)
         {
             assert(pStore);
@@ -61,6 +73,12 @@ namespace SaneAudioRenderer
             PropVariantClear(&prop);
 
             return ret;
+        }
+
+        DWORD ShiftBackSide(DWORD mask)
+        {
+            return mask ^ (SPEAKER_BACK_LEFT | SPEAKER_BACK_RIGHT |
+                           SPEAKER_SIDE_LEFT | SPEAKER_SIDE_RIGHT);
         }
 
         void CreateAudioClient(IMMDeviceEnumerator* pEnumerator, AudioDeviceBackend& backend)
@@ -186,6 +204,13 @@ namespace SaneAudioRenderer
 
                 backend->bitstream = (DspFormatFromWaveFormat(*format) == DspFormat::Unknown);
 
+                const auto inputRate = format->nSamplesPerSec;
+                const auto inputChannels = format->nChannels;
+                const auto inputMask = DspMatrix::GetChannelMask(*format);
+                const auto mixRate = mixFormat->nSamplesPerSec;
+                const auto mixChannels = mixFormat->nChannels;
+                const auto mixMask = DspMatrix::GetChannelMask(*mixFormat);
+
                 if (backend->bitstream)
                 {
                     // Exclusive bitstreaming.
@@ -198,27 +223,30 @@ namespace SaneAudioRenderer
                 else if (backend->exclusive)
                 {
                     // Exclusive.
-                    auto inputRate = format->nSamplesPerSec;
-                    auto mixRate = mixFormat->nSamplesPerSec;
-                    auto mixChannels = mixFormat->nChannels;
-                    auto mixMask = DspMatrix::GetChannelMask(*mixFormat);
+                    std::vector<WAVEFORMATEXTENSIBLE> priorities;
 
-                    auto priorities = make_array(
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, inputRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 32, inputRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 24, 24, inputRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 24, inputRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 16, 16, inputRate, mixChannels, mixMask),
+                    if (backend->endpointFormFactor == DigitalAudioDisplayDevice)
+                    {
+                        AppendPcmFormatPack(priorities, inputRate, inputChannels, inputMask);
+                        AppendPcmFormatPack(priorities, mixRate, inputChannels, inputMask);
 
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32, mixRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 32, mixRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 24, 24, mixRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 32, 24, mixRate, mixChannels, mixMask),
-                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_PCM, 16, 16, mixRate, mixChannels, mixMask),
+                        // Shift between 5.1 with side channels and 5.1 with back channels.
+                        if (inputMask == KSAUDIO_SPEAKER_5POINT1 ||
+                            inputMask == ShiftBackSide(KSAUDIO_SPEAKER_5POINT1))
+                        {
+                            auto altMask = ShiftBackSide(inputMask);
+                            AppendPcmFormatPack(priorities, inputRate, inputChannels, altMask);
+                            AppendPcmFormatPack(priorities, mixRate, inputChannels, altMask);
+                        }
+                    }
 
+                    AppendPcmFormatPack(priorities, inputRate, mixChannels, mixMask);
+                    AppendPcmFormatPack(priorities, mixRate, mixChannels, mixMask);
+
+                    priorities.insert(priorities.cend(), {
                         WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, inputRate, mixChannels)},
                         WAVEFORMATEXTENSIBLE{BuildWaveFormat(WAVE_FORMAT_PCM, 16, mixRate, mixChannels)}
-                    );
+                    });
 
                     for (const auto& f : priorities)
                     {
@@ -237,6 +265,40 @@ namespace SaneAudioRenderer
                     // Shared.
                     backend->dspFormat = DspFormat::Float;
                     backend->waveFormat = mixFormat;
+
+                    std::vector<WAVEFORMATEXTENSIBLE> priorities = {
+                        BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,
+                                           mixRate, inputChannels, inputMask),
+                    };
+
+                    // Shift between 5.1 with side channels and 5.1 with back channels.
+                    if (inputMask == KSAUDIO_SPEAKER_5POINT1 ||
+                        inputMask == ShiftBackSide(KSAUDIO_SPEAKER_5POINT1))
+                    {
+                        priorities.push_back(BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,
+                                                                mixRate, inputChannels, ShiftBackSide(inputMask)));
+                    }
+
+                    for (const auto& f : priorities)
+                    {
+                        assert(DspFormatFromWaveFormat(f.Format) != DspFormat::Unknown);
+
+                        WAVEFORMATEX* pClosest;
+                        if (SUCCEEDED(backend->audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED,
+                                                                              &f.Format, &pClosest)))
+                        {
+                            if (pClosest)
+                            {
+                                CoTaskMemFree(pClosest);
+                            }
+                            else
+                            {
+                                backend->dspFormat = DspFormatFromWaveFormat(f.Format);
+                                backend->waveFormat = CopyWaveFormat(f.Format);
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 ThrowIfFailed(backend->audioClient->Initialize(
