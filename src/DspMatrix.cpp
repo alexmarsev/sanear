@@ -243,7 +243,28 @@ namespace SaneAudioRenderer
         if (inputChannels != outputChannels || inputMask != outputMask)
         {
             m_matrix = BuildMatrix(inputChannels, inputMask, outputChannels, outputMask);
-            m_active = true;
+
+            if (inputChannels != outputChannels)
+            {
+                m_active = true;
+            }
+            else
+            {
+                // Redundancy check.
+                for (size_t y = 0; y < outputChannels; y++)
+                {
+                    for (size_t x = 0; x < inputChannels; x++)
+                    {
+                        float d = m_matrix[y * inputChannels + x];
+
+                        if ((x == y && d != 1.0f) ||
+                            (x != y && d != 0.0f))
+                        {
+                            m_active = true;
+                        }
+                    }
+                }
+            }
         }
 
         m_inputChannels = inputChannels;
