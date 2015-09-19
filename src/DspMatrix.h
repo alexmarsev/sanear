@@ -24,6 +24,7 @@ namespace SaneAudioRenderer
         void Finish(DspChunk& chunk) override;
 
         static DWORD GetChannelMask(const WAVEFORMATEX& format);
+        static bool IsStereoFormat(const WAVEFORMATEX& format);
 
     private:
 

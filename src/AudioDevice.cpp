@@ -175,6 +175,20 @@ namespace SaneAudioRenderer
         }
     }
 
+    SaneAudioRenderer::SharedWaveFormat AudioDevice::GetNewMixFormat()
+    {
+        try
+        {
+            WAVEFORMATEX* pFormat;
+            ThrowIfFailed(m_backend->audioClient->GetMixFormat(&pFormat));
+            return SharedWaveFormat(pFormat, CoTaskMemFreeDeleter());
+        }
+        catch (HRESULT)
+        {
+            return nullptr;
+        }
+    }
+
     void AudioDevice::RealtimeFeed()
     {
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);

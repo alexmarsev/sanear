@@ -350,4 +350,9 @@ namespace SaneAudioRenderer
                 return 0;
         }
     }
+
+    bool DspMatrix::IsStereoFormat(const WAVEFORMATEX& format)
+    {
+        return format.nChannels == 2 && GetChannelMask(format) == KSAUDIO_SPEAKER_STEREO;
+    }
 }

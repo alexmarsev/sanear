@@ -23,6 +23,8 @@ namespace SaneAudioRenderer
         bool                  exclusive;
         bool                  bitstream;
         bool                  realtime;
+
+        bool                  ignoredSystemChannelMixer;
     };
 
     class AudioDevice final
@@ -56,9 +58,13 @@ namespace SaneAudioRenderer
         uint32_t         GetBufferDuration() const { return m_backend->bufferDuration; }
         REFERENCE_TIME   GetStreamLatency()  const { return m_backend->latency; }
 
+        SharedWaveFormat GetNewMixFormat();
+
         bool IsExclusive() const { return m_backend->exclusive; }
         bool IsBitstream() const { return m_backend->bitstream; }
         bool IsRealtime()  const { return m_backend->realtime; }
+
+        bool IgnoredSystemChannelMixer() const { return m_backend->ignoredSystemChannelMixer; }
 
     private:
 

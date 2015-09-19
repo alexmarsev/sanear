@@ -388,9 +388,32 @@ namespace SaneAudioRenderer
 
                 settingsDeviceDefault = (!pDeviceId || !*pDeviceId);
                 settingsDeviceId.reset(pDeviceId);
-
-                m_deviceSettingsSerial = newSettingsSerial;
             }
+
+            bool clearForCrossfeed = false;
+
+            if (!m_device->IsExclusive())
+            {
+                BOOL crossfeedEnabled;
+                m_settings->GetCrossfeedEnabled(&crossfeedEnabled);
+
+                SharedWaveFormat newMixFormat = m_device->GetNewMixFormat();
+                if (!newMixFormat)
+                    return;
+
+                bool mixFormatIsStereo = DspMatrix::IsStereoFormat(*newMixFormat);
+                bool inputIsStereo     = DspMatrix::IsStereoFormat(*m_inputFormat);
+                bool outputIsStereo    = DspMatrix::IsStereoFormat(*m_device->GetWaveFormat());
+                bool ignoredSystemChannelMixer = m_device->IgnoredSystemChannelMixer();
+
+                if ((mixFormatIsStereo && crossfeedEnabled && !outputIsStereo) ||
+                    (mixFormatIsStereo && !crossfeedEnabled && !inputIsStereo && ignoredSystemChannelMixer))
+                {
+                    clearForCrossfeed = true;
+                }
+            }
+
+            m_deviceSettingsSerial = newSettingsSerial;
 
             std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> systemDeviceId;;
 
@@ -404,7 +427,8 @@ namespace SaneAudioRenderer
 
             m_defaultDeviceSerial = newDefaultDeviceSerial;
 
-            if ((m_device->IsExclusive() != !!settingsDeviceExclusive) ||
+            if ((clearForCrossfeed) ||
+                (m_device->IsExclusive() != !!settingsDeviceExclusive) ||
                 (m_device->GetBufferDuration() != settingsDeviceBuffer) ||
                 (!settingsDeviceDefault && *m_device->GetId() != settingsDeviceId.get()) ||
                 (settingsDeviceDefault && *m_device->GetId() != systemDeviceId.get()))

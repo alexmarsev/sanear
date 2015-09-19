@@ -28,7 +28,7 @@ namespace SaneAudioRenderer
 
     void DspCrossfeed::Process(DspChunk& chunk)
     {
-        if (m_possible && m_settingsSerial != m_settings->GetSerial())
+        if (m_settingsSerial != m_settings->GetSerial())
             UpdateSettings();
 
         if (!m_active || chunk.IsEmpty())
@@ -48,8 +48,6 @@ namespace SaneAudioRenderer
 
     void DspCrossfeed::UpdateSettings()
     {
-        assert(m_possible);
-
         m_settingsSerial = m_settings->GetSerial();
 
         UINT32 cutoffFrequency;
@@ -59,7 +57,7 @@ namespace SaneAudioRenderer
         BOOL enabled;
         m_settings->GetCrossfeedEnabled(&enabled);
 
-        m_active = !!enabled;
+        m_active = m_possible && enabled;
 
         if (m_active)
         {

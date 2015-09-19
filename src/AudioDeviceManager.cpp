@@ -204,6 +204,8 @@ namespace SaneAudioRenderer
 
                 backend->bitstream = (DspFormatFromWaveFormat(*format) == DspFormat::Unknown);
 
+                backend->ignoredSystemChannelMixer = false;
+
                 const auto inputRate = format->nSamplesPerSec;
                 const auto inputChannels = format->nChannels;
                 const auto inputMask = DspMatrix::GetChannelMask(*format);
@@ -267,6 +269,9 @@ namespace SaneAudioRenderer
                     backend->dspFormat = DspFormat::Float;
                     backend->waveFormat = mixFormat;
 
+                    BOOL crossfeedEnabled;
+                    pSettings->GetCrossfeedEnabled(&crossfeedEnabled);
+
                     std::vector<WAVEFORMATEXTENSIBLE> priorities = {
                         BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,
                                            mixRate, inputChannels, inputMask),
@@ -294,8 +299,15 @@ namespace SaneAudioRenderer
                             }
                             else
                             {
-                                backend->dspFormat = DspFormatFromWaveFormat(f.Format);
-                                backend->waveFormat = CopyWaveFormat(f.Format);
+                                if (crossfeedEnabled && DspMatrix::IsStereoFormat(*mixFormat))
+                                {
+                                    backend->ignoredSystemChannelMixer = true;
+                                }
+                                else
+                                {
+                                    backend->dspFormat = DspFormatFromWaveFormat(f.Format);
+                                    backend->waveFormat = CopyWaveFormat(f.Format);
+                                }
                                 break;
                             }
                         }
