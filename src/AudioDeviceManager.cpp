@@ -327,6 +327,30 @@ namespace SaneAudioRenderer
                 return ex;
             }
         }
+
+        HRESULT GetDefaultDeviceIdInternal(IMMDeviceEnumerator* pEnumerator,
+                                           std::unique_ptr<WCHAR, CoTaskMemFreeDeleter>& id)
+        {
+            assert(pEnumerator);
+
+            id = nullptr;
+
+            try
+            {
+                IMMDevicePtr device;
+                ThrowIfFailed(pEnumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
+
+                LPWSTR pDeviceId = nullptr;
+                ThrowIfFailed(device->GetId(&pDeviceId));
+                id = std::unique_ptr<WCHAR, CoTaskMemFreeDeleter>(pDeviceId);
+            }
+            catch (HRESULT ex)
+            {
+                return ex;
+            }
+
+            return S_OK;
+        }
     }
 
     AudioDeviceNotificationClient::AudioDeviceNotificationClient(std::atomic<uint32_t>& defaultDeviceSerial)
@@ -473,18 +497,12 @@ namespace SaneAudioRenderer
     {
         assert(m_enumerator);
 
-        try
-        {
-            IMMDevicePtr device;
-            ThrowIfFailed(m_enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &device));
+        std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> id;
 
-            LPWSTR pDeviceId = nullptr;
-            ThrowIfFailed(device->GetId(&pDeviceId));
-            return std::unique_ptr<WCHAR, CoTaskMemFreeDeleter>(pDeviceId);
-        }
-        catch (HRESULT)
-        {
-            return nullptr;
-        }
+        m_function = [&] { return GetDefaultDeviceIdInternal(m_enumerator, id); };
+        m_wake.Set();
+        m_done.Wait();
+
+        return id;
     }
 }
