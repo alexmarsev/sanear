@@ -11,6 +11,8 @@ namespace SaneAudioRenderer
         static void ToFormat(DspFormat format, DspChunk& chunk);
         static void ToFloat(DspChunk& chunk) { ToFormat(DspFormat::Float, chunk); }
 
+        static void MergeChunks(DspChunk& chunk, DspChunk& appendage);
+
         DspChunk();
         DspChunk(DspFormat format, uint32_t channels, size_t frames, uint32_t rate);
         DspChunk(IMediaSample* pSample, const AM_SAMPLE2_PROPERTIES& sampleProps, const WAVEFORMATEX& sampleFormat);

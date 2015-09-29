@@ -299,6 +299,33 @@ namespace SaneAudioRenderer
         }
     }
 
+    void DspChunk::MergeChunks(DspChunk& chunk, DspChunk& appendage)
+    {
+        if (!chunk.IsEmpty())
+        {
+            if (!appendage.IsEmpty())
+            {
+                assert(chunk.GetChannelCount() == appendage.GetChannelCount());
+                assert(chunk.GetRate() == appendage.GetRate());
+
+                ToFormat(chunk.GetFormat(), appendage);
+
+                DspChunk output(chunk.GetFormat(), chunk.GetChannelCount(),
+                                chunk.GetFrameCount() + appendage.GetFrameCount(), chunk.GetRate());
+
+                memcpy(output.GetData(), chunk.GetData(), chunk.GetSize());
+                memcpy(output.GetData() + chunk.GetSize(), appendage.GetData(), appendage.GetSize());
+
+                chunk = std::move(output);
+                appendage = {};
+            }
+        }
+        else if (!appendage.IsEmpty())
+        {
+            chunk = std::move(appendage);
+        }
+    }
+
     DspChunk::DspChunk()
         : m_format(DspFormat::Unknown)
         , m_formatSize(1)

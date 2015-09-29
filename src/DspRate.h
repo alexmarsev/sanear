@@ -27,9 +27,30 @@ namespace SaneAudioRenderer
 
     private:
 
-        void DestroyBackend();
+        enum class State
+        {
+            Passthrough,
+            Constant,
+            Variable,
+        };
 
-        soxr_t m_soxr = nullptr;
+        DspChunk ProcessChunk(soxr_t soxr, DspChunk& chunk);
+        DspChunk ProcessEosChunk(soxr_t soxr, DspChunk& chunk);
+
+        void FinishStateTransition(DspChunk& processedChunk, DspChunk& unprocessedChunk, bool eos);
+
+        soxr_t GetBackend();
+        void DestroyBackends();
+
+        soxr_t m_soxrc = nullptr;
+        soxr_t m_soxrv = nullptr;
+
+        State m_state = State::Passthrough;
+
+        bool m_inStateTransition = false;
+        std::pair<bool, size_t> m_transitionCorrelation;
+        std::pair<DspChunk, DspChunk> m_transitionChunks;
+
         uint32_t m_inputRate = 0;
         uint32_t m_outputRate = 0;
         uint32_t m_channels = 0;
