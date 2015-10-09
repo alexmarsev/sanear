@@ -99,8 +99,8 @@ namespace SaneAudioRenderer
             {
                 if (!(outputMask & SPEAKER_BACK_CENTER))
                 {
-                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_LEFT);
-                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_RIGHT);
+                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_LEFT, minus3dB);
+                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_RIGHT, minus3dB);
                     clear(SPEAKER_BACK_CENTER);
                 }
 
@@ -108,7 +108,7 @@ namespace SaneAudioRenderer
                 {
                     if (outputMask & SPEAKER_BACK_CENTER)
                     {
-                        feed(SPEAKER_BACK_LEFT, SPEAKER_BACK_CENTER, minus3dB);
+                        feed(SPEAKER_BACK_LEFT, SPEAKER_BACK_CENTER);
                     }
                     else if (outputMask & SPEAKER_SIDE_LEFT)
                     {
@@ -126,7 +126,7 @@ namespace SaneAudioRenderer
                 {
                     if (outputMask & SPEAKER_BACK_CENTER)
                     {
-                        feed(SPEAKER_BACK_RIGHT, SPEAKER_BACK_CENTER, minus3dB);
+                        feed(SPEAKER_BACK_RIGHT, SPEAKER_BACK_CENTER);
                     }
                     else if (outputMask & SPEAKER_SIDE_RIGHT)
                     {
