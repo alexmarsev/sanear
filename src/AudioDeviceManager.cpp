@@ -272,10 +272,19 @@ namespace SaneAudioRenderer
                     BOOL crossfeedEnabled;
                     pSettings->GetCrossfeedEnabled(&crossfeedEnabled);
 
-                    std::vector<WAVEFORMATEXTENSIBLE> priorities = {
+                    std::deque<WAVEFORMATEXTENSIBLE> priorities = {
                         BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,
                                            mixRate, inputChannels, inputMask),
                     };
+
+                    // Prefer 7.1 over 6.1 because of widespread audio driver bugs.
+                    // No impact on audio quality.
+                    if (inputMask == (KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER))
+                    {
+                        assert(inputChannels == 7);
+                        priorities.push_front(BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,
+                                                                 mixRate, 8, KSAUDIO_SPEAKER_7POINT1_SURROUND));
+                    }
 
                     // Shift between 5.1 with side channels and 5.1 with back channels.
                     if (inputMask == KSAUDIO_SPEAKER_5POINT1 ||
