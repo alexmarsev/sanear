@@ -346,7 +346,7 @@ namespace SaneAudioRenderer
                 return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
 
             case 8:
-                return KSAUDIO_SPEAKER_7POINT1;
+                return KSAUDIO_SPEAKER_7POINT1_SURROUND;
 
             default:
                 return 0;
