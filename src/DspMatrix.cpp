@@ -55,7 +55,7 @@ namespace SaneAudioRenderer
 
         std::array<float, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
         {
-            const float minus3dB = 0.707945764f;
+            const float halfPower = 0.707113564f;
 
             std::array<float, 18 * 18> matrix{};
 
@@ -99,8 +99,8 @@ namespace SaneAudioRenderer
             {
                 if (!(outputMask & SPEAKER_BACK_CENTER))
                 {
-                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_LEFT, minus3dB);
-                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_RIGHT, minus3dB);
+                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_LEFT, halfPower);
+                    feed(SPEAKER_BACK_CENTER, SPEAKER_BACK_RIGHT, halfPower);
                     clear(SPEAKER_BACK_CENTER);
                 }
 
@@ -116,7 +116,7 @@ namespace SaneAudioRenderer
                     }
                     else
                     {
-                        feed(SPEAKER_BACK_LEFT, SPEAKER_FRONT_LEFT, minus3dB);
+                        feed(SPEAKER_BACK_LEFT, SPEAKER_FRONT_LEFT, halfPower);
                     }
 
                     clear(SPEAKER_BACK_LEFT);
@@ -134,7 +134,7 @@ namespace SaneAudioRenderer
                     }
                     else
                     {
-                        feed(SPEAKER_BACK_RIGHT, SPEAKER_FRONT_RIGHT, minus3dB);
+                        feed(SPEAKER_BACK_RIGHT, SPEAKER_FRONT_RIGHT, halfPower);
                     }
 
                     clear(SPEAKER_BACK_RIGHT);
@@ -145,20 +145,20 @@ namespace SaneAudioRenderer
             {
                 if (!(outputMask & SPEAKER_FRONT_CENTER))
                 {
-                    feed(SPEAKER_FRONT_CENTER, SPEAKER_FRONT_LEFT, minus3dB);
-                    feed(SPEAKER_FRONT_CENTER, SPEAKER_FRONT_RIGHT, minus3dB);
+                    feed(SPEAKER_FRONT_CENTER, SPEAKER_FRONT_LEFT, halfPower);
+                    feed(SPEAKER_FRONT_CENTER, SPEAKER_FRONT_RIGHT, halfPower);
                     clear(SPEAKER_FRONT_CENTER);
                 }
 
                 if (!(outputMask & SPEAKER_FRONT_LEFT) && (outputMask & SPEAKER_FRONT_CENTER))
                 {
-                    feed(SPEAKER_FRONT_LEFT, SPEAKER_FRONT_CENTER, minus3dB);
+                    feed(SPEAKER_FRONT_LEFT, SPEAKER_FRONT_CENTER, halfPower);
                     clear(SPEAKER_FRONT_LEFT);
                 }
 
                 if (!(outputMask & SPEAKER_FRONT_RIGHT) && (outputMask & SPEAKER_FRONT_CENTER))
                 {
-                    feed(SPEAKER_FRONT_RIGHT, SPEAKER_FRONT_CENTER, minus3dB);
+                    feed(SPEAKER_FRONT_RIGHT, SPEAKER_FRONT_CENTER, halfPower);
                     clear(SPEAKER_FRONT_RIGHT);
                 }
             }
