@@ -65,9 +65,6 @@
     <ClCompile Include="src\AudioDevice.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="src\DspRealtimeRate.cpp">
-      <Filter>Processors</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -143,9 +140,6 @@
     </ClInclude>
     <ClInclude Include="src\AudioDevice.h">
       <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DspRealtimeRate.h">
-      <Filter>Processors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

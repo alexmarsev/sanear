@@ -639,7 +639,6 @@ namespace SaneAudioRenderer
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
-        //m_dspRealtimeRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());
