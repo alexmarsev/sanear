@@ -583,7 +583,7 @@ namespace SaneAudioRenderer
                     }
 
                     // Correct the rest with variable rate.
-                    m_dspRealtimeRate.Adjust(padTime);
+                    m_dspRate.Adjust(padTime);
                     m_myClock.OffsetSlavedClock(-padTime);
                 }
                 else if (remaining > latency)
@@ -614,7 +614,7 @@ namespace SaneAudioRenderer
                     }
 
                     // Correct the rest with variable rate.
-                    m_dspRealtimeRate.Adjust(-dropTime);
+                    m_dspRate.Adjust(-dropTime);
                     m_myClock.OffsetSlavedClock(dropTime);
                 }
             }
@@ -639,7 +639,7 @@ namespace SaneAudioRenderer
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
-        m_dspRealtimeRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
+        //m_dspRealtimeRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());

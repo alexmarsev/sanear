@@ -64,12 +64,23 @@ namespace SaneAudioRenderer
         m_outputRate = outputRate;
         m_channels = channels;
 
-        if (!variable && inputRate != outputRate)
+        m_variableInputFrames = 0;
+        m_variableOutputFrames = 0;
+        m_variableDelay = 0;
+
+        m_adjustTime = 0;
+
+        if (variable)
         {
-            auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
-            auto qualitySpec = soxr_quality_spec(SOXR_HQ, 0);
-            m_soxrc = soxr_create(inputRate, outputRate, channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+            m_state = State::Variable;
+            CreateBackend();
+            assert(m_soxrv);
+        }
+        else if (inputRate != outputRate)
+        {
             m_state = State::Constant;
+            CreateBackend();
+            assert(m_soxrc);
         }
     }
 
@@ -85,7 +96,35 @@ namespace SaneAudioRenderer
         if (!soxr || chunk.IsEmpty())
             return;
 
+        if (m_state == State::Variable && m_variableDelay > 0)
+        {
+            uint64_t inputPosition = llMulDiv(m_variableOutputFrames, m_inputRate, m_outputRate, 0);
+            int64_t adjustedFrames = inputPosition + m_variableDelay - m_variableInputFrames;
+
+            REFERENCE_TIME adjustTime = m_adjustTime - llMulDiv(adjustedFrames, OneSecond, m_inputRate, 0);
+
+            double ratio = (double)m_inputRate * 4 / (m_outputRate * (4 + (double)adjustTime / OneSecond));
+
+            // TODO: decrease jitter
+
+            soxr_set_io_ratio(m_soxrv, ratio, m_outputRate / 1000);
+        }
+
         DspChunk output = ProcessChunk(soxr, chunk);
+
+        if (m_state == State::Variable)
+        {
+            m_variableInputFrames += chunk.GetFrameCount();
+            m_variableOutputFrames += output.GetFrameCount();
+
+            // soxr_delay() method is not implemented for variable rate conversion yet,
+            // but the delay stays more or less constant and we can calculate it in a roundabout way.
+            if (m_variableDelay == 0 && m_variableOutputFrames > 0)
+            {
+                uint64_t inputPosition = llMulDiv(m_variableOutputFrames, m_inputRate, m_outputRate, 0);
+                m_variableDelay = m_variableInputFrames - inputPosition;
+            }
+        }
 
         FinishStateTransition(output, chunk, false);
 
@@ -104,6 +143,20 @@ namespace SaneAudioRenderer
         FinishStateTransition(output, chunk, true);
 
         chunk = std::move(output);
+    }
+
+    void DspRate::Adjust(REFERENCE_TIME time)
+    {
+        if (m_state != State::Variable)
+        {
+            m_state = State::Variable;
+            CreateBackend();
+            assert(m_soxrv);
+
+            m_inStateTransition = true;
+        }
+
+        m_adjustTime += time;
     }
 
     DspChunk DspRate::ProcessChunk(soxr_t soxr, DspChunk& chunk)
@@ -178,8 +231,16 @@ namespace SaneAudioRenderer
                 if (!m_transitionCorrelation.first)
                     m_transitionCorrelation = {true, (size_t)std::round(soxr_delay(m_soxrc))};
 
-                DspChunk::MergeChunks(second, eos ? ProcessEosChunk(m_soxrc, unprocessedChunk) :
-                                                    ProcessChunk(m_soxrc, unprocessedChunk));
+                if (m_transitionCorrelation.second > 0)
+                {
+                    DspChunk::MergeChunks(second, eos ? ProcessEosChunk(m_soxrc, unprocessedChunk) :
+                                                        ProcessChunk(m_soxrc, unprocessedChunk));
+                }
+                else
+                {
+                    // Nothing to flush from constant rate conversion buffer.
+                    m_inStateTransition = false;
+                }
             }
             else
             {
@@ -188,21 +249,24 @@ namespace SaneAudioRenderer
                 DspChunk::MergeChunks(second, unprocessedChunk);
             }
 
-            const size_t transitionFrames = m_outputRate / 1000; // 1ms
-
             // Cross-fade.
-            if (first.GetFrameCount() >= transitionFrames &&
-                second.GetFrameCount() >= m_transitionCorrelation.second + transitionFrames)
+            if (m_inStateTransition)
             {
-                second.ShrinkHead(second.GetFrameCount() - m_transitionCorrelation.second);
-                Crossfade(first, second, transitionFrames);
-                processedChunk = std::move(first);
-                m_inStateTransition = false;
-            }
-            else if (eos)
-            {
-                processedChunk = std::move(second);
-                m_inStateTransition = false;
+                const size_t transitionFrames = m_outputRate / 1000; // 1ms
+
+                if (first.GetFrameCount() >= transitionFrames &&
+                    second.GetFrameCount() >= m_transitionCorrelation.second + transitionFrames)
+                {
+                    second.ShrinkHead(second.GetFrameCount() - m_transitionCorrelation.second);
+                    Crossfade(first, second, transitionFrames);
+                    processedChunk = std::move(first);
+                    m_inStateTransition = false;
+                }
+                else if (eos)
+                {
+                    processedChunk = std::move(second);
+                    m_inStateTransition = false;
+                }
             }
 
             if (!m_inStateTransition)
@@ -214,6 +278,38 @@ namespace SaneAudioRenderer
         }
 
         unprocessedChunk = {};
+    }
+
+    void DspRate::CreateBackend()
+    {
+        assert(m_state != State::Passthrough);
+        assert(m_inputRate > 0);
+        assert(m_outputRate > 0);
+        assert(m_channels > 0);
+
+        if (m_state == State::Variable)
+        {
+            assert(!m_soxrv);
+
+            auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
+            auto qualitySpec = soxr_quality_spec(SOXR_HQ, SOXR_VR);
+            m_soxrv = soxr_create(m_inputRate * 2, m_outputRate, m_channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+
+            soxr_set_io_ratio(m_soxrv, (double)m_inputRate / m_outputRate, 0);
+
+            m_variableInputFrames = 0;
+            m_variableOutputFrames = 0;
+            m_variableDelay = 0;
+        }
+        else if (m_state == State::Constant)
+        {
+            assert(m_inputRate != m_outputRate);
+            assert(!m_soxrc);
+
+            auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
+            auto qualitySpec = soxr_quality_spec(SOXR_HQ, 0);
+            m_soxrc = soxr_create(m_inputRate, m_outputRate, m_channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+        }
     }
 
     soxr_t DspRate::GetBackend()

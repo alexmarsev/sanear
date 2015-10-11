@@ -25,6 +25,8 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
 
+        void Adjust(REFERENCE_TIME time);
+
     private:
 
         enum class State
@@ -39,6 +41,7 @@ namespace SaneAudioRenderer
 
         void FinishStateTransition(DspChunk& processedChunk, DspChunk& unprocessedChunk, bool eos);
 
+        void CreateBackend();
         soxr_t GetBackend();
         void DestroyBackends();
 
@@ -54,5 +57,11 @@ namespace SaneAudioRenderer
         uint32_t m_inputRate = 0;
         uint32_t m_outputRate = 0;
         uint32_t m_channels = 0;
+
+        uint64_t m_variableInputFrames = 0;
+        uint64_t m_variableOutputFrames = 0;
+        uint64_t m_variableDelay = 0; // In input samples.
+
+        REFERENCE_TIME m_adjustTime = 0; // Negative time - less samples, positive time - more samples.
     };
 }
