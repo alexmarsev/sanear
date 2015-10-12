@@ -91,10 +91,10 @@ namespace SaneAudioRenderer
 
     namespace
     {
-        inline void DebugOutForward(std::wostringstream&) {}
+        void DebugOutForward(std::wostringstream&) {}
 
         template <typename T0, typename... T>
-        inline void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
+        void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
         {
             stream << " " << arg0;
             DebugOutForward(stream, std::forward<T>(args)...);
