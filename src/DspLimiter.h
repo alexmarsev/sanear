@@ -13,7 +13,7 @@ namespace SaneAudioRenderer
         DspLimiter(const DspLimiter&) = delete;
         DspLimiter& operator=(const DspLimiter&) = delete;
 
-        void Initialize(uint32_t rate, uint32_t channels, bool exclusive);
+        void Initialize(ISettings* pSettings, uint32_t rate, uint32_t channels, bool exclusive);
 
         std::wstring Name() override { return L"Limiter"; }
 
@@ -21,6 +21,10 @@ namespace SaneAudioRenderer
 
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
+
+    protected:
+
+        void SettingsUpdated() override;
 
     private:
 
@@ -34,5 +38,7 @@ namespace SaneAudioRenderer
         int64_t m_holdWindow = 0;
         float m_peak = 0.0f;
         float m_threshold = 0.0f;
+
+        bool m_extraPrecision = false;
     };
 }

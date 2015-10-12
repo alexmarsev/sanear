@@ -53,32 +53,32 @@ namespace SaneAudioRenderer
             throw std::logic_error("");
         }
 
-        std::array<float, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
+        std::array<double, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
         {
-            const float fullPower = 1.0f;
-            const float halfPower = 0.707113564f;
+            const double fullPower = 1.0;
+            const double halfPower = fullPower / std::sqrt(2.0);
 
-            std::array<float, 18 * 18> matrix{};
+            std::array<double, 18 * 18> matrix{};
 
             for (auto& c : Channels)
             {
                 if (inputMask & c)
-                    matrix[18 * IndexForChannel(c) + IndexForChannel(c)] = 1.0f;
+                    matrix[18 * IndexForChannel(c) + IndexForChannel(c)] = 1.0;
             }
 
-            auto feed = [&](DWORD sourceChannel, DWORD targetChannel, float multiplier)
+            auto feed = [&](DWORD sourceChannel, DWORD targetChannel, double multiplier)
             {
-                float* source = matrix.data() + 18 * IndexForChannel(sourceChannel);
-                float* target = matrix.data() + 18 * IndexForChannel(targetChannel);
+                double* source = matrix.data() + 18 * IndexForChannel(sourceChannel);
+                double* target = matrix.data() + 18 * IndexForChannel(targetChannel);
                 for (int i = 0; i < 18; i++)
                     target[i] += source[i] * multiplier;
             };
 
             auto clear = [&](DWORD targetChannel)
             {
-                float* target = matrix.data() + 18 * IndexForChannel(targetChannel);
+                double* target = matrix.data() + 18 * IndexForChannel(targetChannel);
                 for (int i = 0; i < 18; i++)
-                    target[i] = 0.0f;
+                    target[i] = 0.0;
             };
 
             // Mix side
@@ -167,11 +167,12 @@ namespace SaneAudioRenderer
             return matrix;
         }
 
-        std::array<float, 18 * 18> BuildMatrix(size_t inputChannels, DWORD inputMask,
-                                               size_t outputChannels, DWORD outputMask)
+        template <typename T>
+        std::array<T, 18 * 18> BuildMatrix(size_t inputChannels, DWORD inputMask,
+                                           size_t outputChannels, DWORD outputMask)
         {
-            std::array<float, 18 * 18> fullMatrix = BuildFullMatrix(inputMask, outputMask);
-            std::array<float, 18 * 18> matrix{};
+            std::array<double, 18 * 18> fullMatrix = BuildFullMatrix(inputMask, outputMask);
+            std::array<T, 18 * 18> matrix{};
 
             size_t y = 0;
             for (auto& yc : Channels)
@@ -183,8 +184,8 @@ namespace SaneAudioRenderer
                     {
                         if (inputMask & xc)
                         {
-                            matrix[y * inputChannels + x] = fullMatrix[IndexForChannel(yc) * 18 +
-                                                                       IndexForChannel(xc)];
+                            matrix[y * inputChannels + x] = static_cast<T>(fullMatrix[IndexForChannel(yc) * 18 +
+                                                                                      IndexForChannel(xc)]);
 
                             if (++x == inputChannels)
                                 break;
@@ -199,14 +200,14 @@ namespace SaneAudioRenderer
             return matrix;
         }
 
-        template <size_t InputChannels, size_t OutputChannels>
-        void Mix(const float* inputData, float* outputData, const float* matrix, size_t frames)
+        template <size_t InputChannels, size_t OutputChannels, typename T>
+        void Mix(const T* inputData, T* outputData, const T* matrix, size_t frames)
         {
             for (size_t frame = 0; frame < frames; frame++)
             {
                 for (size_t y = 0; y < OutputChannels; y++)
                 {
-                    float d = 0.0f;
+                    T d = 0;
 
                     for (size_t x = 0; x < InputChannels; x++)
                     {
@@ -218,14 +219,15 @@ namespace SaneAudioRenderer
             }
         }
 
-        void Mix(size_t inputChannels, const float* inputData, size_t outputChannels, float* outputData,
-                 const float* matrix, size_t frames)
+        template <typename T>
+        void Mix(size_t inputChannels, const T* inputData, size_t outputChannels, T* outputData,
+                 const T* matrix, size_t frames)
         {
             for (size_t frame = 0; frame < frames; frame++)
             {
                 for (size_t y = 0; y < outputChannels; y++)
                 {
-                    float d = 0.0f;
+                    T d = 0;
 
                     for (size_t x = 0; x < inputChannels; x++)
                     {
@@ -238,14 +240,18 @@ namespace SaneAudioRenderer
         }
     }
 
-    void DspMatrix::Initialize(uint32_t inputChannels, DWORD inputMask,
+    void DspMatrix::Initialize(ISettings* pSettings,
+                               uint32_t inputChannels, DWORD inputMask,
                                uint32_t outputChannels, DWORD outputMask)
     {
+        assert(pSettings);
+
         m_active = false;
 
         if (inputChannels != outputChannels || inputMask != outputMask)
         {
-            m_matrix = BuildMatrix(inputChannels, inputMask, outputChannels, outputMask);
+            m_matrixSingle = BuildMatrix<float>(inputChannels, inputMask, outputChannels, outputMask);
+            m_matrixDouble = BuildMatrix<double>(inputChannels, inputMask, outputChannels, outputMask);
 
             if (inputChannels != outputChannels)
             {
@@ -258,7 +264,7 @@ namespace SaneAudioRenderer
                 {
                     for (size_t x = 0; x < inputChannels; x++)
                     {
-                        float d = m_matrix[y * inputChannels + x];
+                        float d = m_matrixSingle[y * inputChannels + x];
 
                         if ((x == y && d != 1.0f) ||
                             (x != y && d != 0.0f))
@@ -272,6 +278,8 @@ namespace SaneAudioRenderer
 
         m_inputChannels = inputChannels;
         m_outputChannels = outputChannels;
+
+        SetSettings(pSettings);
     }
 
     bool DspMatrix::Active()
@@ -284,33 +292,18 @@ namespace SaneAudioRenderer
         if (!m_active || chunk.IsEmpty())
             return;
 
+        CheckSettings();
+
         assert(chunk.GetChannelCount() == m_inputChannels);
 
-        DspChunk::ToFloat(chunk);
-
-        DspChunk output(DspFormat::Float, m_outputChannels, chunk.GetFrameCount(), chunk.GetRate());
-
-        auto inputData = reinterpret_cast<const float*>(chunk.GetData());
-        auto outputData = reinterpret_cast<float*>(output.GetData());
-
-        if (m_inputChannels == 6 && m_outputChannels == 2)
+        if (chunk.GetFormat() == DspFormat::Double || m_extraPrecision)
         {
-            Mix<6, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
-        }
-        else if (m_inputChannels == 7 && m_outputChannels == 2)
-        {
-            Mix<7, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
-        }
-        else if (m_inputChannels == 8 && m_outputChannels == 2)
-        {
-            Mix<8, 2>(inputData, outputData, m_matrix.data(), chunk.GetFrameCount());
+            MixChunk<DspFormat::Double>(chunk, m_matrixDouble);
         }
         else
         {
-            Mix(m_inputChannels, inputData, m_outputChannels, outputData, m_matrix.data(), chunk.GetFrameCount());
+            MixChunk<DspFormat::Float>(chunk, m_matrixSingle);
         }
-
-        chunk = std::move(output);
     }
 
     void DspMatrix::Finish(DspChunk& chunk)
@@ -357,5 +350,40 @@ namespace SaneAudioRenderer
     bool DspMatrix::IsStereoFormat(const WAVEFORMATEX& format)
     {
         return format.nChannels == 2 && GetChannelMask(format) == KSAUDIO_SPEAKER_STEREO;
+    }
+
+    void DspMatrix::SettingsUpdated()
+    {
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
+    }
+
+    template <DspFormat MixFormat, typename MixSampleType>
+    void DspMatrix::MixChunk(DspChunk& chunk, const std::array<MixSampleType, 18 * 18>& matrix)
+    {
+        DspChunk::ToFormat(MixFormat, chunk);
+
+        DspChunk output(MixFormat, m_outputChannels, chunk.GetFrameCount(), chunk.GetRate());
+
+        auto inputData = reinterpret_cast<const MixSampleType*>(chunk.GetData());
+        auto outputData = reinterpret_cast<MixSampleType*>(output.GetData());
+
+        if (m_inputChannels == 6 && m_outputChannels == 2)
+        {
+            Mix<6, 2>(inputData, outputData, matrix.data(), chunk.GetFrameCount());
+        }
+        else if (m_inputChannels == 7 && m_outputChannels == 2)
+        {
+            Mix<7, 2>(inputData, outputData, matrix.data(), chunk.GetFrameCount());
+        }
+        else if (m_inputChannels == 8 && m_outputChannels == 2)
+        {
+            Mix<8, 2>(inputData, outputData, matrix.data(), chunk.GetFrameCount());
+        }
+        else
+        {
+            Mix(m_inputChannels, inputData, m_outputChannels, outputData, matrix.data(), chunk.GetFrameCount());
+        }
+
+        chunk = std::move(output);
     }
 }

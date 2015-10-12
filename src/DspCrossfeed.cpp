@@ -6,7 +6,6 @@ namespace SaneAudioRenderer
     void DspCrossfeed::Initialize(ISettings* pSettings, uint32_t rate, uint32_t channels, DWORD mask)
     {
         assert(pSettings);
-        m_settings = pSettings;
 
         m_possible = (channels == 2 &&
                       mask == KSAUDIO_SPEAKER_STEREO &&
@@ -17,8 +16,9 @@ namespace SaneAudioRenderer
         {
             m_bs2b.clear();
             m_bs2b.set_srate(rate);
-            UpdateSettings();
         }
+
+        SetSettings(pSettings);
     }
 
     bool DspCrossfeed::Active()
@@ -28,17 +28,26 @@ namespace SaneAudioRenderer
 
     void DspCrossfeed::Process(DspChunk& chunk)
     {
-        if (m_settingsSerial != m_settings->GetSerial())
-            UpdateSettings();
+        if (!m_possible || chunk.IsEmpty())
+            return;
 
-        if (!m_active || chunk.IsEmpty())
+        CheckSettings();
+
+        if (!m_active)
             return;
 
         assert(chunk.GetChannelCount() == 2);
 
-        DspChunk::ToFloat(chunk);
-
-        m_bs2b.cross_feed((float*)chunk.GetData(), (int)chunk.GetFrameCount());
+        if (chunk.GetFormat() == DspFormat::Double || m_extraPrecision)
+        {
+            DspChunk::ToDouble(chunk);
+            m_bs2b.cross_feed((double*)chunk.GetData(), (int)chunk.GetFrameCount());
+        }
+        else
+        {
+            DspChunk::ToFloat(chunk);
+            m_bs2b.cross_feed((float*)chunk.GetData(), (int)chunk.GetFrameCount());
+        }
     }
 
     void DspCrossfeed::Finish(DspChunk& chunk)
@@ -46,10 +55,8 @@ namespace SaneAudioRenderer
         Process(chunk);
     }
 
-    void DspCrossfeed::UpdateSettings()
+    void DspCrossfeed::SettingsUpdated()
     {
-        m_settingsSerial = m_settings->GetSerial();
-
         UINT32 cutoffFrequency;
         UINT32 crossfeedLevel;
         m_settings->GetCrossfeedSettings(&cutoffFrequency, &crossfeedLevel);
@@ -63,5 +70,7 @@ namespace SaneAudioRenderer
             m_bs2b.set_level_fcut(cutoffFrequency);
             m_bs2b.set_level_feed(crossfeedLevel);
         }
+
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
     }
 }

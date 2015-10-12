@@ -13,7 +13,7 @@ namespace SaneAudioRenderer
         DspDither(const DspDither&) = delete;
         DspDither& operator=(const DspDither&) = delete;
 
-        void Initialize(DspFormat outputFormat);
+        void Initialize(ISettings* pSettings, DspFormat outputFormat);
 
         std::wstring Name() override { return L"Dither"; }
 
@@ -22,12 +22,23 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
 
+    protected:
+
+        void SettingsUpdated() override;
+
     private:
 
-        bool m_enabled = false;
+        template <DspFormat DitherFormat, DspFormat OutputFormat, bool complex>
+        void Dither(DspChunk& chunk);
+
+        DspFormat m_outputFormat = DspFormat::Unknown;
         bool m_active = false;
+
+        bool m_extraPrecision = false;
+
         std::array<float, 18> m_previous;
-        std::array<std::minstd_rand, 18> m_generator;
+        std::array<std::minstd_rand, 18> m_generatorSimple;
+        std::array<std::mt19937, 18> m_generatorComplex;
         std::array<std::uniform_real_distribution<float>, 18> m_distributor;
     };
 }

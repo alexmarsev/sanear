@@ -16,7 +16,8 @@ namespace SaneAudioRenderer
         DspRate& operator=(const DspRate&) = delete;
         ~DspRate();
 
-        void Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels);
+        void Initialize(ISettings* pSettings, bool variable,
+                        uint32_t inputRate, uint32_t outputRate, uint32_t channels);
 
         std::wstring Name() override { return L"Rate"; }
 
@@ -27,17 +28,22 @@ namespace SaneAudioRenderer
 
         void Adjust(REFERENCE_TIME time);
 
+    protected:
+
+        void SettingsUpdated() override;
+
     private:
 
         enum class State
         {
             Passthrough,
-            Constant,
+            ConstantSingle,
+            ConstantDouble,
             Variable,
         };
 
-        DspChunk ProcessChunk(soxr_t soxr, DspChunk& chunk);
-        DspChunk ProcessEosChunk(soxr_t soxr, DspChunk& chunk);
+        DspChunk ProcessChunk(soxr_t soxr, DspChunk& chunk, bool doublePrecision);
+        DspChunk ProcessEosChunk(soxr_t soxr, DspChunk& chunk, bool doublePrecision);
 
         void FinishStateTransition(DspChunk& processedChunk, DspChunk& unprocessedChunk, bool eos);
 
@@ -45,8 +51,11 @@ namespace SaneAudioRenderer
         soxr_t GetBackend();
         void DestroyBackends();
 
-        soxr_t m_soxrc = nullptr;
+        soxr_t m_soxrcs = nullptr;
+        soxr_t m_soxrcd = nullptr;
         soxr_t m_soxrv = nullptr;
+
+        bool m_extraPrecision = false;
 
         State m_state = State::Passthrough;
 

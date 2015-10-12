@@ -5,6 +5,22 @@
 
 namespace SaneAudioRenderer
 {
+    namespace
+    {
+        template <typename T>
+        void GainChannel(T* data, size_t sampleCount, float gain, size_t channel)
+        {
+            for (size_t i = channel; i < sampleCount; i += 2)
+                data[i] *= gain;
+        }
+    }
+
+    void DspBalance::Initialize(ISettings* pSettings)
+    {
+        assert(pSettings);
+        SetSettings(pSettings);
+    }
+
     bool DspBalance::Active()
     {
         return m_renderer.GetBalance() != 0.0f;
@@ -18,16 +34,30 @@ namespace SaneAudioRenderer
         if (balance == 0.0f || chunk.IsEmpty() || chunk.GetChannelCount() != 2)
             return;
 
-        DspChunk::ToFloat(chunk);
+        CheckSettings();
 
-        auto data = reinterpret_cast<float*>(chunk.GetData());
         const float gain = std::abs(balance);
-        for (size_t i = (balance < 0.0f ? 1 : 0), n = chunk.GetSampleCount(); i < n; i += 2)
-            data[i] *= gain;
+        const size_t channel = (balance < 0.0f ? 1 : 0);
+
+        if (chunk.GetFormat() == DspFormat::Double || m_extraPrecision)
+        {
+            DspChunk::ToDouble(chunk);
+            GainChannel((double*)chunk.GetData(), chunk.GetSampleCount(), gain, channel);
+        }
+        else
+        {
+            DspChunk::ToFloat(chunk);
+            GainChannel((float*)chunk.GetData(), chunk.GetSampleCount(), gain, channel);
+        }
     }
 
     void DspBalance::Finish(DspChunk& chunk)
     {
         Process(chunk);
+    }
+
+    void DspBalance::SettingsUpdated()
+    {
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
     }
 }

@@ -34,8 +34,10 @@ namespace SaneAudioRenderer
         }
     }
 
-    void DspLimiter::Initialize(uint32_t rate, uint32_t channels, bool exclusive)
+    void DspLimiter::Initialize(ISettings* pSettings, uint32_t rate, uint32_t channels, bool exclusive)
     {
+        assert(pSettings);
+
         m_exclusive = exclusive;
         m_rate = rate;
         m_channels = channels;
@@ -44,6 +46,8 @@ namespace SaneAudioRenderer
         m_holdWindow = 0;
         m_peak = 0.0f;
         m_threshold = 0.0f;
+
+        SetSettings(pSettings);
     }
 
     bool DspLimiter::Active()
@@ -64,6 +68,8 @@ namespace SaneAudioRenderer
         }
 
         m_active = true;
+
+        CheckSettings();
 
         // Analyze samples
         float peak;
@@ -96,7 +102,7 @@ namespace SaneAudioRenderer
         // Apply limiter
         if (m_holdWindow > 0)
         {
-            if (chunk.GetFormat() == DspFormat::Double)
+            if (chunk.GetFormat() == DspFormat::Double || m_extraPrecision)
             {
                 ApplyLimiter<double>((double*)chunk.GetData(), chunk.GetSampleCount(), m_threshold);
             }
@@ -113,6 +119,11 @@ namespace SaneAudioRenderer
     void DspLimiter::Finish(DspChunk& chunk)
     {
         Process(chunk);
+    }
+
+    void DspLimiter::SettingsUpdated()
+    {
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
     }
 
     void DspLimiter::NewTreshold(float peak)

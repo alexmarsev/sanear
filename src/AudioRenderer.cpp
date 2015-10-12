@@ -639,12 +639,14 @@ namespace SaneAudioRenderer
         const auto outChannels = m_device->GetWaveFormat()->nChannels;
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 
-        m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
-        m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
+        m_dspMatrix.Initialize(m_settings, inChannels, inMask, outChannels, outMask);
+        m_dspRate.Initialize(m_settings, m_live || m_externalClock, inRate, outRate, outChannels);
         m_dspTempo.Initialize(m_rate, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
-        m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());
-        m_dspDither.Initialize(m_device->GetDspFormat());
+        m_dspVolume.Initialize(m_settings);
+        m_dspBalance.Initialize(m_settings);
+        m_dspLimiter.Initialize(m_settings, outRate, outChannels, m_device->IsExclusive());
+        m_dspDither.Initialize(m_settings, m_device->GetDspFormat());
     }
 
     bool AudioRenderer::PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent)

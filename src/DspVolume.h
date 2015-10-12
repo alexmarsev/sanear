@@ -15,6 +15,8 @@ namespace SaneAudioRenderer
         DspVolume(const DspVolume&) = delete;
         DspVolume& operator=(const DspVolume&) = delete;
 
+        void Initialize(ISettings* pSettings);
+
         std::wstring Name() override { return L"Volume"; }
 
         bool Active() override;
@@ -22,8 +24,13 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
 
+    protected:
+
+        void SettingsUpdated() override;
+
     private:
 
         const AudioRenderer& m_renderer;
+        bool m_extraPrecision = false;
     };
 }

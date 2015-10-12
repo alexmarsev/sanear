@@ -50,8 +50,11 @@ namespace SaneAudioRenderer
         DestroyBackends();
     }
 
-    void DspRate::Initialize(bool variable, uint32_t inputRate, uint32_t outputRate, uint32_t channels)
+    void DspRate::Initialize(ISettings* pSettings, bool variable,
+                             uint32_t inputRate, uint32_t outputRate, uint32_t channels)
     {
+        assert(pSettings);
+
         DestroyBackends();
 
         m_state = State::Passthrough;
@@ -70,6 +73,8 @@ namespace SaneAudioRenderer
 
         m_adjustTime = 0;
 
+        SetSettings(pSettings);
+
         if (variable)
         {
             m_state = State::Variable;
@@ -78,9 +83,9 @@ namespace SaneAudioRenderer
         }
         else if (inputRate != outputRate)
         {
-            m_state = State::Constant;
+            m_state = m_extraPrecision ? State::ConstantDouble : State::ConstantSingle;
             CreateBackend();
-            assert(m_soxrc);
+            assert(m_extraPrecision ? m_soxrcd : m_soxrcs);
         }
     }
 
@@ -96,6 +101,33 @@ namespace SaneAudioRenderer
         if (!soxr || chunk.IsEmpty())
             return;
 
+        CheckSettings();
+
+        if (m_state == State::ConstantSingle && m_extraPrecision)
+        {
+            if (!m_inStateTransition)
+            {
+                m_state = State::ConstantDouble;
+                CreateBackend();
+                assert(m_soxrcd);
+                soxr = m_soxrcd;
+
+                m_inStateTransition = true;
+            }
+        }
+        else if (m_state == State::ConstantDouble && !m_extraPrecision)
+        {
+            if (!m_inStateTransition)
+            {
+                m_state = State::ConstantSingle;
+                CreateBackend();
+                assert(m_soxrcs);
+                soxr = m_soxrcs;
+
+                m_inStateTransition = true;
+            }
+        }
+
         if (m_state == State::Variable && m_variableDelay > 0)
         {
             uint64_t inputPosition = llMulDiv(m_variableOutputFrames, m_inputRate, m_outputRate, 0);
@@ -110,7 +142,7 @@ namespace SaneAudioRenderer
             soxr_set_io_ratio(m_soxrv, ratio, m_outputRate / 1000);
         }
 
-        DspChunk output = ProcessChunk(soxr, chunk);
+        DspChunk output = ProcessChunk(soxr, chunk, (m_state == State::ConstantDouble));
 
         if (m_state == State::Variable)
         {
@@ -138,7 +170,7 @@ namespace SaneAudioRenderer
         if (!soxr)
             return;
 
-        DspChunk output = ProcessEosChunk(soxr, chunk);
+        DspChunk output = ProcessEosChunk(soxr, chunk, (m_state == State::ConstantDouble));
 
         FinishStateTransition(output, chunk, true);
 
@@ -159,17 +191,23 @@ namespace SaneAudioRenderer
         m_adjustTime += time;
     }
 
-    DspChunk DspRate::ProcessChunk(soxr_t soxr, DspChunk& chunk)
+    void DspRate::SettingsUpdated()
+    {
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
+    }
+
+    DspChunk DspRate::ProcessChunk(soxr_t soxr, DspChunk& chunk, bool doublePrecision)
     {
         assert(soxr);
         assert(!chunk.IsEmpty());
         assert(chunk.GetRate() == m_inputRate);
         assert(chunk.GetChannelCount() == m_channels);
 
-        DspChunk::ToFloat(chunk);
+        DspChunk::ToFormat(doublePrecision ? DspFormat::Double : DspFormat::Float, chunk);
 
         size_t outputFrames = (size_t)(2 * (uint64_t)chunk.GetFrameCount() * m_outputRate / m_inputRate);
-        DspChunk output(DspFormat::Float, chunk.GetChannelCount(), outputFrames, m_outputRate);
+        DspChunk output(doublePrecision ? DspFormat::Double : DspFormat::Float,
+                        chunk.GetChannelCount(), outputFrames, m_outputRate);
 
         size_t inputDone = 0;
         size_t outputDone = 0;
@@ -181,18 +219,19 @@ namespace SaneAudioRenderer
         return output;
     }
 
-    DspChunk DspRate::ProcessEosChunk(soxr_t soxr, DspChunk& chunk)
+    DspChunk DspRate::ProcessEosChunk(soxr_t soxr, DspChunk& chunk, bool doublePrecision)
     {
         assert(soxr);
 
         DspChunk output;
 
         if (!chunk.IsEmpty())
-            output = ProcessChunk(soxr, chunk);
+            output = ProcessChunk(soxr, chunk, doublePrecision);
 
         for (;;)
         {
-            DspChunk tailChunk(DspFormat::Float, m_channels, m_outputRate, m_outputRate);
+            DspChunk tailChunk(doublePrecision ? DspFormat::Double : DspFormat::Float,
+                               m_channels, m_outputRate, m_outputRate);
 
             size_t inputDone = 0;
             size_t outputDo = tailChunk.GetFrameCount();
@@ -214,10 +253,7 @@ namespace SaneAudioRenderer
     {
         if (m_inStateTransition)
         {
-            assert(m_state == State::Variable);
-
             DspChunk::ToFloat(processedChunk);
-            DspChunk::ToFloat(unprocessedChunk);
 
             auto& first = m_transitionChunks.first;
             auto& second = m_transitionChunks.second;
@@ -225,16 +261,61 @@ namespace SaneAudioRenderer
             DspChunk::MergeChunks(first, processedChunk);
             assert(processedChunk.IsEmpty());
 
-            if (m_soxrc)
+            if (m_soxrcs || m_soxrcd)
             {
-                // Transitioning from constant rate conversion to variable.
+                soxr_t soxr = nullptr;
+                bool fromDoublePrecision = false;
+
+                if (m_state == State::Variable)
+                {
+                    if (m_soxrcs)
+                    {
+                        // Transitioning from constant rate conversion (normal precision) to variable.
+                        soxr = m_soxrcs;
+                        fromDoublePrecision = false;
+                    }
+                    else
+                    {
+                        // Transitioning from constant rate conversion (excessive precision) to variable.
+                        assert(m_soxrcd);
+                        soxr = m_soxrcd;
+                        fromDoublePrecision = true;
+                    }
+                }
+                else if (m_state == State::ConstantSingle)
+                {
+                    // Transitioning from constant rate conversion (excessive precision) to
+                    // constant rate conversion (normal precision).
+                    assert(m_soxrcd);
+                    soxr = m_soxrcd;
+                    fromDoublePrecision = true;
+                }
+                else
+                {
+                    // Transitioning from constant rate conversion (normal precision) to
+                    // constant rate conversion (excessive precision).
+                    assert(m_state == State::ConstantDouble);
+                    assert(m_soxrcs);
+                    soxr = m_soxrcs;
+                    fromDoublePrecision = false;
+                }
+
+                assert(soxr);
+
+                // Get correlation info.
                 if (!m_transitionCorrelation.first)
-                    m_transitionCorrelation = {true, (size_t)std::round(soxr_delay(m_soxrc))};
+                    m_transitionCorrelation = {true, (size_t)std::round(soxr_delay(soxr))};
 
                 if (m_transitionCorrelation.second > 0)
                 {
-                    DspChunk::MergeChunks(second, eos ? ProcessEosChunk(m_soxrc, unprocessedChunk) :
-                                                        ProcessChunk(m_soxrc, unprocessedChunk));
+                    // Flush constant rate conversion buffer.
+                    DspChunk chunk = eos ? ProcessEosChunk(soxr, unprocessedChunk, fromDoublePrecision) :
+                                           ProcessChunk(soxr, unprocessedChunk, fromDoublePrecision);
+
+                    if (fromDoublePrecision)
+                        DspChunk::ToFloat(chunk);
+
+                    DspChunk::MergeChunks(second, chunk);
                 }
                 else
                 {
@@ -246,6 +327,7 @@ namespace SaneAudioRenderer
             {
                 // Transitioning from pass-through to variable rate conversion.
                 m_transitionCorrelation = {};
+                DspChunk::ToFloat(unprocessedChunk);
                 DspChunk::MergeChunks(second, unprocessedChunk);
             }
 
@@ -273,7 +355,12 @@ namespace SaneAudioRenderer
             {
                 m_transitionCorrelation = {};
                 m_transitionChunks = {};
-                DestroyBackend(m_soxrc);
+
+                if (m_state != State::ConstantSingle)
+                    DestroyBackend(m_soxrcs);
+
+                if (m_state != State::ConstantDouble)
+                    DestroyBackend(m_soxrcd);
             }
         }
 
@@ -301,26 +388,37 @@ namespace SaneAudioRenderer
             m_variableOutputFrames = 0;
             m_variableDelay = 0;
         }
-        else if (m_state == State::Constant)
+        else if (m_state == State::ConstantSingle)
         {
             assert(m_inputRate != m_outputRate);
-            assert(!m_soxrc);
+            assert(!m_soxrcs);
 
             auto ioSpec = soxr_io_spec(SOXR_FLOAT32_I, SOXR_FLOAT32_I);
             auto qualitySpec = soxr_quality_spec(SOXR_HQ, 0);
-            m_soxrc = soxr_create(m_inputRate, m_outputRate, m_channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+            m_soxrcs = soxr_create(m_inputRate, m_outputRate, m_channels, nullptr, &ioSpec, &qualitySpec, nullptr);
+        }
+        else if (m_state == State::ConstantDouble)
+        {
+            assert(m_inputRate != m_outputRate);
+            assert(!m_soxrcd);
+
+            auto ioSpec = soxr_io_spec(SOXR_FLOAT64_I, SOXR_FLOAT64_I);
+            auto qualitySpec = soxr_quality_spec(SOXR_VHQ, 0);
+            m_soxrcd = soxr_create(m_inputRate, m_outputRate, m_channels, nullptr, &ioSpec, &qualitySpec, nullptr);
         }
     }
 
     soxr_t DspRate::GetBackend()
     {
-        return (m_state == State::Constant) ? m_soxrc :
+        return (m_state == State::ConstantSingle) ? m_soxrcs :
+               (m_state == State::ConstantDouble) ? m_soxrcd :
                (m_state == State::Variable) ? m_soxrv : nullptr;
     }
 
     void DspRate::DestroyBackends()
     {
-        DestroyBackend(m_soxrc);
+        DestroyBackend(m_soxrcs);
+        DestroyBackend(m_soxrcd);
         DestroyBackend(m_soxrv);
     }
 }

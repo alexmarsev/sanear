@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DspBase.h"
-#include "Interfaces.h"
 
 #include <bs2bclass.h>
 
@@ -25,16 +24,16 @@ namespace SaneAudioRenderer
         void Process(DspChunk& chunk) override;
         void Finish(DspChunk& chunk) override;
 
-    private:
+    protected:
 
-        void UpdateSettings();
+        void SettingsUpdated() override;
+
+    private:
 
         bs2b_base m_bs2b;
 
-        ISettingsPtr m_settings;
-        UINT32 m_settingsSerial = 0;
-
         bool m_possible = false;
         bool m_active = false;
+        bool m_extraPrecision = false;
     };
 }

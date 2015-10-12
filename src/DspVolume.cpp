@@ -5,6 +5,22 @@
 
 namespace SaneAudioRenderer
 {
+    namespace
+    {
+        template <typename T>
+        void Gain(T* data, size_t sampleCount, float volume)
+        {
+            for (size_t i = 0; i < sampleCount; i++)
+                data[i] *= volume;
+        }
+    }
+
+    void DspVolume::Initialize(ISettings* pSettings)
+    {
+        assert(pSettings);
+        SetSettings(pSettings);
+    }
+
     bool DspVolume::Active()
     {
         return m_renderer.GetVolume() != 1.0f;
@@ -18,15 +34,27 @@ namespace SaneAudioRenderer
         if (volume == 1.0f || chunk.IsEmpty())
             return;
 
-        DspChunk::ToFloat(chunk);
+        CheckSettings();
 
-        auto data = reinterpret_cast<float*>(chunk.GetData());
-        for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
-            data[i] *= volume;
+        if (chunk.GetFormat() == DspFormat::Double || m_extraPrecision)
+        {
+            DspChunk::ToDouble(chunk);
+            Gain((double*)chunk.GetData(), chunk.GetSampleCount(), volume);
+        }
+        else
+        {
+            DspChunk::ToFloat(chunk);
+            Gain((float*)chunk.GetData(), chunk.GetSampleCount(), volume);
+        }
     }
 
     void DspVolume::Finish(DspChunk& chunk)
     {
         Process(chunk);
+    }
+
+    void DspVolume::SettingsUpdated()
+    {
+        m_extraPrecision = !!m_settings->GetExtraPrecisionProcessing();
     }
 }
