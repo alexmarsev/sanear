@@ -5,7 +5,7 @@
 
 namespace SaneAudioRenderer
 {
-    struct __declspec(uuid("ED41579C-C96A-4D8C-9813-856AB99F405E"))
+    struct __declspec(uuid("AA7BCE08-9687-46B6-B474-DD284747552D"))
     ISettings : IUnknown
     {
         STDMETHOD_(UINT32, GetSerial)() = 0;
@@ -41,6 +41,9 @@ namespace SaneAudioRenderer
 
         STDMETHOD_(void, SetIgnoreSystemChannelMixer)(BOOL bEnable) = 0;
         STDMETHOD_(BOOL, GetIgnoreSystemChannelMixer)() = 0;
+
+        STDMETHOD_(void, SetExtraPrecisionProcessing)(BOOL bEnable) = 0;
+        STDMETHOD_(BOOL, GetExtraPrecisionProcessing)() = 0;
     };
     _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
 

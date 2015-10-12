@@ -160,4 +160,22 @@ namespace SaneAudioRenderer
 
         return m_ignoreSystemChannelMixer;
     }
+
+    STDMETHODIMP_(void) Settings::SetExtraPrecisionProcessing(BOOL bEnable)
+    {
+        CAutoLock lock(this);
+
+        if (m_extraPrecisionProcessing != bEnable)
+        {
+            m_extraPrecisionProcessing = bEnable;
+            m_serial++;
+        }
+    }
+
+    STDMETHODIMP_(BOOL) Settings::GetExtraPrecisionProcessing()
+    {
+        CAutoLock lock(this);
+
+        return m_extraPrecisionProcessing;
+    }
 }
