@@ -24,9 +24,6 @@ namespace SaneAudioRenderer
 
     private:
 
-        void AnalyzeLastChunk();
-        void ModifyFirstChunk();
-
         void NewTreshold(float peak);
 
         bool m_exclusive = false;
