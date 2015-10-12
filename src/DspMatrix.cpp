@@ -55,6 +55,7 @@ namespace SaneAudioRenderer
 
         std::array<float, 18 * 18> BuildFullMatrix(DWORD inputMask, DWORD outputMask)
         {
+            const float fullPower = 1.0f;
             const float halfPower = 0.707113564f;
 
             std::array<float, 18 * 18> matrix{};
@@ -65,7 +66,7 @@ namespace SaneAudioRenderer
                     matrix[18 * IndexForChannel(c) + IndexForChannel(c)] = 1.0f;
             }
 
-            auto feed = [&](DWORD sourceChannel, DWORD targetChannel, float multiplier = 1.0f)
+            auto feed = [&](DWORD sourceChannel, DWORD targetChannel, float multiplier)
             {
                 float* source = matrix.data() + 18 * IndexForChannel(sourceChannel);
                 float* target = matrix.data() + 18 * IndexForChannel(targetChannel);
@@ -84,13 +85,13 @@ namespace SaneAudioRenderer
             {
                 if (!(outputMask & SPEAKER_SIDE_LEFT))
                 {
-                    feed(SPEAKER_SIDE_LEFT, SPEAKER_BACK_LEFT);
+                    feed(SPEAKER_SIDE_LEFT, SPEAKER_BACK_LEFT, fullPower);
                     clear(SPEAKER_SIDE_LEFT);
                 }
 
                 if (!(outputMask & SPEAKER_SIDE_RIGHT))
                 {
-                    feed(SPEAKER_SIDE_RIGHT, SPEAKER_BACK_RIGHT);
+                    feed(SPEAKER_SIDE_RIGHT, SPEAKER_BACK_RIGHT, fullPower);
                     clear(SPEAKER_SIDE_RIGHT);
                 }
             }
@@ -108,11 +109,11 @@ namespace SaneAudioRenderer
                 {
                     if (outputMask & SPEAKER_BACK_CENTER)
                     {
-                        feed(SPEAKER_BACK_LEFT, SPEAKER_BACK_CENTER);
+                        feed(SPEAKER_BACK_LEFT, SPEAKER_BACK_CENTER, fullPower);
                     }
                     else if (outputMask & SPEAKER_SIDE_LEFT)
                     {
-                        feed(SPEAKER_BACK_LEFT, SPEAKER_SIDE_LEFT);
+                        feed(SPEAKER_BACK_LEFT, SPEAKER_SIDE_LEFT, fullPower);
                     }
                     else
                     {
@@ -126,11 +127,11 @@ namespace SaneAudioRenderer
                 {
                     if (outputMask & SPEAKER_BACK_CENTER)
                     {
-                        feed(SPEAKER_BACK_RIGHT, SPEAKER_BACK_CENTER);
+                        feed(SPEAKER_BACK_RIGHT, SPEAKER_BACK_CENTER, fullPower);
                     }
                     else if (outputMask & SPEAKER_SIDE_RIGHT)
                     {
-                        feed(SPEAKER_BACK_RIGHT, SPEAKER_SIDE_RIGHT);
+                        feed(SPEAKER_BACK_RIGHT, SPEAKER_SIDE_RIGHT, fullPower);
                     }
                     else
                     {
