@@ -144,4 +144,22 @@ namespace SaneAudioRenderer
         if (puCrossfeedLevel)
             *puCrossfeedLevel = m_crossfeedLevel;
     }
+
+    STDMETHODIMP_(void) Settings::SetIgnoreSystemChannelMixer(BOOL bEnable)
+    {
+        CAutoLock lock(this);
+
+        if (m_ignoreSystemChannelMixer != bEnable)
+        {
+            m_ignoreSystemChannelMixer = bEnable;
+            m_serial++;
+        }
+    }
+
+    STDMETHODIMP_(BOOL) Settings::GetIgnoreSystemChannelMixer()
+    {
+        CAutoLock lock(this);
+
+        return m_ignoreSystemChannelMixer;
+    }
 }

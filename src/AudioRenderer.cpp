@@ -390,24 +390,28 @@ namespace SaneAudioRenderer
                 settingsDeviceId.reset(pDeviceId);
             }
 
+            bool clearForSystemChannelMixer = false;
             bool clearForCrossfeed = false;
 
             if (!m_device->IsExclusive())
             {
                 BOOL crossfeedEnabled;
                 m_settings->GetCrossfeedEnabled(&crossfeedEnabled);
+                BOOL ignoreSystemChannelMixer = m_settings->GetIgnoreSystemChannelMixer();
 
                 SharedWaveFormat newMixFormat = m_device->GetNewMixFormat();
                 if (!newMixFormat)
                     return;
 
                 bool mixFormatIsStereo = DspMatrix::IsStereoFormat(*newMixFormat);
-                bool inputIsStereo     = DspMatrix::IsStereoFormat(*m_inputFormat);
-                bool outputIsStereo    = DspMatrix::IsStereoFormat(*m_device->GetWaveFormat());
-                bool ignoredSystemChannelMixer = m_device->IgnoredSystemChannelMixer();
+                bool inputIsStereo = DspMatrix::IsStereoFormat(*m_inputFormat);
+                bool outputIsStereo = DspMatrix::IsStereoFormat(*m_device->GetWaveFormat());
 
-                if ((mixFormatIsStereo && crossfeedEnabled && !outputIsStereo) ||
-                    (mixFormatIsStereo && !crossfeedEnabled && !inputIsStereo && ignoredSystemChannelMixer))
+                if (m_device->IgnoredSystemChannelMixer() && !ignoreSystemChannelMixer && !crossfeedEnabled)
+                {
+                    clearForSystemChannelMixer = true;
+                }
+                else if (mixFormatIsStereo && crossfeedEnabled && !outputIsStereo)
                 {
                     clearForCrossfeed = true;
                 }
@@ -427,7 +431,8 @@ namespace SaneAudioRenderer
 
             m_defaultDeviceSerial = newDefaultDeviceSerial;
 
-            if ((clearForCrossfeed) ||
+            if ((clearForSystemChannelMixer) ||
+                (clearForCrossfeed) ||
                 (m_device->IsExclusive() != !!settingsDeviceExclusive) ||
                 (m_device->GetBufferDuration() != settingsDeviceBuffer) ||
                 (!settingsDeviceDefault && *m_device->GetId() != settingsDeviceId.get()) ||

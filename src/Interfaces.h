@@ -38,6 +38,9 @@ namespace SaneAudioRenderer
         };
         STDMETHOD(SetCrossfeedSettings)(UINT32 uCutoffFrequency, UINT32 uCrossfeedLevel) = 0;
         STDMETHOD_(void, GetCrossfeedSettings)(UINT32* puCutoffFrequency, UINT32* puCrossfeedLevel) = 0;
+
+        STDMETHOD_(void, SetIgnoreSystemChannelMixer)(BOOL bEnable) = 0;
+        STDMETHOD_(BOOL, GetIgnoreSystemChannelMixer)() = 0;
     };
     _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
 

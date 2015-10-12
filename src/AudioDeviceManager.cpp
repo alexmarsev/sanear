@@ -308,8 +308,18 @@ namespace SaneAudioRenderer
                             }
                             else
                             {
-                                if (crossfeedEnabled && DspMatrix::IsStereoFormat(*mixFormat))
+                                bool usingSystemChannelMixer = f.Format.nChannels != mixChannels ||
+                                                               f.dwChannelMask != mixMask;
+
+                                if (usingSystemChannelMixer && pSettings->GetIgnoreSystemChannelMixer())
                                 {
+                                    // Ignore system channel mixer if explicitly requested.
+                                    backend->ignoredSystemChannelMixer = true;
+                                }
+                                else if (usingSystemChannelMixer && pSettings->GetCrossfeedEnabled() &&
+                                                                    DspMatrix::IsStereoFormat(*mixFormat))
+                                {
+                                    // Crossfeed takes priority over system channel mixer.
                                     backend->ignoredSystemChannelMixer = true;
                                 }
                                 else
