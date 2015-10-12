@@ -188,11 +188,9 @@ namespace SaneAudioRenderer
         m_hMenu = CreateMenu();
         HMENU hMenu = CreateMenu();
 
-        BOOL allowBitstreaming;
-        m_settings->GetAllowBitstreaming(&allowBitstreaming);
+        BOOL allowBitstreaming = m_settings->GetAllowBitstreaming();
 
-        BOOL crossfeedEnabled;
-        m_settings->GetCrossfeedEnabled(&crossfeedEnabled);
+        BOOL crossfeedEnabled = m_settings->GetCrossfeedEnabled();
 
         UINT32 crosfeedCutoff;
         UINT32 crosfeedLevel;
@@ -329,17 +327,13 @@ namespace SaneAudioRenderer
 
             case Item::AllowBitstreaming:
             {
-                BOOL value;
-                m_settings->GetAllowBitstreaming(&value);
-                m_settings->SetAllowBitstreaming(!value);
+                m_settings->SetAllowBitstreaming(!m_settings->GetAllowBitstreaming());
                 break;
             }
 
             case Item::EnableCrossfeed:
             {
-                BOOL value;
-                m_settings->GetCrossfeedEnabled(&value);
-                m_settings->SetCrossfeedEnabled(!value);
+                m_settings->SetCrossfeedEnabled(!m_settings->GetCrossfeedEnabled());
                 break;
             }
 

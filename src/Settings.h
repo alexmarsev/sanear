@@ -25,10 +25,10 @@ namespace SaneAudioRenderer
         STDMETHODIMP GetOuputDevice(LPWSTR* ppDeviceId, BOOL* pbExclusive, UINT32* puBufferMS) override;
 
         STDMETHODIMP_(void) SetAllowBitstreaming(BOOL bAllowBitstreaming) override;
-        STDMETHODIMP_(void) GetAllowBitstreaming(BOOL* pbAllowBitstreaming) override;
+        STDMETHODIMP_(BOOL) GetAllowBitstreaming() override;
 
         STDMETHODIMP_(void) SetCrossfeedEnabled(BOOL bEnable) override;
-        STDMETHODIMP_(void) GetCrossfeedEnabled(BOOL* pbEnabled) override;
+        STDMETHODIMP_(BOOL) GetCrossfeedEnabled() override;
 
         STDMETHODIMP SetCrossfeedSettings(UINT32 uCutoffFrequency, UINT32 uCrossfeedLevel) override;
         STDMETHODIMP_(void) GetCrossfeedSettings(UINT32* puCutoffFrequency, UINT32* puCrossfeedLevel) override;

@@ -259,8 +259,7 @@ namespace SaneAudioRenderer
 
         BOOL exclusive;
         m_settings->GetOuputDevice(nullptr, &exclusive, nullptr);
-        BOOL bitstreamingAllowed;
-        m_settings->GetAllowBitstreaming(&bitstreamingAllowed);
+        BOOL bitstreamingAllowed = m_settings->GetAllowBitstreaming();
 
         if (!exclusive || !bitstreamingAllowed || live)
             return false;
@@ -395,8 +394,7 @@ namespace SaneAudioRenderer
 
             if (!m_device->IsExclusive())
             {
-                BOOL crossfeedEnabled;
-                m_settings->GetCrossfeedEnabled(&crossfeedEnabled);
+                BOOL crossfeedEnabled = m_settings->GetCrossfeedEnabled();
                 BOOL ignoreSystemChannelMixer = m_settings->GetIgnoreSystemChannelMixer();
 
                 SharedWaveFormat newMixFormat = m_device->GetNewMixFormat();

@@ -84,12 +84,11 @@ namespace SaneAudioRenderer
         }
     }
 
-    STDMETHODIMP_(void) Settings::GetAllowBitstreaming(BOOL* pbAllowBitstreaming)
+    STDMETHODIMP_(BOOL) Settings::GetAllowBitstreaming()
     {
         CAutoLock lock(this);
 
-        if (pbAllowBitstreaming)
-            *pbAllowBitstreaming = m_allowBitstreaming;
+        return m_allowBitstreaming;
     }
 
     STDMETHODIMP_(void) Settings::SetCrossfeedEnabled(BOOL bEnable)
@@ -103,12 +102,11 @@ namespace SaneAudioRenderer
         }
     }
 
-    STDMETHODIMP_(void) Settings::GetCrossfeedEnabled(BOOL* pbEnabled)
+    STDMETHODIMP_(BOOL) Settings::GetCrossfeedEnabled()
     {
         CAutoLock lock(this);
 
-        if (pbEnabled)
-            *pbEnabled = m_crossfeedEnabled;
+        return m_crossfeedEnabled;
     }
 
     STDMETHODIMP Settings::SetCrossfeedSettings(UINT32 uCutoffFrequency, UINT32 uCrossfeedLevel)

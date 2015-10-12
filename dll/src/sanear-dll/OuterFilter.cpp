@@ -37,11 +37,9 @@ namespace SaneAudioRenderer
             m_registryKey.SetUint(DeviceBufferDuration, uintValue1);
         }
 
-        m_settings->GetAllowBitstreaming(&boolValue);
-        m_registryKey.SetUint(AllowBitstreaming, boolValue);
+        m_registryKey.SetUint(AllowBitstreaming, m_settings->GetAllowBitstreaming());
 
-        m_settings->GetCrossfeedEnabled(&boolValue);
-        m_registryKey.SetUint(CrossfeedEnabled, boolValue);
+        m_registryKey.SetUint(CrossfeedEnabled, m_settings->GetCrossfeedEnabled());
 
         m_settings->GetCrossfeedSettings(&uintValue1, &uintValue2);
         m_registryKey.SetUint(CrossfeedCutoffFrequency, uintValue1);

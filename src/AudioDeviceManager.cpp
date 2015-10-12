@@ -269,8 +269,7 @@ namespace SaneAudioRenderer
                     backend->dspFormat = DspFormat::Float;
                     backend->waveFormat = mixFormat;
 
-                    BOOL crossfeedEnabled;
-                    pSettings->GetCrossfeedEnabled(&crossfeedEnabled);
+                    BOOL crossfeedEnabled = pSettings->GetCrossfeedEnabled();
 
                     std::deque<WAVEFORMATEXTENSIBLE> priorities = {
                         BuildWaveFormatExt(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 32, 32,

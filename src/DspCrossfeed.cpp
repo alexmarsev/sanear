@@ -54,8 +54,7 @@ namespace SaneAudioRenderer
         UINT32 crossfeedLevel;
         m_settings->GetCrossfeedSettings(&cutoffFrequency, &crossfeedLevel);
 
-        BOOL enabled;
-        m_settings->GetCrossfeedEnabled(&enabled);
+        BOOL enabled = m_settings->GetCrossfeedEnabled();
 
         m_active = m_possible && enabled;
 
