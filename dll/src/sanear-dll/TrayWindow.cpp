@@ -19,6 +19,7 @@ namespace SaneAudioRenderer
         {
             ExclusiveMode = 10,
             AllowBitstreaming,
+            IgnoreSystemChannelMixer,
             EnableCrossfeed,
             CrossfeedCMoy,   // used in CheckMenuRadioItem()
             CrossfeedJMeier, // used in CheckMenuRadioItem()
@@ -192,6 +193,8 @@ namespace SaneAudioRenderer
 
         BOOL crossfeedEnabled = m_settings->GetCrossfeedEnabled();
 
+        BOOL ignoreMixer = m_settings->GetIgnoreSystemChannelMixer();
+
         UINT32 crosfeedCutoff;
         UINT32 crosfeedLevel;
         m_settings->GetCrossfeedSettings(&crosfeedCutoff, &crosfeedLevel);
@@ -228,6 +231,11 @@ namespace SaneAudioRenderer
         check.wID = Item::ExclusiveMode;
         check.dwTypeData = L"Exclusive WASAPI mode";
         check.fState = (exclusive ? MFS_CHECKED : MFS_UNCHECKED);
+        InsertMenuItem(hMenu, 0, TRUE, &check);
+
+        check.wID = Item::IgnoreSystemChannelMixer;
+        check.dwTypeData = L"Ignore system channel mixer (always ignored in exclusive WASAPI mode)";
+        check.fState = (ignoreMixer ? MFS_CHECKED : MFS_UNCHECKED) | (exclusive ? MFS_DISABLED : MFS_ENABLED);
         InsertMenuItem(hMenu, 0, TRUE, &check);
 
         InsertMenuItem(hMenu, 0, TRUE, &separator);
@@ -328,6 +336,12 @@ namespace SaneAudioRenderer
             case Item::AllowBitstreaming:
             {
                 m_settings->SetAllowBitstreaming(!m_settings->GetAllowBitstreaming());
+                break;
+            }
+
+            case Item::IgnoreSystemChannelMixer:
+            {
+                m_settings->SetIgnoreSystemChannelMixer(!m_settings->GetIgnoreSystemChannelMixer());
                 break;
             }
 

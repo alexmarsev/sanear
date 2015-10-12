@@ -14,6 +14,7 @@ namespace SaneAudioRenderer
         const auto CrossfeedEnabled = L"CrossfeedEnabled";
         const auto CrossfeedCutoffFrequency = L"CrossfeedCutoffFrequency";
         const auto CrossfeedLevel = L"CrossfeedLevel";
+        const auto IgnoreSystemChannelMixer = L"IgnoreSystemChannelMixer";
     }
 
     OuterFilter::OuterFilter(IUnknown* pUnknown, const GUID& guid)
@@ -44,6 +45,8 @@ namespace SaneAudioRenderer
         m_settings->GetCrossfeedSettings(&uintValue1, &uintValue2);
         m_registryKey.SetUint(CrossfeedCutoffFrequency, uintValue1);
         m_registryKey.SetUint(CrossfeedLevel, uintValue2);
+
+        m_registryKey.SetUint(IgnoreSystemChannelMixer, m_settings->GetIgnoreSystemChannelMixer());
     }
 
     STDMETHODIMP OuterFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
@@ -93,6 +96,9 @@ namespace SaneAudioRenderer
         {
             m_settings->SetCrossfeedSettings(uintValue1, uintValue2);
         }
+
+        if (m_registryKey.GetUint(IgnoreSystemChannelMixer, uintValue1))
+            m_settings->SetIgnoreSystemChannelMixer(uintValue1);
 
         return S_OK;
     }
