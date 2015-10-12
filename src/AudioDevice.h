@@ -16,6 +16,8 @@ namespace SaneAudioRenderer
         IAudioRenderClientPtr audioRenderClient;
         IAudioClockPtr        audioClock;
 
+        SharedWaveFormat      mixFormat;
+
         SharedWaveFormat      waveFormat;
         DspFormat             dspFormat;
         uint32_t              bufferDuration;
@@ -53,12 +55,12 @@ namespace SaneAudioRenderer
 
         IAudioClockPtr GetClock() { return m_backend->audioClock; }
 
+        SharedWaveFormat GetMixFormat()      const { return m_backend->mixFormat; }
+
         SharedWaveFormat GetWaveFormat()     const { return m_backend->waveFormat; }
         DspFormat        GetDspFormat()      const { return m_backend->dspFormat; }
         uint32_t         GetBufferDuration() const { return m_backend->bufferDuration; }
         REFERENCE_TIME   GetStreamLatency()  const { return m_backend->latency; }
-
-        SharedWaveFormat GetNewMixFormat();
 
         bool IsExclusive() const { return m_backend->exclusive; }
         bool IsBitstream() const { return m_backend->bitstream; }

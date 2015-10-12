@@ -202,6 +202,8 @@ namespace SaneAudioRenderer
                 ThrowIfFailed(backend->audioClient->GetMixFormat(&pFormat));
                 SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
 
+                backend->mixFormat = mixFormat;
+
                 backend->bitstream = (DspFormatFromWaveFormat(*format) == DspFormat::Unknown);
 
                 backend->ignoredSystemChannelMixer = false;

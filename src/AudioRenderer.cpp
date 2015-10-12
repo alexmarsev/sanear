@@ -397,11 +397,10 @@ namespace SaneAudioRenderer
                 BOOL crossfeedEnabled = m_settings->GetCrossfeedEnabled();
                 BOOL ignoreSystemChannelMixer = m_settings->GetIgnoreSystemChannelMixer();
 
-                SharedWaveFormat newMixFormat = m_device->GetNewMixFormat();
-                if (!newMixFormat)
-                    return;
+                SharedWaveFormat mixFormat = m_device->GetMixFormat();
+                assert(mixFormat);
 
-                bool mixFormatIsStereo = DspMatrix::IsStereoFormat(*newMixFormat);
+                bool mixFormatIsStereo = DspMatrix::IsStereoFormat(*mixFormat);
                 bool inputIsStereo = DspMatrix::IsStereoFormat(*m_inputFormat);
                 bool outputIsStereo = DspMatrix::IsStereoFormat(*m_device->GetWaveFormat());
 
