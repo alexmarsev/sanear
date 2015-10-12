@@ -8,6 +8,7 @@ namespace SaneAudioRenderer
         Pcm8,
         Pcm16,
         Pcm24,
+        Pcm24in32,
         Pcm32,
         Float,
         Double,
@@ -38,6 +39,12 @@ namespace SaneAudioRenderer
     struct DspFormatTraits<DspFormat::Pcm24>
     {
         typedef int24_t SampleType;
+    };
+
+    template <>
+    struct DspFormatTraits<DspFormat::Pcm24in32>
+    {
+        typedef int32_t SampleType;
     };
 
     template <>
@@ -112,7 +119,8 @@ namespace SaneAudioRenderer
                     case 8:  return DspFormat::Pcm8;
                     case 16: return DspFormat::Pcm16;
                     case 24: return DspFormat::Pcm24;
-                    case 32: return DspFormat::Pcm32;
+                    case 32: return formatExtensible.Samples.wValidBitsPerSample == 24 ? DspFormat::Pcm24in32 :
+                                                                                         DspFormat::Pcm32;
                 }
             }
         }

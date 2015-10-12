@@ -249,6 +249,7 @@ namespace SaneAudioRenderer
                     ConvertSamples<DspFormat::Pcm24, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
 
+                case DspFormat::Pcm24in32:
                 case DspFormat::Pcm32:
                     ConvertSamples<DspFormat::Pcm32, OutputFormat>(chunk.GetData(), outputData, chunk.GetSampleCount());
                     break;
@@ -283,6 +284,12 @@ namespace SaneAudioRenderer
 
             case DspFormat::Pcm24:
                 ConvertChunk<DspFormat::Pcm24>(chunk);
+                break;
+
+            case DspFormat::Pcm24in32:
+                if (chunk.GetFormat() != DspFormat::Pcm32)
+                    ConvertChunk<DspFormat::Pcm32>(chunk);
+                chunk.m_format = DspFormat::Pcm24in32;
                 break;
 
             case DspFormat::Pcm32:

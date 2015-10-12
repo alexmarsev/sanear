@@ -75,9 +75,6 @@ namespace SaneAudioRenderer
                 (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) ?
                     reinterpret_cast<const WAVEFORMATEXTENSIBLE*>(&format) : nullptr;
 
-            bool pcm24in32 = (dspFormat == DspFormat::Pcm32 &&
-                              pFormatExt && pFormatExt->Samples.wValidBitsPerSample == 24);
-
             switch (dspFormat)
             {
                 case DspFormat::Pcm8:
@@ -89,8 +86,11 @@ namespace SaneAudioRenderer
                 case DspFormat::Pcm24:
                     return L"PCM-24";
 
+                case DspFormat::Pcm24in32:
+                    return L"PCM-24 (Padded)";
+
                 case DspFormat::Pcm32:
-                    return pcm24in32 ? L"PCM-24 (Padded)" : L"PCM-32";
+                    return L"PCM-32";
 
                 case DspFormat::Float:
                     return L"Float";
