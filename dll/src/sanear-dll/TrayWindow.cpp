@@ -19,6 +19,7 @@ namespace SaneAudioRenderer
         {
             ExclusiveMode = 10,
             AllowBitstreaming,
+            ExtraPrecisionProcessing,
             IgnoreSystemChannelMixer,
             EnableCrossfeed,
             CrossfeedCMoy,   // used in CheckMenuRadioItem()
@@ -195,6 +196,8 @@ namespace SaneAudioRenderer
 
         BOOL ignoreMixer = m_settings->GetIgnoreSystemChannelMixer();
 
+        BOOL extraPrecision = m_settings->GetExtraPrecisionProcessing();
+
         UINT32 crosfeedCutoff;
         UINT32 crosfeedLevel;
         m_settings->GetCrossfeedSettings(&crosfeedCutoff, &crosfeedLevel);
@@ -236,6 +239,13 @@ namespace SaneAudioRenderer
         check.wID = Item::IgnoreSystemChannelMixer;
         check.dwTypeData = L"Ignore system channel mixer (always ignored in exclusive WASAPI mode)";
         check.fState = (ignoreMixer ? MFS_CHECKED : MFS_UNCHECKED) | (exclusive ? MFS_DISABLED : MFS_ENABLED);
+        InsertMenuItem(hMenu, 0, TRUE, &check);
+
+        InsertMenuItem(hMenu, 0, TRUE, &separator);
+
+        check.wID = Item::ExtraPrecisionProcessing;
+        check.dwTypeData = L"Extra processing precision";
+        check.fState = (extraPrecision ? MFS_CHECKED : MFS_UNCHECKED);
         InsertMenuItem(hMenu, 0, TRUE, &check);
 
         InsertMenuItem(hMenu, 0, TRUE, &separator);
@@ -342,6 +352,12 @@ namespace SaneAudioRenderer
             case Item::IgnoreSystemChannelMixer:
             {
                 m_settings->SetIgnoreSystemChannelMixer(!m_settings->GetIgnoreSystemChannelMixer());
+                break;
+            }
+
+            case Item::ExtraPrecisionProcessing:
+            {
+                m_settings->SetExtraPrecisionProcessing(!m_settings->GetExtraPrecisionProcessing());
                 break;
             }
 

@@ -15,6 +15,7 @@ namespace SaneAudioRenderer
         const auto CrossfeedCutoffFrequency = L"CrossfeedCutoffFrequency";
         const auto CrossfeedLevel = L"CrossfeedLevel";
         const auto IgnoreSystemChannelMixer = L"IgnoreSystemChannelMixer";
+        const auto ExtraPrecisionProcessing = L"ExtraPrecisionProcessing";
     }
 
     OuterFilter::OuterFilter(IUnknown* pUnknown, const GUID& guid)
@@ -47,6 +48,8 @@ namespace SaneAudioRenderer
         m_registryKey.SetUint(CrossfeedLevel, uintValue2);
 
         m_registryKey.SetUint(IgnoreSystemChannelMixer, m_settings->GetIgnoreSystemChannelMixer());
+
+        m_registryKey.SetUint(ExtraPrecisionProcessing, m_settings->GetExtraPrecisionProcessing());
     }
 
     STDMETHODIMP OuterFilter::NonDelegatingQueryInterface(REFIID riid, void** ppv)
@@ -99,6 +102,9 @@ namespace SaneAudioRenderer
 
         if (m_registryKey.GetUint(IgnoreSystemChannelMixer, uintValue1))
             m_settings->SetIgnoreSystemChannelMixer(uintValue1);
+
+        if (m_registryKey.GetUint(ExtraPrecisionProcessing, uintValue1))
+            m_settings->SetExtraPrecisionProcessing(uintValue1);
 
         return S_OK;
     }
