@@ -2,12 +2,14 @@
 
 namespace SaneAudioRenderer
 {
+    class AudioRenderer;
+
     class MyClock final
         : public CBaseReferenceClock
     {
     public:
 
-        MyClock(IUnknown* pUnknown, HRESULT& result);
+        MyClock(IUnknown* pUnknown, const std::unique_ptr<AudioRenderer>& renderer, HRESULT& result);
         MyClock(const MyClock&) = delete;
         MyClock& operator=(const MyClock&) = delete;
 
@@ -24,6 +26,8 @@ namespace SaneAudioRenderer
         HRESULT GetAudioClockStartTime(REFERENCE_TIME* pStartTime);
 
     private:
+
+        const std::unique_ptr<AudioRenderer>& m_renderer;
 
         const int64_t m_performanceFrequency;
         IAudioClockPtr m_audioClock;

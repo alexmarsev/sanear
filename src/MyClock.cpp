@@ -1,10 +1,13 @@
 #include "pch.h"
 #include "MyClock.h"
 
+#include "AudioRenderer.h"
+
 namespace SaneAudioRenderer
 {
-    MyClock::MyClock(IUnknown* pUnknown, HRESULT& result)
+    MyClock::MyClock(IUnknown* pUnknown, const std::unique_ptr<AudioRenderer>& renderer, HRESULT& result)
         : CBaseReferenceClock(L"SaneAudioRenderer::MyClock", pUnknown, &result)
+        , m_renderer(renderer)
         , m_performanceFrequency(GetPerformanceFrequency())
     {
     }

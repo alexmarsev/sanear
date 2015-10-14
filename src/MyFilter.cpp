@@ -23,7 +23,7 @@ namespace SaneAudioRenderer
         try
         {
             if (SUCCEEDED(result))
-                m_clock = std::make_unique<MyClock>(GetOwner(), result);
+                m_clock = std::make_unique<MyClock>(GetOwner(), m_renderer, result);
 
             //if (SUCCEEDED(result))
             //    m_testClock = new MyTestClock(nullptr, result);
