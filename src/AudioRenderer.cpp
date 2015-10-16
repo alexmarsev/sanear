@@ -113,9 +113,19 @@ namespace SaneAudioRenderer
                     DspChunk::ToFormat(m_device->GetDspFormat(), chunk);
                 }
 
-                // Apply rate corrections (rate matching and clock slaving).
-                if (m_device && !m_device->IsBitstream() && m_device->IsRealtime() && m_state == State_Running)
-                    ApplyRateCorrection(chunk);
+                if (m_device && !m_device->IsBitstream() && m_state == State_Running)
+                {
+                    if (m_device->IsRealtime())
+                    {
+                        // Apply rate corrections (rate matching and clock slaving).
+                        ApplyRateCorrection(chunk);
+                    }
+                    else if (REFERENCE_TIME offset = std::atomic_exchange(&m_guidedReclockOffset, 0))
+                    {
+                        // Apply guided reclock adjustment.
+                        m_dspRate.Adjust(-offset);
+                    }
+                }
 
                 // Don't deny the allocator its right to reuse IMediaSample while the chunk is hanging in the buffer.
                 if (m_device && m_device->IsRealtime())
@@ -448,6 +458,7 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
+            m_guidedReclockOffset = 0;
             m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
             m_clockCorrection = 0;
             m_device->Start();
@@ -513,6 +524,7 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_device);
         assert(!m_device->IsBitstream());
+        assert(m_device->IsRealtime());
         assert(m_state == State_Running);
 
         if (chunk.IsEmpty())

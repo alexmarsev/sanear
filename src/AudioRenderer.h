@@ -56,6 +56,8 @@ namespace SaneAudioRenderer
         const AudioDevice* GetAudioDevice();
         std::vector<std::wstring> GetActiveProcessors();
 
+        void TakeGuidedReclock(REFERENCE_TIME offset) { m_guidedReclockOffset += offset; }
+
     private:
 
         void CheckDeviceSettings();
@@ -121,5 +123,7 @@ namespace SaneAudioRenderer
         std::atomic<float> m_volume = 1.0f;
         std::atomic<float> m_balance = 0.0f;
         double m_rate = 1.0;
+
+        std::atomic<REFERENCE_TIME> m_guidedReclockOffset = 0;
     };
 }
