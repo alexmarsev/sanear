@@ -53,19 +53,19 @@ namespace SaneAudioRenderer
                 assert(chunk.IsEmpty());
             }
         }
-        else if (m_lastFrameEnd == 0 && !realtimeDevice)
+        else if (!realtimeDevice && (m_lastFrameEnd == 0 || (sampleProps.dwSampleFlags & AM_SAMPLE_TIMEDISCONTINUITY)))
         {
-            if ((sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID) && sampleProps.tStop <= 0)
+            if ((sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID) && sampleProps.tStop <= m_lastFrameEnd)
             {
                 // Drop the sample.
                 DebugOut("SampleCorrection drop [", sampleProps.tStart, sampleProps.tStop, "]");
                 chunk = DspChunk();
                 assert(chunk.IsEmpty());
             }
-            else if ((sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID) && sampleProps.tStart < 0)
+            else if ((sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID) && sampleProps.tStart < m_lastFrameEnd)
             {
                 // Crop the sample.
-                const size_t cropFrames = (size_t)TimeToFrames(0 - sampleProps.tStart);
+                const size_t cropFrames = (size_t)TimeToFrames(m_lastFrameEnd - sampleProps.tStart);
 
                 if (cropFrames > 0)
                 {
@@ -75,7 +75,7 @@ namespace SaneAudioRenderer
                     chunk.ShrinkHead(chunk.GetFrameCount() > cropFrames ? chunk.GetFrameCount() - cropFrames : 0);
                 }
             }
-            else if ((sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID) && sampleProps.tStart > 0)
+            else if ((sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID) && sampleProps.tStart > m_lastFrameEnd)
             {
                 // Zero-pad the sample.
                 const size_t padFrames = (size_t)TimeToFrames(sampleProps.tStart - m_lastFrameEnd);
