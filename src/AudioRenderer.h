@@ -65,6 +65,8 @@ namespace SaneAudioRenderer
         void CreateDevice();
         void ClearDevice();
 
+        void MinimizeReslavingJitter();
+
         void ApplyClockCorrection();
 
         void ApplyRateCorrection(DspChunk& chunk);

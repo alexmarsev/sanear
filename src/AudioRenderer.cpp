@@ -238,6 +238,7 @@ namespace SaneAudioRenderer
                 m_sampleCorrection.NewDeviceBuffer();
                 InitializeProcessors();
                 m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
+                MinimizeReslavingJitter();
                 StartDevice();
             }
             else
@@ -485,7 +486,10 @@ namespace SaneAudioRenderer
             m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
 
             if (m_state == State_Running)
+            {
+                MinimizeReslavingJitter();
                 StartDevice();
+            }
         }
     }
 
@@ -498,6 +502,43 @@ namespace SaneAudioRenderer
             m_myClock.UnslaveClockFromAudio();
             m_device->Stop();
             m_device = nullptr;
+        }
+    }
+
+    void AudioRenderer::MinimizeReslavingJitter()
+    {
+        assert(m_device);
+        assert(m_state == State_Running);
+        assert(m_device->GetEnd() == 0);
+
+        if (m_device->IsBitstream())
+            return;
+
+        // Try to keep inevitable clock jerking to a minimum after re-slaving.
+
+        REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime);
+
+        if (!m_device->IsExclusive())
+            silence -= m_device->GetStreamLatency();
+
+        if (silence > 0)
+        {
+            silence = std::min(silence, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
+
+            uint32_t rate = m_device->GetWaveFormat()->nSamplesPerSec;
+            DspChunk chunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
+                           (size_t)llMulDiv(silence, rate, OneSecond, 0), rate);
+
+            if (!chunk.IsEmpty())
+            {
+                m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, rate, 0);
+
+                DebugOut("AudioRenderer insert", chunk.GetFrameCount() * 1000. / rate,
+                         "ms of silence to minimize re-slaving jitter");
+
+                ZeroMemory(chunk.GetData(), chunk.GetSize());
+                PushToDevice(chunk, nullptr);
+            }
         }
     }
 
