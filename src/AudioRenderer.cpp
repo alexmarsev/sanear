@@ -61,20 +61,6 @@ namespace SaneAudioRenderer
         }
     }
 
-    bool AudioRenderer::OnExternalClock()
-    {
-        CAutoLock objectLock(this);
-
-        return m_externalClock;
-    }
-
-    bool AudioRenderer::IsLive()
-    {
-        CAutoLock objectLock(this);
-
-        return m_live;
-    }
-
     bool AudioRenderer::Push(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
     {
         DspChunk chunk;
@@ -101,7 +87,7 @@ namespace SaneAudioRenderer
                     ApplyClockCorrection();
 
                 // Apply dsp chain.
-                if (m_device && !m_device->IsBitstream())
+                if (m_device && !IsBitstreaming())
                 {
                     auto f = [&](DspBase* pDsp)
                     {
@@ -113,7 +99,7 @@ namespace SaneAudioRenderer
                     DspChunk::ToFormat(m_device->GetDspFormat(), chunk);
                 }
 
-                if (m_device && !m_device->IsBitstream() && m_state == State_Running)
+                if (m_device && !IsBitstreaming() && m_state == State_Running)
                 {
                     if (m_device->IsRealtime())
                     {
@@ -161,7 +147,7 @@ namespace SaneAudioRenderer
             try
             {
                 // Apply dsp chain.
-                if (m_device && !m_device->IsBitstream())
+                if (m_device && !IsBitstreaming())
                 {
                     auto f = [&](DspBase* pDsp)
                     {
@@ -290,6 +276,8 @@ namespace SaneAudioRenderer
         m_sampleCorrection.NewFormat(inputFormat);
 
         ClearDevice();
+
+        m_bitstreaming = (DspFormatFromWaveFormat(*inputFormat) == DspFormat::Unknown);
     }
 
     void AudioRenderer::NewSegment(double rate)
@@ -361,7 +349,7 @@ namespace SaneAudioRenderer
 
         std::vector<std::wstring> ret;
 
-        if (m_inputFormat && m_device && !m_device->IsBitstream())
+        if (m_inputFormat && m_device && !IsBitstreaming())
         {
             auto f = [&](DspBase* pDsp)
             {
@@ -511,7 +499,7 @@ namespace SaneAudioRenderer
         assert(m_state == State_Running);
         assert(m_device->GetEnd() == 0);
 
-        if (m_device->IsBitstream())
+        if (IsBitstreaming())
             return;
 
         // Try to keep inevitable clock jerking to a minimum after re-slaving.
@@ -564,7 +552,7 @@ namespace SaneAudioRenderer
     {
         CAutoLock objectLock(this);
         assert(m_device);
-        assert(!m_device->IsBitstream());
+        assert(!IsBitstreaming());
         assert(m_device->IsRealtime());
         assert(m_state == State_Running);
 
@@ -682,7 +670,7 @@ namespace SaneAudioRenderer
         assert(m_inputFormat);
         assert(m_device);
 
-        if (m_device->IsBitstream())
+        if (IsBitstreaming())
             return;
 
         const auto inRate = m_inputFormat->nSamplesPerSec;

@@ -35,6 +35,8 @@ namespace SaneAudioRenderer
 
     private:
 
+        bool CanDoGuidedReclock();
+
         int64_t GetCounterTime() { return llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0); }
 
         const std::unique_ptr<AudioRenderer>& m_renderer;

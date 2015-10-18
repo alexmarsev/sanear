@@ -24,6 +24,9 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
+        if (m_guidedReclockSlaving && !CanDoGuidedReclock())
+            UnslaveClock();
+
         if (m_guidedReclockSlaving)
         {
             auto getGuidedReclockTime = [this](int64_t counterTime)
@@ -132,6 +135,9 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
+        if (!CanDoGuidedReclock())
+            return E_FAIL;
+
         int64_t time;
         ReturnIfFailed(GetTime(&time));
 
@@ -147,6 +153,9 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
+        if (!m_guidedReclockSlaving)
+            return S_FALSE;
+
         GetPrivateTime();
         m_guidedReclockSlaving = false;
 
@@ -156,6 +165,9 @@ namespace SaneAudioRenderer
     STDMETHODIMP MyClock::OffsetClock(LONGLONG offset)
     {
         CAutoLock lock(this);
+
+        if (!CanDoGuidedReclock())
+            return E_FAIL;
 
         m_audioOffset += offset;
         m_counterOffset += offset;
@@ -173,5 +185,12 @@ namespace SaneAudioRenderer
         *pTime = GetPrivateTime();
 
         return S_OK;
+    }
+
+    bool MyClock::CanDoGuidedReclock()
+    {
+        return !m_renderer->IsBitstreaming() &&
+               !m_renderer->OnExternalClock() &&
+               !m_renderer->IsLive();
     }
 }

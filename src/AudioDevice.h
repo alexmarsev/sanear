@@ -63,7 +63,6 @@ namespace SaneAudioRenderer
         REFERENCE_TIME   GetStreamLatency()  const { return m_backend->latency; }
 
         bool IsExclusive() const { return m_backend->exclusive; }
-        bool IsBitstream() const { return m_backend->bitstream; }
         bool IsRealtime()  const { return m_backend->realtime; }
 
         bool IgnoredSystemChannelMixer() const { return m_backend->ignoredSystemChannelMixer; }
@@ -76,7 +75,6 @@ namespace SaneAudioRenderer
         void PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent);
         UINT32 PushSilenceToDevice(UINT32 frames);
         void PushToBuffer(DspChunk& chunk);
-        void RetrieveFromBuffer(DspChunk& chunk);
 
         std::shared_ptr<AudioDeviceBackend> m_backend;
         std::atomic<uint64_t> m_pushedFrames = 0;

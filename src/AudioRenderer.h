@@ -28,9 +28,6 @@ namespace SaneAudioRenderer
         ~AudioRenderer();
 
         void SetClock(IReferenceClock* pClock);
-        bool OnExternalClock();
-
-        bool IsLive();
 
         bool Push(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent);
         bool Finish(bool blockUntilEnd, CAMEvent* pFilledEvent);
@@ -57,6 +54,10 @@ namespace SaneAudioRenderer
         std::vector<std::wstring> GetActiveProcessors();
 
         void TakeGuidedReclock(REFERENCE_TIME offset) { m_guidedReclockOffset += offset; }
+
+        bool OnExternalClock() const { return m_externalClock; }
+        bool IsLive()          const { return m_live; }
+        bool IsBitstreaming()  const { return m_bitstreaming; }
 
     private:
 
@@ -98,10 +99,12 @@ namespace SaneAudioRenderer
 
         MyClock& m_myClock;
         IReferenceClockPtr m_graphClock;
-        bool m_externalClock = false;
+
+        std::atomic<bool> m_externalClock = false;
+        std::atomic<bool> m_live = false;
+        std::atomic<bool> m_bitstreaming = false;
 
         SharedWaveFormat m_inputFormat;
-        bool m_live = false;
 
         REFERENCE_TIME m_startClockOffset = 0;
         REFERENCE_TIME m_startTime = 0;
