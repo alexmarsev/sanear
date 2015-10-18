@@ -54,6 +54,8 @@ namespace SaneAudioRenderer
         UINT32 crossfeedLevel;
         m_settings->GetCrossfeedSettings(&cutoffFrequency, &crossfeedLevel);
 
+        bool wasActive = m_active;
+
         BOOL enabled = m_settings->GetCrossfeedEnabled();
 
         m_active = m_possible && enabled;
@@ -62,6 +64,10 @@ namespace SaneAudioRenderer
         {
             m_bs2b.set_level_fcut(cutoffFrequency);
             m_bs2b.set_level_feed(crossfeedLevel);
+        }
+        else if (wasActive)
+        {
+            m_bs2b.clear();
         }
     }
 }
