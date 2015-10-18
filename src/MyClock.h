@@ -8,6 +8,7 @@ namespace SaneAudioRenderer
 
     class MyClock final
         : public CBaseReferenceClock
+        , public IGuidedReclock
     {
     public:
 
@@ -27,14 +28,27 @@ namespace SaneAudioRenderer
         HRESULT GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime);
         HRESULT GetAudioClockStartTime(REFERENCE_TIME* pStartTime);
 
+        STDMETHODIMP SlaveClock(DOUBLE multiplier) override;
+        STDMETHODIMP UnslaveClock() override;
+        STDMETHODIMP OffsetClock(LONGLONG offset) override;
+        STDMETHODIMP GetImmediateTime(LONGLONG* pTime) override;
+
     private:
+
+        int64_t GetCounterTime() { return llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0); }
 
         const std::unique_ptr<AudioRenderer>& m_renderer;
 
         const int64_t m_performanceFrequency;
+
         IAudioClockPtr m_audioClock;
         int64_t m_audioStart = 0;
         int64_t m_audioOffset = 0;
         int64_t m_counterOffset = 0;
+
+        bool m_guidedReclockSlaving = false;
+        double m_guidedReclockMultiplier = 1.0;
+        int64_t m_guidedReclockStartTime = 0;
+        int64_t m_guidedReclockStartClock = 0;
     };
 }

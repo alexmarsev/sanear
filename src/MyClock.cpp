@@ -14,12 +14,42 @@ namespace SaneAudioRenderer
 
     STDMETHODIMP MyClock::NonDelegatingQueryInterface(REFIID riid, void** ppv)
     {
+        if (riid == __uuidof(IGuidedReclock))
+            return GetInterface(static_cast<IGuidedReclock*>(this), ppv);
+
         return CBaseReferenceClock::NonDelegatingQueryInterface(riid, ppv);
     }
 
     REFERENCE_TIME MyClock::GetPrivateTime()
     {
         CAutoLock lock(this);
+
+        if (m_guidedReclockSlaving)
+        {
+            auto getGuidedReclockTime = [this](int64_t counterTime)
+            {
+                int64_t progress = (int64_t)((counterTime - m_guidedReclockStartTime) * m_guidedReclockMultiplier);
+                return m_guidedReclockStartClock + progress;
+            };
+
+            REFERENCE_TIME audioClockTime, counterTime, clockTime;
+            if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &counterTime)))
+            {
+                clockTime = getGuidedReclockTime(counterTime);
+                int64_t diff = clockTime - audioClockTime;
+                m_audioOffset += diff;
+                m_renderer->TakeGuidedReclock(diff);
+            }
+            else
+            {
+                counterTime = GetCounterTime();
+                clockTime = getGuidedReclockTime(counterTime);
+            }
+
+            m_counterOffset = clockTime - counterTime;
+
+            return clockTime;
+        }
 
         REFERENCE_TIME audioClockTime, audioClockCounterTime;
         if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &audioClockCounterTime)))
@@ -28,7 +58,7 @@ namespace SaneAudioRenderer
             return audioClockTime;
         }
 
-        return m_counterOffset + llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
+        return m_counterOffset + GetCounterTime();
     }
 
     void MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
@@ -38,6 +68,7 @@ namespace SaneAudioRenderer
         m_audioClock = pAudioClock;
         m_audioStart = audioStart;
         m_audioOffset = 0;
+        m_counterOffset = audioStart - GetCounterTime();
     }
 
     void MyClock::UnslaveClockFromAudio()
@@ -66,9 +97,9 @@ namespace SaneAudioRenderer
             if (SUCCEEDED(m_audioClock->GetFrequency(&audioFrequency)) &&
                 SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)))
             {
-                int64_t counterTime = llMulDiv(GetPerformanceCounter(), OneSecond, m_performanceFrequency, 0);
+                int64_t counterTime = GetCounterTime();
                 int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) +
-                                    m_audioStart + (audioPosition > 0 ? m_audioOffset + counterTime - audioTime : 0);
+                                    m_audioStart + m_audioOffset + (audioPosition > 0 ? counterTime - audioTime : 0);
 
                 *pAudioTime = clockTime;
 
@@ -95,5 +126,52 @@ namespace SaneAudioRenderer
         }
 
         return E_FAIL;
+    }
+
+    STDMETHODIMP MyClock::SlaveClock(DOUBLE multiplier)
+    {
+        CAutoLock lock(this);
+
+        int64_t time;
+        ReturnIfFailed(GetTime(&time));
+
+        m_guidedReclockSlaving = true;
+        m_guidedReclockMultiplier = multiplier;
+        m_guidedReclockStartTime = GetCounterTime();
+        m_guidedReclockStartClock = time;
+
+        return S_OK;
+    }
+
+    STDMETHODIMP MyClock::UnslaveClock()
+    {
+        CAutoLock lock(this);
+
+        GetPrivateTime();
+        m_guidedReclockSlaving = false;
+
+        return S_OK;
+    }
+
+    STDMETHODIMP MyClock::OffsetClock(LONGLONG offset)
+    {
+        CAutoLock lock(this);
+
+        m_audioOffset += offset;
+        m_counterOffset += offset;
+        m_guidedReclockStartClock += offset;
+
+        m_renderer->TakeGuidedReclock(offset);
+
+        return S_OK;
+    }
+
+    STDMETHODIMP MyClock::GetImmediateTime(LONGLONG* pTime)
+    {
+        CheckPointer(pTime, E_POINTER);
+
+        *pTime = GetPrivateTime();
+
+        return S_OK;
     }
 }
