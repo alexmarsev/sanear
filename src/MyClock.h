@@ -24,7 +24,7 @@ namespace SaneAudioRenderer
 
         void SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart);
         void UnslaveClockFromAudio();
-        void OffsetSlavedClock(REFERENCE_TIME offsetTime);
+        void OffsetAudioClock(REFERENCE_TIME offsetTime);
         HRESULT GetAudioClockTime(REFERENCE_TIME* pAudioTime, REFERENCE_TIME* pCounterTime);
         HRESULT GetAudioClockStartTime(REFERENCE_TIME* pStartTime);
 

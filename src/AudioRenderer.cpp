@@ -553,7 +553,7 @@ namespace SaneAudioRenderer
             REFERENCE_TIME offset = m_sampleCorrection.GetTimeDivergence() - m_clockCorrection;
             if (std::abs(offset) > 100)
             {
-                m_myClock.OffsetSlavedClock(offset);
+                m_myClock.OffsetAudioClock(offset);
                 m_clockCorrection += offset;
                 DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
             }
@@ -629,7 +629,7 @@ namespace SaneAudioRenderer
                         REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond,
                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        m_myClock.OffsetSlavedClock(-paddedTime);
+                        m_myClock.OffsetAudioClock(-paddedTime);
                         padTime -= paddedTime;
                         assert(padTime >= 0);
 
@@ -639,7 +639,7 @@ namespace SaneAudioRenderer
 
                     // Correct the rest with variable rate.
                     m_dspRate.Adjust(padTime);
-                    m_myClock.OffsetSlavedClock(-padTime);
+                    m_myClock.OffsetAudioClock(-padTime);
                 }
                 else if (remaining > latency)
                 {
@@ -660,7 +660,7 @@ namespace SaneAudioRenderer
                         REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond,
                                                               m_device->GetWaveFormat()->nSamplesPerSec, 0);
 
-                        m_myClock.OffsetSlavedClock(droppedTime);
+                        m_myClock.OffsetAudioClock(droppedTime);
                         dropTime -= droppedTime;
                         assert(dropTime >= 0);
 
@@ -670,7 +670,7 @@ namespace SaneAudioRenderer
 
                     // Correct the rest with variable rate.
                     m_dspRate.Adjust(-dropTime);
-                    m_myClock.OffsetSlavedClock(dropTime);
+                    m_myClock.OffsetAudioClock(dropTime);
                 }
             }
         }

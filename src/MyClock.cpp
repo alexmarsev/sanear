@@ -51,10 +51,10 @@ namespace SaneAudioRenderer
             return clockTime;
         }
 
-        REFERENCE_TIME audioClockTime, audioClockCounterTime;
-        if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &audioClockCounterTime)))
+        REFERENCE_TIME audioClockTime, counterTime;
+        if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &counterTime)))
         {
-            m_counterOffset = audioClockTime - audioClockCounterTime;
+            m_counterOffset = audioClockTime - counterTime;
             return audioClockTime;
         }
 
@@ -78,7 +78,7 @@ namespace SaneAudioRenderer
         m_audioClock = nullptr;
     }
 
-    void MyClock::OffsetSlavedClock(REFERENCE_TIME offsetTime)
+    void MyClock::OffsetAudioClock(REFERENCE_TIME offsetTime)
     {
         CAutoLock lock(this);
 
