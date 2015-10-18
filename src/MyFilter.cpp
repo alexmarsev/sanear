@@ -181,7 +181,8 @@ namespace SaneAudioRenderer
             data = MyPropertyPage::CreateDialogData(resize, inputFormat, audioDevice,
                                                     m_renderer->GetActiveProcessors(),
                                                     m_renderer->OnExternalClock(),
-                                                    m_renderer->IsLive());
+                                                    m_renderer->IsLive(),
+                                                    m_renderer->OnGuidedReclock());
         }
         catch (std::bad_alloc&)
         {

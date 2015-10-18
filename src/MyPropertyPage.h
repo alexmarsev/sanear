@@ -20,7 +20,8 @@ namespace SaneAudioRenderer
     public:
 
         static std::vector<char> CreateDialogData(bool resize, SharedWaveFormat inputFormat, const AudioDevice* device,
-                                                  std::vector<std::wstring> processors, bool externalClock, bool live);
+                                                  std::vector<std::wstring> processors, bool externalClock, bool live,
+                                                  bool guidedReclock);
 
         MyPropertyPage();
         MyPropertyPage(HRESULT& result, IStatusPageData* pData);

@@ -59,6 +59,8 @@ namespace SaneAudioRenderer
 
             m_externalClock = false;
         }
+
+        m_guidedReclockActive = false;
     }
 
     bool AudioRenderer::Push(IMediaSample* pSample, AM_SAMPLE2_PROPERTIES& sampleProps, CAMEvent* pFilledEvent)
@@ -110,6 +112,7 @@ namespace SaneAudioRenderer
                     {
                         // Apply guided reclock adjustment.
                         m_dspRate.Adjust(-offset);
+                        m_guidedReclockActive = true;
                     }
                 }
 
@@ -361,6 +364,13 @@ namespace SaneAudioRenderer
         }
 
         return ret;
+    }
+
+    bool AudioRenderer::OnGuidedReclock()
+    {
+        CAutoLock objectLock(this);
+
+        return m_guidedReclockActive;
     }
 
     void AudioRenderer::CheckDeviceSettings()

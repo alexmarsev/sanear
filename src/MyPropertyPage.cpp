@@ -152,7 +152,8 @@ namespace SaneAudioRenderer
     }
 
     std::vector<char> MyPropertyPage::CreateDialogData(bool resize, SharedWaveFormat inputFormat, const AudioDevice* pDevice,
-                                                       std::vector<std::wstring> processors, bool externalClock, bool live)
+                                                       std::vector<std::wstring> processors, bool externalClock, bool live,
+                                                       bool guidedReclock)
     {
         std::wstring adapterField = (pDevice && pDevice->GetAdapterName()) ? *pDevice->GetAdapterName() : L"-";
 
@@ -166,7 +167,7 @@ namespace SaneAudioRenderer
 
         std::wstring bitstreamingField = (inputFormat ? (bitstreaming ? L"Yes" : L"No") : L"-");
 
-        std::wstring slavingField = live ? L"Live Source" : externalClock ? L"Graph Clock" : L"Audio Device";
+        std::wstring slavingField = guidedReclock ? L"Guided Reclock" : live ? L"Live Source" : externalClock ? L"Graph Clock" : L"Audio Device";
 
         std::wstring channelsInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-";
@@ -237,7 +238,7 @@ namespace SaneAudioRenderer
         : CUnknown(L"SaneAudioRenderer::MyPropertyPage", nullptr)
         , m_delayedData(true)
     {
-        m_dialogData = CreateDialogData(false, nullptr, nullptr, {}, false, false);
+        m_dialogData = CreateDialogData(false, nullptr, nullptr, {}, false, false, false);
     }
 
     MyPropertyPage::MyPropertyPage(HRESULT& result, IStatusPageData* pData)

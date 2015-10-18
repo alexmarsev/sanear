@@ -59,6 +59,8 @@ namespace SaneAudioRenderer
         bool IsLive()          const { return m_live; }
         bool IsBitstreaming()  const { return m_bitstreaming; }
 
+        bool OnGuidedReclock();
+
     private:
 
         void CheckDeviceSettings();
@@ -130,5 +132,6 @@ namespace SaneAudioRenderer
         double m_rate = 1.0;
 
         std::atomic<REFERENCE_TIME> m_guidedReclockOffset = 0;
+        bool m_guidedReclockActive = false;
     };
 }
