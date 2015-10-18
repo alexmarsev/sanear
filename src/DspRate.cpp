@@ -96,7 +96,7 @@ namespace SaneAudioRenderer
         if (!soxr || chunk.IsEmpty())
             return;
 
-        if (m_state == State::Variable && m_variableDelay > 0)
+        if (m_state == State::Variable && !m_inStateTransition && m_variableDelay > 0)
         {
             uint64_t inputPosition = llMulDiv(m_variableOutputFrames, m_inputRate, m_outputRate, 0);
             int64_t adjustedFrames = inputPosition + m_variableDelay - m_variableInputFrames;
