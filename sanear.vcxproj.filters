@@ -141,6 +141,7 @@
     <ClInclude Include="src\AudioDevice.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="IGuidedReclock.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectShow">

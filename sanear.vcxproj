@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="IGuidedReclock.h" />
     <ClInclude Include="src\AudioDevice.h" />
     <ClInclude Include="src\AudioDeviceManager.h" />
     <ClInclude Include="src\DspBalance.h" />

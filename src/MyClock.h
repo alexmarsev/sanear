@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../IGuidedReclock.h"
+
 namespace SaneAudioRenderer
 {
     class AudioRenderer;
