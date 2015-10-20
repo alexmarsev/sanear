@@ -457,6 +457,23 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
+            // Try to minimize clock slaving initial jitter.
+            {
+                REFERENCE_TIME clockTime;
+                m_myClock.GetImmediateTime(&clockTime);
+
+                if (!m_device->IsExclusive())
+                    clockTime += m_device->GetStreamLatency();
+
+                int64_t sleepTime = llMulDiv(m_startTime + m_startClockOffset - clockTime, 1000, OneSecond, 0);
+
+                if (sleepTime > 0 && sleepTime < 200)
+                {
+                    TimePeriodHelper timePeriodHelper(1);
+                    Sleep((DWORD)sleepTime);
+                }
+            }
+
             m_guidedReclockOffset = 0;
             m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
             m_clockCorrection = 0;
