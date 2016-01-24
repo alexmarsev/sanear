@@ -115,10 +115,6 @@ namespace SaneAudioRenderer
                         m_guidedReclockActive = true;
                     }
                 }
-
-                // Don't deny the allocator its right to reuse IMediaSample while the chunk is hanging in the buffer.
-                if (m_device && m_device->IsRealtime())
-                    chunk.FreeMediaSample();
             }
             catch (HRESULT)
             {

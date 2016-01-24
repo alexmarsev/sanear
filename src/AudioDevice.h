@@ -24,6 +24,7 @@ namespace SaneAudioRenderer
         REFERENCE_TIME        latency;
         bool                  exclusive;
         bool                  bitstream;
+        bool                  eventMode;
         bool                  realtime;
 
         bool                  ignoredSystemChannelMixer;

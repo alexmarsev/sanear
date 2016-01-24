@@ -18,6 +18,7 @@ namespace SaneAudioRenderer
         : m_woken(TRUE/*manual reset*/)
     {
         assert(backend);
+        assert(!backend->eventMode);
         m_backend = backend;
 
         if (static_cast<HANDLE>(m_wake) == NULL ||
@@ -347,6 +348,10 @@ namespace SaneAudioRenderer
 
         try
         {
+            // Don't deny the allocator its right to reuse
+            // IMediaSample while the chunk is hanging in the buffer.
+            chunk.FreeMediaSample();
+
             CAutoLock lock(&m_bufferMutex);
 
             if (m_bufferFrameCount > m_backend->waveFormat->nSamplesPerSec / 4) // 250ms

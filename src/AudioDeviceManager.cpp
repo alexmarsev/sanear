@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "AudioDeviceManager.h"
 
+#include "AudioDeviceEvent.h"
 #include "AudioDevicePush.h"
 #include "DspMatrix.h"
 
@@ -335,11 +336,56 @@ namespace SaneAudioRenderer
                     }
                 }
 
-                ThrowIfFailed(backend->audioClient->Initialize(
-                                         backend->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
-                                         AUDCLNT_STREAMFLAGS_NOPERSIST,
-                                         OneMillisecond * backend->bufferDuration,
-                                         0, &(*backend->waveFormat), nullptr));
+                backend->eventMode = realtime || backend->exclusive;
+
+                {
+                    AUDCLNT_SHAREMODE mode = backend->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE :
+                                                                  AUDCLNT_SHAREMODE_SHARED;
+
+                    DWORD flags = AUDCLNT_STREAMFLAGS_NOPERSIST;
+                    if (backend->eventMode)
+                        flags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+
+                    REFERENCE_TIME defaultPeriod;
+                    REFERENCE_TIME minimumPeriod;
+                    ThrowIfFailed(backend->audioClient->GetDevicePeriod(&defaultPeriod, &minimumPeriod));
+
+                    REFERENCE_TIME bufferDuration = OneMillisecond * backend->bufferDuration;
+                    if (backend->eventMode)
+                        bufferDuration = realtime ? minimumPeriod : defaultPeriod;
+
+                    REFERENCE_TIME periodicy = 0;
+                    if (backend->exclusive && backend->eventMode)
+                        periodicy = bufferDuration;
+
+                    // Initialize our audio client.
+                    HRESULT result = backend->audioClient->Initialize(mode, flags, bufferDuration,
+                                                                      periodicy, &(*backend->waveFormat), nullptr);
+
+                    // Requested periodicity may have not met alignment requirements of the audio device.
+                    if (result == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED &&
+                        backend->exclusive && backend->eventMode)
+                    {
+                        // Ask the audio driver for closest supported periodicity.
+                        UINT32 bufferFrames;
+                        ThrowIfFailed(backend->audioClient->GetBufferSize(&bufferFrames));
+
+                        // Recreate our audio client (MSDN suggests it).
+                        backend->audioClient = nullptr;
+                        CreateAudioClient(pEnumerator, *backend);
+                        if (!backend->audioClient)
+                            return E_FAIL;
+
+                        bufferDuration = llMulDiv(bufferFrames, OneSecond, backend->waveFormat->nSamplesPerSec, 0);
+                        periodicy = bufferDuration;
+
+                        // Initialize our audio client again with the right periodicity.
+                        result = backend->audioClient->Initialize(mode, flags, bufferDuration,
+                                                                  periodicy, &(*backend->waveFormat), nullptr);
+                    }
+
+                    ThrowIfFailed(result);
+                }
 
                 ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioRenderClient)));
 
@@ -514,6 +560,9 @@ namespace SaneAudioRenderer
 
         try
         {
+            if (backend->eventMode)
+                return std::unique_ptr<AudioDevice>(new AudioDeviceEvent(backend));
+
             return std::unique_ptr<AudioDevice>(new AudioDevicePush(backend));
         }
         catch (std::bad_alloc&)

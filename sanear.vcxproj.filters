@@ -65,6 +65,9 @@
     <ClCompile Include="src\AudioDevicePush.cpp">
       <Filter>Device</Filter>
     </ClCompile>
+    <ClCompile Include="src\AudioDeviceEvent.cpp">
+      <Filter>Device</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -143,6 +146,9 @@
       <Filter>Device</Filter>
     </ClInclude>
     <ClInclude Include="src\AudioDevice.h">
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AudioDeviceEvent.h">
       <Filter>Device</Filter>
     </ClInclude>
   </ItemGroup>
