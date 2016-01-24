@@ -60,10 +60,10 @@
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\AudioDeviceManager.cpp">
-      <Filter>Renderer</Filter>
+      <Filter>Device</Filter>
     </ClCompile>
-    <ClCompile Include="src\AudioDevice.cpp">
-      <Filter>Renderer</Filter>
+    <ClCompile Include="src\AudioDevicePush.cpp">
+      <Filter>Device</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -135,13 +135,16 @@
     <ClInclude Include="src\SampleCorrection.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="IGuidedReclock.h" />
     <ClInclude Include="src\AudioDeviceManager.h">
-      <Filter>Renderer</Filter>
+      <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AudioDevicePush.h">
+      <Filter>Device</Filter>
     </ClInclude>
     <ClInclude Include="src\AudioDevice.h">
-      <Filter>Renderer</Filter>
+      <Filter>Device</Filter>
     </ClInclude>
-    <ClInclude Include="IGuidedReclock.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectShow">
@@ -158,6 +161,9 @@
     </Filter>
     <Filter Include="Processors\Base">
       <UniqueIdentifier>{a3828985-2937-4570-8aa1-110935fd6227}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Device">
+      <UniqueIdentifier>{0fcfb96b-d55e-4bd8-9a08-2f45801291ce}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

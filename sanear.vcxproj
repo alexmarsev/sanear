@@ -99,6 +99,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="IGuidedReclock.h" />
+    <ClInclude Include="src\AudioDevicePush.h" />
     <ClInclude Include="src\AudioDevice.h" />
     <ClInclude Include="src\AudioDeviceManager.h" />
     <ClInclude Include="src\DspBalance.h" />
@@ -127,7 +128,7 @@
     <ClInclude Include="src\DspRate.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\AudioDevice.cpp" />
+    <ClCompile Include="src\AudioDevicePush.cpp" />
     <ClCompile Include="src\AudioDeviceManager.cpp" />
     <ClCompile Include="src\DspBalance.cpp" />
     <ClCompile Include="src\DspCrossfeed.cpp" />

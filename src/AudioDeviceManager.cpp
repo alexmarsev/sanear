@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "AudioDeviceManager.h"
 
+#include "AudioDevicePush.h"
 #include "DspMatrix.h"
 
 namespace SaneAudioRenderer
@@ -513,7 +514,7 @@ namespace SaneAudioRenderer
 
         try
         {
-            return std::unique_ptr<AudioDevice>(new AudioDevice(backend));
+            return std::unique_ptr<AudioDevice>(new AudioDevicePush(backend));
         }
         catch (std::bad_alloc&)
         {

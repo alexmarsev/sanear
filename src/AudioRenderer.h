@@ -1,7 +1,7 @@
 #pragma once
 
-#include "AudioDeviceManager.h"
 #include "AudioDevice.h"
+#include "AudioDeviceManager.h"
 #include "DspBalance.h"
 #include "DspCrossfeed.h"
 #include "DspDither.h"
