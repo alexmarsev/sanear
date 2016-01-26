@@ -586,8 +586,7 @@ namespace SaneAudioRenderer
         if (chunk.IsEmpty())
             return;
 
-        const REFERENCE_TIME latency = llMulDiv(chunk.GetFrameCount(), OneSecond, chunk.GetRate(), 0) +
-                                       m_device->GetStreamLatency() + OneMillisecond * 10;
+        const REFERENCE_TIME latency = m_device->GetStreamLatency() * 2; // x2.0
 
         const REFERENCE_TIME remaining = m_device->GetEnd() - m_device->GetPosition();
 
@@ -596,16 +595,32 @@ namespace SaneAudioRenderer
         if (m_live)
         {
             // Rate matching.
-            if (remaining > latency)
+            if (remaining > latency) // x2.0
             {
                 size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                     remaining - latency, OneSecond, 0);
+                                                     remaining - latency * 3 / 4, OneSecond, 0); // x1.5
 
                 dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 
                 chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
                 DebugOut("AudioRenderer drop", dropFrames, "frames for rate matching");
+            }
+            else if (remaining < latency / 2) // x1.0
+            {
+                size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
+                                                    latency * 3 / 4 - remaining, OneSecond, 0); // x1.5
+
+                DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
+                                   chunk.GetFrameCount() + padFrames, chunk.GetRate());
+
+                size_t padBytes = tempChunk.GetFrameSize() * padFrames;
+                ZeroMemory(tempChunk.GetData(), padBytes);
+                memcpy(tempChunk.GetData() + padBytes, chunk.GetData(), chunk.GetSize());
+
+                chunk = std::move(tempChunk);
+
+                DebugOut("AudioRenderer pad", padFrames, "frames for rate matching");
             }
         }
         else
