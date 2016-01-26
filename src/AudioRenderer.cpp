@@ -103,7 +103,7 @@ namespace SaneAudioRenderer
 
                 if (m_device && !IsBitstreaming() && m_state == State_Running)
                 {
-                    if (m_device->IsRealtime())
+                    if (m_live || m_externalClock)
                     {
                         // Apply rate corrections (rate matching and clock slaving).
                         ApplyRateCorrection(chunk);
@@ -580,7 +580,7 @@ namespace SaneAudioRenderer
         CAutoLock objectLock(this);
         assert(m_device);
         assert(!IsBitstreaming());
-        assert(m_device->IsRealtime());
+        assert(m_live || m_externalClock);
         assert(m_state == State_Running);
 
         if (chunk.IsEmpty())
@@ -752,7 +752,7 @@ namespace SaneAudioRenderer
                 try
                 {
                     m_device->Push(chunk, pFilledEvent);
-                    sleepDuration = (m_device->IsRealtime() ? 50 : m_device->GetBufferDuration() / 4);
+                    sleepDuration = m_device->GetBufferDuration() / 4;
                 }
                 catch (HRESULT)
                 {

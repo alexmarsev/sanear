@@ -60,7 +60,6 @@ namespace SaneAudioRenderer
         REFERENCE_TIME   GetStreamLatency()  const { return m_backend->latency; }
 
         bool IsExclusive() const { return m_backend->exclusive; }
-        bool IsRealtime()  const { return m_backend->realtime; }
 
         bool IgnoredSystemChannelMixer() const { return m_backend->ignoredSystemChannelMixer; }
 
