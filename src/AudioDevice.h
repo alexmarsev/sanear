@@ -67,5 +67,34 @@ namespace SaneAudioRenderer
     protected:
 
         std::shared_ptr<AudioDeviceBackend> m_backend;
+
+        template <class T>
+        bool IsLastInstance(T& smartPointer)
+        {
+            bool ret = (smartPointer.GetInterfacePtr()->AddRef() == 2);
+            smartPointer.GetInterfacePtr()->Release();
+            return ret;
+        }
+
+        bool CheckLastInstances()
+        {
+            if (!m_backend.unique())
+                return false;
+
+            if (m_backend->audioClock && !IsLastInstance(m_backend->audioClock))
+                return false;
+
+            m_backend->audioClock = nullptr;
+
+            if (m_backend->audioRenderClient && !IsLastInstance(m_backend->audioRenderClient))
+                return false;
+
+            m_backend->audioRenderClient = nullptr;
+
+            if (m_backend->audioClient && !IsLastInstance(m_backend->audioClient))
+                return false;
+
+            return true;
+        }
     };
 }
