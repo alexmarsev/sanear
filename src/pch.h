@@ -8,6 +8,7 @@
 
 #include <streams.h>
 
+#include <avrt.h>
 #include <audioclient.h>
 #include <comdef.h>
 #include <malloc.h>

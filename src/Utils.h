@@ -118,4 +118,22 @@ namespace SaneAudioRenderer
         }
         #endif
     }
+
+    template <typename>
+    class WinapiFunc;
+    template <typename ReturnType, typename...Args>
+    class WinapiFunc<ReturnType WINAPI(Args...)> final
+    {
+    public:
+        typedef ReturnType(WINAPI* Func)(Args...);
+        WinapiFunc(LPCWSTR dll, LPCSTR func) { m_lib = LoadLibrary(dll); m_func = (Func)GetProcAddress(m_lib, func); }
+        WinapiFunc(const WinapiFunc&) = delete;
+        WinapiFunc& operator=(const WinapiFunc&) = delete;
+        ~WinapiFunc() { FreeLibrary(m_lib); }
+        explicit operator bool() const { return !!m_func; }
+        ReturnType operator()(Args...args) const { return m_func(args...); }
+    private:
+        HMODULE m_lib = NULL;
+        Func m_func = nullptr;
+    };
 }

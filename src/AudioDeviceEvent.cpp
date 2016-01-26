@@ -3,6 +3,15 @@
 
 namespace SaneAudioRenderer
 {
+    namespace
+    {
+        WinapiFunc<decltype(AvSetMmThreadCharacteristicsW)>
+        AvSetMmThreadCharacteristicsFunction(L"avrt.dll", "AvSetMmThreadCharacteristicsW");
+
+        WinapiFunc<decltype(AvRevertMmThreadCharacteristics)>
+        AvRevertMmThreadCharacteristicsFunction(L"avrt.dll", "AvRevertMmThreadCharacteristics");
+    }
+
     AudioDeviceEvent::AudioDeviceEvent(std::shared_ptr<AudioDeviceBackend> backend)
     {
         assert(backend);
@@ -143,7 +152,16 @@ namespace SaneAudioRenderer
 
     void AudioDeviceEvent::EventFeed()
     {
-        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+        HANDLE taskHandle = NULL;
+        if (AvSetMmThreadCharacteristicsFunction && AvRevertMmThreadCharacteristicsFunction)
+        {
+            DWORD taskIndex = 0;
+            taskHandle = AvSetMmThreadCharacteristicsFunction(L"Pro Audio", &taskIndex);
+            assert(taskHandle != NULL);
+        }
+
+        if (taskHandle == NULL)
+            SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
         while (!m_exit)
         {
@@ -172,6 +190,9 @@ namespace SaneAudioRenderer
 
             m_wake.Wait();
         }
+
+        if (taskHandle != NULL)
+            AvRevertMmThreadCharacteristicsFunction(taskHandle);
     }
 
     void AudioDeviceEvent::PushBufferToDevice()
