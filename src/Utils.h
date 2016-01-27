@@ -89,17 +89,15 @@ namespace SaneAudioRenderer
         return SharedWaveFormat(reinterpret_cast<WAVEFORMATEX*>(pBuffer), AlignedFreeDeleter());
     }
 
-    namespace
-    {
-        void DebugOutForward(std::wostringstream&) {}
+    inline void DebugOutForward(std::wostringstream&) {}
 
-        template <typename T0, typename... T>
-        void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
-        {
-            stream << " " << arg0;
-            DebugOutForward(stream, std::forward<T>(args)...);
-        }
+    template <typename T0, typename... T>
+    inline void DebugOutForward(std::wostringstream& stream, T0&& arg0, T&&... args)
+    {
+        stream << " " << arg0;
+        DebugOutForward(stream, std::forward<T>(args)...);
     }
+
     template <typename... T>
     inline void DebugOut(T&&... args)
     {
