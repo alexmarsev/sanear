@@ -99,9 +99,8 @@ namespace SaneAudioRenderer
     }
 
     template <typename... T>
-    inline void DebugOut(T&&... args)
+    inline void DebugOutBody(T&&... args)
     {
-        #ifndef NDEBUG
         try
         {
             std::wostringstream stream;
@@ -114,8 +113,13 @@ namespace SaneAudioRenderer
         {
             OutputDebugString(L"sanear: caught exception while formatting debug message");
         }
-        #endif
     }
+
+    #ifndef NDEBUG
+    #   define DebugOut(...) DebugOutBody(##__VA_ARGS__)
+    #else
+    #   define DebugOut(...)
+    #endif
 
     template <class T>
     inline const char* ClassName(T* p)
