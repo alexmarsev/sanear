@@ -34,6 +34,9 @@ namespace SaneAudioRenderer
 
         char* GetData() { return (m_mediaSample ? m_mediaData : m_data.get()) + m_dataOffset; }
 
+        void PadTail(size_t padFrames);
+        void PadHead(size_t padFrames);
+
         void ShrinkTail(size_t toFrames);
         void ShrinkHead(size_t toFrames);
 

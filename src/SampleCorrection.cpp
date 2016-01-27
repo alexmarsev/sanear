@@ -86,19 +86,7 @@ namespace SaneAudioRenderer
                     DebugOut("SampleCorrection pad", padFrames, "frames before [",
                              sampleProps.tStart, sampleProps.tStop, "]");
 
-                    DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
-                                       chunk.GetFrameCount() + padFrames, chunk.GetRate());
-
-                    const size_t padBytes = padFrames * chunk.GetFrameSize();
-                    sampleProps.pbBuffer = nullptr;
-                    sampleProps.lActual += (int32_t)padBytes;
-                    sampleProps.tStart -= FramesToTime(padFrames);
-
-                    assert(tempChunk.GetSize() == chunk.GetSize() + padBytes);
-                    ZeroMemory(tempChunk.GetData(), padBytes);
-                    memcpy(tempChunk.GetData() + padBytes, chunk.GetData(), chunk.GetSize());
-
-                    chunk = std::move(tempChunk);
+                    chunk.PadHead(padFrames);
                 }
             }
         }

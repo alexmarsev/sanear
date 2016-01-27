@@ -607,14 +607,7 @@ namespace SaneAudioRenderer
                 size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
                                                     latency * 3 / 4 - remaining, OneSecond, 0); // x1.5
 
-                DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
-                                   chunk.GetFrameCount() + padFrames, chunk.GetRate());
-
-                size_t padBytes = tempChunk.GetFrameSize() * padFrames;
-                ZeroMemory(tempChunk.GetData(), padBytes);
-                memcpy(tempChunk.GetData() + padBytes, chunk.GetData(), chunk.GetSize());
-
-                chunk = std::move(tempChunk);
+                chunk.PadHead(padFrames);
 
                 DebugOut("AudioRenderer pad", padFrames, "frames for rate matching");
             }
@@ -643,14 +636,7 @@ namespace SaneAudioRenderer
 
                     if (padFrames > m_device->GetWaveFormat()->nSamplesPerSec / 33) // ~30ms threshold
                     {
-                        DspChunk tempChunk(chunk.GetFormat(), chunk.GetChannelCount(),
-                                           chunk.GetFrameCount() + padFrames, chunk.GetRate());
-
-                        size_t padBytes = tempChunk.GetFrameSize() * padFrames;
-                        ZeroMemory(tempChunk.GetData(), padBytes);
-                        memcpy(tempChunk.GetData() + padBytes, chunk.GetData(), chunk.GetSize());
-
-                        chunk = std::move(tempChunk);
+                        chunk.PadHead(padFrames);
 
                         REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond,
                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0);

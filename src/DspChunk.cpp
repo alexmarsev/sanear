@@ -405,6 +405,46 @@ namespace SaneAudioRenderer
         return *this;
     }
 
+    void DspChunk::PadTail(size_t padFrames)
+    {
+        if (padFrames == 0)
+            return;
+
+        size_t newBytes = padFrames * GetFrameSize();
+
+        {
+            DspChunk tempChunk(GetFormat(), GetChannelCount(), GetFrameCount() + padFrames, GetRate());
+            memcpy(tempChunk.GetData(), GetData(), GetSize());
+            *this = std::move(tempChunk);
+        }
+
+        assert(GetSize() >= newBytes);
+        ZeroMemory(GetData() + GetSize() - newBytes, newBytes);
+    }
+
+    void DspChunk::PadHead(size_t padFrames)
+    {
+        if (padFrames == 0)
+            return;
+
+        size_t newBytes = padFrames * GetFrameSize();
+
+        if (padFrames <= m_dataOffset)
+        {
+            m_dataOffset -= padFrames;
+            m_dataSize += newBytes;
+        }
+        else
+        {
+            DspChunk tempChunk(GetFormat(), GetChannelCount(), GetFrameCount() + padFrames, GetRate());
+            memcpy(tempChunk.GetData() + newBytes, GetData(), GetSize());
+            *this = std::move(tempChunk);
+        }
+
+        assert(GetSize() >= newBytes);
+        ZeroMemory(GetData(), newBytes);
+    }
+
     void DspChunk::ShrinkTail(size_t toFrames)
     {
         if (toFrames < GetFrameCount())
