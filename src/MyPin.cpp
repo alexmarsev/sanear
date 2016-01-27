@@ -305,22 +305,22 @@ namespace SaneAudioRenderer
             if (SUCCEEDED(pushSource->GetPushSourceFlags(&flags)))
             {
                 if (flags & AM_PUSHSOURCECAPS_INTERNAL_RM)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_INTERNAL_RM flag");
+                    DebugOut(ClassName(this), "upstream live pin has AM_PUSHSOURCECAPS_INTERNAL_RM flag");
 
                 if (flags & AM_PUSHSOURCECAPS_NOT_LIVE)
                 {
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_NOT_LIVE flag");
+                    DebugOut(ClassName(this), "upstream live pin has AM_PUSHSOURCECAPS_NOT_LIVE flag");
                     live = false;
                 }
 
                 if (flags & AM_PUSHSOURCECAPS_PRIVATE_CLOCK)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCECAPS_PRIVATE_CLOCK flag");
+                    DebugOut(ClassName(this), "upstream live pin has AM_PUSHSOURCECAPS_PRIVATE_CLOCK flag");
 
                 if (flags & AM_PUSHSOURCEREQS_USE_STREAM_CLOCK)
-                    DebugOut("MyPin upstream live pin has AM_PUSHSOURCEREQS_USE_STREAM_CLOCK flag");
+                    DebugOut(ClassName(this), "upstream live pin has AM_PUSHSOURCEREQS_USE_STREAM_CLOCK flag");
 
                 if (!flags)
-                    DebugOut("MyPin upstream live pin has no flags");
+                    DebugOut(ClassName(this), "upstream live pin has no flags");
             }
         }
 

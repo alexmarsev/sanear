@@ -176,7 +176,7 @@ namespace SaneAudioRenderer
         ThrowIfFailed(m_backend->audioRenderClient->GetBuffer(doFrames, &deviceBuffer));
         ThrowIfFailed(m_backend->audioRenderClient->ReleaseBuffer(doFrames, AUDCLNT_BUFFERFLAGS_SILENT));
 
-        DebugOut("AudioDevice push", 1000. * doFrames / m_backend->waveFormat->nSamplesPerSec, "ms of silence");
+        DebugOut(ClassName(this), "push", 1000. * doFrames / m_backend->waveFormat->nSamplesPerSec, "ms of silence");
 
         m_pushedFrames += doFrames;
 

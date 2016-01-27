@@ -119,6 +119,6 @@ namespace SaneAudioRenderer
     {
         m_peak = peak;
         m_threshold = std::pow(1.0f / peak, 1.0f / slope - 1.0f) - 0.0001f;
-        DebugOut("DspLimiter active with", m_peak, "peak and", m_threshold, "threshold");
+        DebugOut(ClassName(this), "active with", m_peak, "peak and", m_threshold, "threshold");
     }
 }

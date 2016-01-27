@@ -58,7 +58,7 @@ namespace SaneAudioRenderer
 
         if (!m_endOfStream)
         {
-            DebugOut("AudioDeviceEvent finish");
+            DebugOut(ClassName(this), "finish");
             m_endOfStream = true;
             m_endOfStreamPos = GetEnd();
         }
@@ -104,19 +104,19 @@ namespace SaneAudioRenderer
 
         if (delegateStart)
         {
-            DebugOut("AudioDeviceEvent queue start");
+            DebugOut(ClassName(this), "queue start");
             m_wake.Set();
         }
         else
         {
-            DebugOut("AudioDeviceEvent start");
+            DebugOut(ClassName(this), "start");
             m_backend->audioClient->Start();
         }
     }
 
     void AudioDeviceEvent::Stop()
     {
-        DebugOut("AudioDeviceEvent stop");
+        DebugOut(ClassName(this), "stop");
 
         {
             CAutoLock threadLock(&m_threadMutex);
@@ -128,7 +128,7 @@ namespace SaneAudioRenderer
 
     void AudioDeviceEvent::Reset()
     {
-        DebugOut("AudioDeviceEvent reset");
+        DebugOut(ClassName(this), "reset");
 
         {
             CAutoLock threadLock(&m_threadMutex);
@@ -176,7 +176,7 @@ namespace SaneAudioRenderer
 
                         if (m_queuedStart)
                         {
-                            DebugOut("AudioDeviceEvent start");
+                            DebugOut(ClassName(this), "start");
                             m_backend->audioClient->Start();
                             m_queuedStart = false;
                         }
@@ -236,7 +236,7 @@ namespace SaneAudioRenderer
                     ThrowIfFailed(m_backend->audioRenderClient->ReleaseBuffer(deviceFrames, 0));
                 }
 
-                DebugOut("AudioDeviceEvent silence", doFrames * 1000. / m_backend->waveFormat->nSamplesPerSec, "ms");
+                DebugOut(ClassName(this), "silence", doFrames * 1000. / m_backend->waveFormat->nSamplesPerSec, "ms");
 
                 m_silenceFrames += doFrames;
 

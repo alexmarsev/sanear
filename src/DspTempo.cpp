@@ -106,14 +106,14 @@ namespace SaneAudioRenderer
             if (m_ftempo != m_ftempo2 &&
                 m_outSamples1 * ratio21 - m_outSamples2 > 60 * m_rate)
             {
-                DebugOut("DspTempo adjusting for float/double imprecision (2), ratio", ratio21);
+                DebugOut(ClassName(this), "adjusting for float/double imprecision (2), ratio", ratio21);
                 m_ftempo = m_ftempo2;
                 m_stouch.setTempo(m_ftempo);
             }
             else if (m_ftempo != m_ftempo1 &&
                      m_outSamples2 - m_outSamples1 * ratio21 > 60 * m_rate)
             {
-                DebugOut("DspTempo adjusting for float/double imprecision (1), ratio", ratio21);
+                DebugOut(ClassName(this), "adjusting for float/double imprecision (1), ratio", ratio21);
                 m_ftempo = m_ftempo1;
                 m_stouch.setTempo(m_ftempo);
             }

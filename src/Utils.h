@@ -117,6 +117,13 @@ namespace SaneAudioRenderer
         #endif
     }
 
+    template <class T>
+    inline const char* ClassName(T* p)
+    {
+        const char* str = strrchr(typeid(*p).name(), ':');
+        return str ? str + 1 : "";
+    }
+
     template <typename>
     class WinapiFunc;
     template <typename ReturnType, typename...Args>

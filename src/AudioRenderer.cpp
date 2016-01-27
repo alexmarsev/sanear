@@ -544,7 +544,7 @@ namespace SaneAudioRenderer
             {
                 m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, rate, 0);
 
-                DebugOut("AudioRenderer insert", chunk.GetFrameCount() * 1000. / rate,
+                DebugOut(ClassName(this), "insert", chunk.GetFrameCount() * 1000. / rate,
                          "ms of silence to minimize re-slaving jitter");
 
                 ZeroMemory(chunk.GetData(), chunk.GetSize());
@@ -566,7 +566,7 @@ namespace SaneAudioRenderer
             {
                 m_myClock.OffsetAudioClock(offset);
                 m_clockCorrection += offset;
-                DebugOut("AudioRenderer offset internal clock by", offset / 10000., "ms");
+                DebugOut(ClassName(this), "offset internal clock by", offset / 10000., "ms");
             }
         }
     }
@@ -600,7 +600,7 @@ namespace SaneAudioRenderer
 
                 chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
-                DebugOut("AudioRenderer drop", dropFrames, "frames for rate matching");
+                DebugOut(ClassName(this), "drop", dropFrames, "frames for rate matching");
             }
             else if (remaining < latency / 2) // x1.0
             {
@@ -609,7 +609,7 @@ namespace SaneAudioRenderer
 
                 chunk.PadHead(padFrames);
 
-                DebugOut("AudioRenderer pad", padFrames, "frames for rate matching");
+                DebugOut(ClassName(this), "pad", padFrames, "frames for rate matching");
             }
         }
         else
@@ -645,7 +645,7 @@ namespace SaneAudioRenderer
                         padTime -= paddedTime;
                         assert(padTime >= 0);
 
-                        DebugOut("AudioRenderer pad", paddedTime / 10000., "ms for clock matching at",
+                        DebugOut(ClassName(this), "pad", paddedTime / 10000., "ms for clock matching at",
                                  m_sampleCorrection.GetLastFrameEnd() / 10000., "frame position");
                     }
 
@@ -676,7 +676,7 @@ namespace SaneAudioRenderer
                         dropTime -= droppedTime;
                         assert(dropTime >= 0);
 
-                        DebugOut("AudioRenderer drop", droppedTime / 10000., "ms for clock matching at",
+                        DebugOut(ClassName(this), "drop", droppedTime / 10000., "ms for clock matching at",
                                  m_sampleCorrection.GetLastFrameEnd() / 10000., "frame position");
                     }
 

@@ -48,7 +48,7 @@ namespace SaneAudioRenderer
             if (m_freshBuffer && !(sampleProps.dwSampleFlags & AM_SAMPLE_SPLICEPOINT))
             {
                 // Drop the sample.
-                DebugOut("SampleCorrection drop [", sampleProps.tStart, sampleProps.tStop, "]");
+                DebugOut(ClassName(this), "drop [", sampleProps.tStart, sampleProps.tStop, "]");
                 chunk = DspChunk();
                 assert(chunk.IsEmpty());
             }
@@ -58,7 +58,7 @@ namespace SaneAudioRenderer
             if ((sampleProps.dwSampleFlags & AM_SAMPLE_STOPVALID) && sampleProps.tStop <= m_lastFrameEnd)
             {
                 // Drop the sample.
-                DebugOut("SampleCorrection drop [", sampleProps.tStart, sampleProps.tStop, "]");
+                DebugOut(ClassName(this), "drop [", sampleProps.tStart, sampleProps.tStop, "]");
                 chunk = DspChunk();
                 assert(chunk.IsEmpty());
             }
@@ -69,7 +69,7 @@ namespace SaneAudioRenderer
 
                 if (cropFrames > 0)
                 {
-                    DebugOut("SampleCorrection crop", cropFrames, "frames from [",
+                    DebugOut(ClassName(this), "crop", cropFrames, "frames from [",
                              sampleProps.tStart, sampleProps.tStop, "]");
 
                     chunk.ShrinkHead(chunk.GetFrameCount() > cropFrames ? chunk.GetFrameCount() - cropFrames : 0);
@@ -83,7 +83,7 @@ namespace SaneAudioRenderer
                 if (padFrames > 0 &&
                     FramesToTime(padFrames) < 10 * OneSecond)
                 {
-                    DebugOut("SampleCorrection pad", padFrames, "frames before [",
+                    DebugOut(ClassName(this), "pad", padFrames, "frames before [",
                              sampleProps.tStart, sampleProps.tStop, "]");
 
                     chunk.PadHead(padFrames);
