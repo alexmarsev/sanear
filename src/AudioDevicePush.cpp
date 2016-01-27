@@ -251,12 +251,11 @@ namespace SaneAudioRenderer
     void AudioDevicePush::PushToDevice(DspChunk& chunk, CAMEvent* pFilledEvent)
     {
         // Get up-to-date information on the device buffer.
-        UINT32 bufferFrames, bufferPadding;
-        ThrowIfFailed(m_backend->audioClient->GetBufferSize(&bufferFrames));
+        UINT32 bufferPadding;
         ThrowIfFailed(m_backend->audioClient->GetCurrentPadding(&bufferPadding));
 
         // Find out how many frames we can write this time.
-        const UINT32 doFrames = std::min(bufferFrames - bufferPadding, (UINT32)chunk.GetFrameCount());
+        const UINT32 doFrames = std::min(m_backend->deviceBufferSize - bufferPadding, (UINT32)chunk.GetFrameCount());
 
         if (doFrames == 0)
             return;
@@ -270,7 +269,7 @@ namespace SaneAudioRenderer
 
         // If the buffer is fully filled, set the corresponding event (if requested).
         if (pFilledEvent &&
-            bufferPadding + doFrames == bufferFrames)
+            bufferPadding + doFrames == m_backend->deviceBufferSize)
         {
             pFilledEvent->Set();
         }
@@ -284,12 +283,11 @@ namespace SaneAudioRenderer
     UINT32 AudioDevicePush::PushSilenceToDevice(UINT32 frames)
     {
         // Get up-to-date information on the device buffer.
-        UINT32 bufferFrames, bufferPadding;
-        ThrowIfFailed(m_backend->audioClient->GetBufferSize(&bufferFrames));
+        UINT32 bufferPadding;
         ThrowIfFailed(m_backend->audioClient->GetCurrentPadding(&bufferPadding));
 
         // Find out how many frames we can write this time.
-        const UINT32 doFrames = std::min(bufferFrames - bufferPadding, frames);
+        const UINT32 doFrames = std::min(m_backend->deviceBufferSize - bufferPadding, frames);
 
         if (doFrames == 0)
             return 0;

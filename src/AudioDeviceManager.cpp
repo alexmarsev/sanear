@@ -388,10 +388,10 @@ namespace SaneAudioRenderer
                 }
 
                 ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioRenderClient)));
-
                 ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioClock)));
 
-                ThrowIfFailed(backend->audioClient->GetStreamLatency(&backend->latency));
+                ThrowIfFailed(backend->audioClient->GetStreamLatency(&backend->deviceLatency));
+                ThrowIfFailed(backend->audioClient->GetBufferSize(&backend->deviceBufferSize));
 
                 return S_OK;
             }

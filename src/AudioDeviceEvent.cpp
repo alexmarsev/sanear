@@ -176,8 +176,7 @@ namespace SaneAudioRenderer
 
     void AudioDeviceEvent::PushBufferToDevice()
     {
-        UINT32 deviceFrames;
-        ThrowIfFailed(m_backend->audioClient->GetBufferSize(&deviceFrames));
+        UINT32 deviceFrames = m_backend->deviceBufferSize;
 
         if (!m_backend->exclusive)
         {
