@@ -14,6 +14,8 @@ namespace SaneAudioRenderer
 
     AudioDeviceEvent::AudioDeviceEvent(std::shared_ptr<AudioDeviceBackend> backend)
     {
+        DebugOut(ClassName(this), "create");
+
         assert(backend);
         assert(backend->eventMode);
         m_backend = backend;
@@ -28,6 +30,8 @@ namespace SaneAudioRenderer
 
     AudioDeviceEvent::~AudioDeviceEvent()
     {
+        DebugOut(ClassName(this), "destroy");
+
         m_exit = true;
         m_wake.Set();
 
