@@ -39,6 +39,8 @@ namespace SaneAudioRenderer
 
         if (!m_endOfStream)
         {
+            DebugOut(ClassName(this), "finish");
+
             m_endOfStream = true;
             m_endOfStreamPos = GetEnd();
 
@@ -83,16 +85,22 @@ namespace SaneAudioRenderer
 
     void AudioDevicePush::Start()
     {
+        DebugOut(ClassName(this), "start");
+
         m_backend->audioClient->Start();
     }
 
     void AudioDevicePush::Stop()
     {
+        DebugOut(ClassName(this), "stop");
+
         m_backend->audioClient->Stop();
     }
 
     void AudioDevicePush::Reset()
     {
+        DebugOut(ClassName(this), "reset");
+
         if (m_thread.joinable())
         {
             m_exit = true;
