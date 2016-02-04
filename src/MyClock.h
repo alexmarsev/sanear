@@ -45,6 +45,7 @@ namespace SaneAudioRenderer
 
         IAudioClockPtr m_audioClock;
         int64_t m_audioStart = 0;
+        uint64_t m_audioInitialPosition = 0;
         int64_t m_audioOffset = 0;
         int64_t m_counterOffset = 0;
 

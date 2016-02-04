@@ -24,8 +24,14 @@ namespace SaneAudioRenderer
     {
         CAutoLock lock(this);
 
+    #ifndef NDEBUG
+        const int64_t oldCounterOffset = m_counterOffset;
+    #endif
+
         if (m_guidedReclockSlaving && !CanDoGuidedReclock())
             UnslaveClock();
+
+        REFERENCE_TIME audioClockTime, counterTime, clockTime;
 
         if (m_guidedReclockSlaving)
         {
@@ -35,7 +41,6 @@ namespace SaneAudioRenderer
                 return m_guidedReclockStartClock + progress;
             };
 
-            REFERENCE_TIME audioClockTime, counterTime, clockTime;
             if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &counterTime)))
             {
                 clockTime = getGuidedReclockTime(counterTime);
@@ -50,33 +55,46 @@ namespace SaneAudioRenderer
             }
 
             m_counterOffset = clockTime - counterTime;
-
-            return clockTime;
         }
-
-        REFERENCE_TIME audioClockTime, counterTime;
-        if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &counterTime)))
+        else if (SUCCEEDED(GetAudioClockTime(&audioClockTime, &counterTime)))
         {
+            clockTime = audioClockTime;
             m_counterOffset = audioClockTime - counterTime;
-            return audioClockTime;
+        }
+        else
+        {
+            clockTime = m_counterOffset + GetCounterTime();
         }
 
-        return m_counterOffset + GetCounterTime();
+    #ifndef NDEBUG
+        int64_t counterOffsetDiff = m_counterOffset - oldCounterOffset;
+        if (std::abs(counterOffsetDiff) > OneMillisecond)
+            DebugOut(ClassName(this), "observed clock warp of", counterOffsetDiff / 10000., "ms");
+    #endif
+
+        return clockTime;
     }
 
     void MyClock::SlaveClockToAudio(IAudioClock* pAudioClock, int64_t audioStart)
     {
+        assert(pAudioClock);
+
         CAutoLock lock(this);
+
+        DebugOut(ClassName(this), "slave clock to audio device (delayed until it progresses)");
 
         m_audioClock = pAudioClock;
         m_audioStart = audioStart;
+        m_audioInitialPosition = 0;
+        m_audioClock->GetPosition(&m_audioInitialPosition, nullptr);
         m_audioOffset = 0;
-        m_counterOffset = audioStart - GetCounterTime();
     }
 
     void MyClock::UnslaveClockFromAudio()
     {
         CAutoLock lock(this);
+
+        DebugOut(ClassName(this), "unslave clock from audio device");
 
         m_audioClock = nullptr;
     }
@@ -98,11 +116,12 @@ namespace SaneAudioRenderer
         {
             uint64_t audioFrequency, audioPosition, audioTime;
             if (SUCCEEDED(m_audioClock->GetFrequency(&audioFrequency)) &&
-                SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)))
+                SUCCEEDED(m_audioClock->GetPosition(&audioPosition, &audioTime)) &&
+                audioPosition > m_audioInitialPosition)
             {
                 int64_t counterTime = GetCounterTime();
                 int64_t clockTime = llMulDiv(audioPosition, OneSecond, audioFrequency, 0) +
-                                    m_audioStart + m_audioOffset + (audioPosition > 0 ? counterTime - audioTime : 0);
+                                    m_audioStart + m_audioOffset + counterTime - audioTime;
 
                 *pAudioTime = clockTime;
 
