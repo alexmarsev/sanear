@@ -68,7 +68,7 @@ namespace SaneAudioRenderer
 
     #ifndef NDEBUG
         int64_t counterOffsetDiff = m_counterOffset - oldCounterOffset;
-        if (std::abs(counterOffsetDiff) > OneMillisecond)
+        if (std::abs(counterOffsetDiff) > OneMillisecond / 2)
             DebugOut(ClassName(this), "observed clock warp of", counterOffsetDiff / 10000., "ms");
     #endif
 
@@ -130,6 +130,8 @@ namespace SaneAudioRenderer
 
                 return S_OK;
             }
+
+            return E_FAIL;
         }
 
         return E_FAIL;

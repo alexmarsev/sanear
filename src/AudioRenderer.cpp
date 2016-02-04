@@ -301,6 +301,9 @@ namespace SaneAudioRenderer
     void AudioRenderer::Play(REFERENCE_TIME startTime)
     {
         CAutoLock objectLock(this);
+
+        CheckDeviceSettings();
+
         assert(m_state != State_Running);
         m_state = State_Running;
 
@@ -511,8 +514,11 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            m_myClock.UnslaveClockFromAudio();
-            m_device->Stop();
+            if (m_state == State_Running)
+            {
+                m_myClock.UnslaveClockFromAudio();
+                m_device->Stop();
+            }
             m_device = nullptr;
         }
     }
@@ -753,11 +759,12 @@ namespace SaneAudioRenderer
 
                 sleepDuration = 1;
 
-                // Loop until the graph time passes the current sample end.
+                // Loop until the graph time passes the current sample end minus 50ms.
                 REFERENCE_TIME graphTime;
                 if (m_state == State_Running &&
                     SUCCEEDED(m_graphClock->GetTime(&graphTime)) &&
-                    graphTime > m_startTime + m_sampleCorrection.GetLastFrameEnd() + m_sampleCorrection.GetTimeDivergence())
+                    graphTime + 50 * OneMillisecond > m_startTime + m_sampleCorrection.GetLastFrameEnd() +
+                                                      m_sampleCorrection.GetTimeDivergence())
                 {
                     break;
                 }
