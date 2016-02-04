@@ -223,7 +223,7 @@ namespace SaneAudioRenderer
                 m_sampleCorrection.NewDeviceBuffer();
                 InitializeProcessors();
                 m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
-                MinimizeReslavingJitter();
+                PushReslavingJitter();
                 StartDevice();
             }
             else
@@ -456,28 +456,46 @@ namespace SaneAudioRenderer
 
         if (m_device)
         {
-            // Try to minimize clock slaving initial jitter.
+            try
             {
-                REFERENCE_TIME clockTime;
-                m_myClock.GetImmediateTime(&clockTime);
-
-                if (!m_device->IsExclusive())
-                    clockTime += m_device->GetStreamLatency();
-
-                int64_t sleepTime = llMulDiv(m_startTime + m_startClockOffset - clockTime, 1000, OneSecond, 0);
-
-                if (sleepTime > 0 && sleepTime < 200)
+                // Try to minimize clock slaving initial jitter.
                 {
-                    TimePeriodHelper timePeriodHelper(1);
-                    DebugOut(ClassName(this), "sleep for", sleepTime, "ms to minimize slaving jitter");
-                    Sleep((DWORD)sleepTime);
-                }
-            }
+                    REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime) +
+                                             m_device->GetPosition();
 
-            m_guidedReclockOffset = 0;
-            m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
-            m_clockCorrection = 0;
-            m_device->Start();
+                    if (m_device->IsExclusive())
+                    {
+                        silence -= 3 * OneMillisecond; // Taking USB cards into account, could have been lower otherwise.
+                    }
+                    else
+                    {
+                        silence -= m_device->GetStreamLatency() - OneMillisecond; // Experimental guesswork.
+                    }
+
+                    int64_t sleepTime = llMulDiv(silence, 1000, OneSecond, 0);
+
+                    if (sleepTime < 0)
+                        sleepTime = 0;
+
+                    if (sleepTime > 0 && sleepTime < 200)
+                    {
+                        TimePeriodHelper timePeriodHelper(1);
+                        DebugOut(ClassName(this), "sleep for", sleepTime, "ms to minimize slaving jitter");
+                        Sleep((DWORD)sleepTime);
+                    }
+
+                    DebugOut(ClassName(this), "predicting approx", silence / 10000. - sleepTime, "ms slaving jitter");
+                }
+
+                m_guidedReclockOffset = 0;
+                m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
+                m_clockCorrection = 0;
+                m_device->Start();
+            }
+            catch (HRESULT)
+            {
+                ClearDevice();
+            }
         }
     }
 
@@ -502,7 +520,15 @@ namespace SaneAudioRenderer
 
             if (m_state == State_Running)
             {
-                MinimizeReslavingJitter();
+                try
+                {
+                    PushReslavingJitter();
+                }
+                catch (HRESULT)
+                {
+                    ClearDevice();
+                }
+
                 StartDevice();
             }
         }
@@ -523,8 +549,10 @@ namespace SaneAudioRenderer
         }
     }
 
-    void AudioRenderer::MinimizeReslavingJitter()
+    void AudioRenderer::PushReslavingJitter()
     {
+        CAutoLock objectLock(this);
+
         assert(m_device);
         assert(m_state == State_Running);
         assert(m_device->GetEnd() == 0);
@@ -536,8 +564,14 @@ namespace SaneAudioRenderer
 
         REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime);
 
-        if (!m_device->IsExclusive())
-            silence -= m_device->GetStreamLatency();
+        if (m_device->IsExclusive())
+        {
+            silence -= 3 * OneMillisecond; // Taking USB cards into account, could have been lower otherwise.
+        }
+        else
+        {
+            silence -= m_device->GetStreamLatency() - OneMillisecond; // Experimental guesswork.
+        }
 
         if (silence > 0)
         {
