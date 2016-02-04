@@ -466,6 +466,7 @@ namespace SaneAudioRenderer
                 if (sleepTime > 0 && sleepTime < 200)
                 {
                     TimePeriodHelper timePeriodHelper(1);
+                    DebugOut(ClassName(this), "sleep for", sleepTime, "ms to minimize slaving jitter");
                     Sleep((DWORD)sleepTime);
                 }
             }
@@ -544,7 +545,7 @@ namespace SaneAudioRenderer
             {
                 m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, rate, 0);
 
-                DebugOut(ClassName(this), "insert", chunk.GetFrameCount() * 1000. / rate,
+                DebugOut(ClassName(this), "push", chunk.GetFrameCount() * 1000. / rate,
                          "ms of silence to minimize re-slaving jitter");
 
                 ZeroMemory(chunk.GetData(), chunk.GetSize());
@@ -566,7 +567,8 @@ namespace SaneAudioRenderer
             {
                 m_myClock.OffsetAudioClock(offset);
                 m_clockCorrection += offset;
-                DebugOut(ClassName(this), "offset internal clock by", offset / 10000., "ms");
+                DebugOut(ClassName(this), "offset internal clock by", offset / 10000.,
+                         "ms to match", ClassName(&m_sampleCorrection));
             }
         }
     }
