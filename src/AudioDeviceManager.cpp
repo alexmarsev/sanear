@@ -135,6 +135,13 @@ namespace SaneAudioRenderer
             };
             backend.endpointFormFactor = GetDevicePropertyUint(devicePropertyStore, formFactorKey);
 
+            static const PROPERTYKEY supportsEventModeKey = { // PKEY_AudioEndpoint_Supports_EventDriven_Mode
+                {0x1da5d803, 0xd492, 0x4edd, {0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x0e}}, 7
+            };
+            backend.supportsSharedEventMode = IsWindows7OrGreater();
+            backend.supportsExclusiveEventMode = backend.supportsSharedEventMode &&
+                                                 GetDevicePropertyUint(devicePropertyStore, supportsEventModeKey);
+
             ThrowIfFailed(device->Activate(__uuidof(IAudioClient),
                                            CLSCTX_INPROC_SERVER, nullptr, (void**)&backend.audioClient));
         }
@@ -336,7 +343,8 @@ namespace SaneAudioRenderer
                     }
                 }
 
-                backend->eventMode = realtime || backend->exclusive;
+                backend->eventMode = (realtime && backend->supportsSharedEventMode) ||
+                                     (backend->exclusive && backend->supportsExclusiveEventMode);
 
                 {
                     AUDCLNT_SHAREMODE mode = backend->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE :

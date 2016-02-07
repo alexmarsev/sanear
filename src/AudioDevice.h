@@ -11,6 +11,8 @@ namespace SaneAudioRenderer
         SharedString          adapterName;
         SharedString          endpointName;
         UINT32                endpointFormFactor;
+        bool                  supportsSharedEventMode;
+        bool                  supportsExclusiveEventMode;
 
         IAudioClientPtr       audioClient;
         IAudioRenderClientPtr audioRenderClient;

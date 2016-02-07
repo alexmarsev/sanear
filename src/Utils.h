@@ -145,4 +145,14 @@ namespace SaneAudioRenderer
         HMODULE m_lib = NULL;
         Func m_func = nullptr;
     };
+
+    inline bool IsWindows7OrGreater()
+    {
+        OSVERSIONINFOEX info = {sizeof(info)};
+        info.dwMajorVersion = 6;
+        info.dwMinorVersion = 1;
+        auto rule = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+                                                               VER_MINORVERSION, VER_GREATER_EQUAL);
+        return !!VerifyVersionInfo(&info, VER_MAJORVERSION | VER_MINORVERSION, rule);
+    }
 }
