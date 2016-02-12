@@ -7,3 +7,6 @@
 [submodule "soundtouch"]
 	path = dll/src/soundtouch
 	url = git://github.com/alexmarsev/soundtouch.git
+[submodule "rubberband"]
+	path = dll/src/rubberband
+	url = git://github.com/breakfastquay/rubberband.git

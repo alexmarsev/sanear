@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="rubberband\src\system\Allocators.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\dsp\AudioCurveCalculator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\CompoundAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\ConstantAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\dsp\FFT.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\HighFrequencyAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\PercussiveAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\base\Profiler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\speex\resample.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\dsp\Resampler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\rubberband-c.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\RubberBandStretcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\SilentAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\audiocurves\SpectralDifferenceAudioCurve.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\StretchCalculator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\StretcherChannelData.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\StretcherImpl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\StretcherProcess.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\system\sysutils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="rubberband\src\system\Thread.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{5f1ad43f-a951-4728-878e-cae51eb9e82a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rubberband\rubberband\RubberBandStretcher.h" />
+  </ItemGroup>
+</Project>

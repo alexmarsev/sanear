@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sanear-dll", "src\sanear-dll.vcxproj", "{E02FD084-ED17-46C7-B5A6-F0BBB7966BBB}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "soxr", "src\soxr.vcxproj", "{2D2A92FF-1FB6-4926-AFFB-5E00D27939FC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "soundtouch", "src\soundtouch.vcxproj", "{3C1B816A-645C-4E1F-A006-5C47263E59C5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rubberband", "src\rubberband.vcxproj", "{863E6128-1F58-4371-A282-0FCC62DFF747}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,14 @@ Global
 		{3C1B816A-645C-4E1F-A006-5C47263E59C5}.Release|Win32.Build.0 = Release|Win32
 		{3C1B816A-645C-4E1F-A006-5C47263E59C5}.Release|x64.ActiveCfg = Release|x64
 		{3C1B816A-645C-4E1F-A006-5C47263E59C5}.Release|x64.Build.0 = Release|x64
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Debug|Win32.ActiveCfg = Debug|Win32
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Debug|Win32.Build.0 = Debug|Win32
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Debug|x64.ActiveCfg = Debug|x64
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Debug|x64.Build.0 = Debug|x64
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|Win32.ActiveCfg = Release|Win32
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|Win32.Build.0 = Release|Win32
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|x64.ActiveCfg = Release|x64
+		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
