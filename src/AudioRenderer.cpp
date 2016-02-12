@@ -314,21 +314,25 @@ namespace SaneAudioRenderer
     void AudioRenderer::Pause()
     {
         CAutoLock objectLock(this);
-        m_state = State_Paused;
 
         if (m_device)
         {
             m_myClock.UnslaveClockFromAudio();
             m_device->Stop();
         }
+
+        assert(m_state != State_Paused);
+        m_state = State_Paused;
     }
 
     void AudioRenderer::Stop()
     {
         CAutoLock objectLock(this);
-        m_state = State_Stopped;
 
         ClearDevice();
+
+        assert(m_state != State_Stopped);
+        m_state = State_Stopped;
     }
 
     SharedWaveFormat AudioRenderer::GetInputFormat()
