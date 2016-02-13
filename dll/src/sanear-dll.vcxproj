@@ -93,6 +93,9 @@
     <ProjectReference Include="bs2b.vcxproj">
       <Project>{c59b751c-f10d-4de0-b580-73cb03b27b6e}</Project>
     </ProjectReference>
+    <ProjectReference Include="fftw.vcxproj">
+      <Project>{85a00e9e-c632-497e-8dcb-857487f4d940}</Project>
+    </ProjectReference>
     <ProjectReference Include="rubberband.vcxproj">
       <Project>{863e6128-1f58-4371-a282-0fcc62dff747}</Project>
     </ProjectReference>

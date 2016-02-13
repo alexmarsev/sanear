@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "soundtouch", "src\soundtouc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rubberband", "src\rubberband.vcxproj", "{863E6128-1F58-4371-A282-0FCC62DFF747}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fftw", "src\fftw.vcxproj", "{85A00E9E-C632-497E-8DCB-857487F4D940}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -81,6 +83,14 @@ Global
 		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|Win32.Build.0 = Release|Win32
 		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|x64.ActiveCfg = Release|x64
 		{863E6128-1F58-4371-A282-0FCC62DFF747}.Release|x64.Build.0 = Release|x64
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Debug|Win32.ActiveCfg = Debug|Win32
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Debug|Win32.Build.0 = Debug|Win32
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Debug|x64.ActiveCfg = Debug|x64
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Debug|x64.Build.0 = Debug|x64
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Release|Win32.ActiveCfg = Release|Win32
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Release|Win32.Build.0 = Release|Win32
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Release|x64.ActiveCfg = Release|x64
+		{85A00E9E-C632-497E-8DCB-857487F4D940}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

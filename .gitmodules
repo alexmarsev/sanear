@@ -10,3 +10,7 @@
 [submodule "rubberband"]
 	path = dll/src/rubberband
 	url = git://github.com/breakfastquay/rubberband.git
+[submodule "fftw"]
+	path = dll/src/fftw
+	url = git://github.com/alexmarsev/fftw3.git
+	branch = codelets-3.3.4
