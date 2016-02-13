@@ -44,8 +44,8 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>rubberband;rubberband\src</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>__MSVC__;WIN32;NOMINMAX;_USE_MATH_DEFINES;USE_KISSFFT;USE_SPEEX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>rubberband;rubberband\src;soxr\src</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>__MSVC__;WIN32;NOMINMAX;_USE_MATH_DEFINES;USE_KISSFFT;HAVE_LIBSAMPLERATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -83,7 +83,9 @@
     <ClCompile Include="rubberband\src\kissfft\kiss_fftr.c" />
     <ClCompile Include="rubberband\src\rubberband-c.cpp" />
     <ClCompile Include="rubberband\src\RubberBandStretcher.cpp" />
-    <ClCompile Include="rubberband\src\speex\resample.c" />
+    <ClCompile Include="rubberband\src\speex\resample.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="rubberband\src\StretchCalculator.cpp" />
     <ClCompile Include="rubberband\src\StretcherChannelData.cpp" />
     <ClCompile Include="rubberband\src\StretcherImpl.cpp" />
