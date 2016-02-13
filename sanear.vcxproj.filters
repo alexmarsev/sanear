@@ -68,6 +68,9 @@
     <ClCompile Include="src\AudioDeviceEvent.cpp">
       <Filter>Device</Filter>
     </ClCompile>
+    <ClCompile Include="src\DspTempo2.cpp">
+      <Filter>Processors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\DspMatrix.h">
@@ -150,6 +153,9 @@
     </ClInclude>
     <ClInclude Include="src\AudioDeviceEvent.h">
       <Filter>Device</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DspTempo2.h">
+      <Filter>Processors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

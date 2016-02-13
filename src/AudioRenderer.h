@@ -9,6 +9,7 @@
 #include "DspMatrix.h"
 #include "DspRate.h"
 #include "DspTempo.h"
+#include "DspTempo2.h"
 #include "DspVolume.h"
 #include "Interfaces.h"
 #include "SampleCorrection.h"
@@ -115,7 +116,7 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         DspRate m_dspRate;
-        DspTempo m_dspTempo;
+        DspTempo2 m_dspTempo;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
         DspBalance m_dspBalance;

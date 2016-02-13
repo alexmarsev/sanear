@@ -3,7 +3,7 @@
   <Import Project="$(SolutionDir)base.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\baseclasses;$(SolutionDir)src\soxr\src;$(SolutionDir)src\libbs2b\src;$(SolutionDir)src\soundtouch\include;$(SolutionDir)src\zita-resampler\libs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\baseclasses;$(SolutionDir)src\soxr\src;$(SolutionDir)src\libbs2b\src;$(SolutionDir)src\soundtouch\include;$(SolutionDir)src\zita-resampler\libs;$(SolutionDir)src\rubberband\rubberband;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

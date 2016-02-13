@@ -79,6 +79,8 @@
     <ClCompile Include="rubberband\src\dsp\AudioCurveCalculator.cpp" />
     <ClCompile Include="rubberband\src\dsp\FFT.cpp" />
     <ClCompile Include="rubberband\src\dsp\Resampler.cpp" />
+    <ClCompile Include="rubberband\src\kissfft\kiss_fft.c" />
+    <ClCompile Include="rubberband\src\kissfft\kiss_fftr.c" />
     <ClCompile Include="rubberband\src\rubberband-c.cpp" />
     <ClCompile Include="rubberband\src\RubberBandStretcher.cpp" />
     <ClCompile Include="rubberband\src\speex\resample.c" />
