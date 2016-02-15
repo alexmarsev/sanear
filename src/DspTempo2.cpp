@@ -17,7 +17,8 @@ namespace SaneAudioRenderer
         {
             try
             {
-                auto options = RubberBand::RubberBandStretcher::OptionProcessRealTime;
+                auto options = RubberBand::RubberBandStretcher::OptionTransientsMixed |
+                               RubberBand::RubberBandStretcher::OptionProcessRealTime;
 
                 m_stretcher = std::make_unique<RubberBand::RubberBandStretcher>(rate, channels, options, 1.0 / tempo);
 
