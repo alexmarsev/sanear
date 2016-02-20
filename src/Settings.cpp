@@ -160,4 +160,31 @@ namespace SaneAudioRenderer
 
         return m_ignoreSystemChannelMixer;
     }
+
+    STDMETHODIMP Settings::SetTimestretchSettings(UINT32 uTimestretchMethod)
+    {
+        if (uTimestretchMethod != TIMESTRETCH_METHOD_SOLA &&
+            uTimestretchMethod != TIMESTRETCH_METHOD_PHASE_VOCODER)
+        {
+            return E_INVALIDARG;
+        }
+
+        CAutoLock lock(this);
+
+        if (uTimestretchMethod != m_timestretchMethod)
+        {
+            m_timestretchMethod = uTimestretchMethod;
+            m_serial++;
+        }
+
+        return S_OK;
+    }
+
+    STDMETHODIMP_(void) Settings::GetTimestretchSettings(UINT32* puTimestretchMethod)
+    {
+        CAutoLock lock(this);
+
+        if (puTimestretchMethod)
+            *puTimestretchMethod = m_timestretchMethod;
+    }
 }

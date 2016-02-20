@@ -36,6 +36,9 @@ namespace SaneAudioRenderer
         STDMETHODIMP_(void) SetIgnoreSystemChannelMixer(BOOL bEnable) override;
         STDMETHODIMP_(BOOL) GetIgnoreSystemChannelMixer() override;
 
+        STDMETHODIMP SetTimestretchSettings(UINT32 uTimestretchMethod) override;
+        STDMETHODIMP_(void) GetTimestretchSettings(UINT32* puTimestretchMethod) override;
+
     private:
 
         std::atomic<UINT32> m_serial = 0;
@@ -53,5 +56,7 @@ namespace SaneAudioRenderer
         UINT32 m_crossfeedLevel = CROSSFEED_LEVEL_CMOY;
 
         BOOL m_ignoreSystemChannelMixer = TRUE;
+
+        UINT32 m_timestretchMethod = TIMESTRETCH_METHOD_PHASE_VOCODER;
     };
 }

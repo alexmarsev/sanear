@@ -426,6 +426,19 @@ namespace SaneAudioRenderer
                 }
             }
 
+            bool clearForTimestretch = false;
+            {
+                UINT32 timestretchMethod;
+                m_settings->GetTimestretchSettings(&timestretchMethod);
+                const bool usePhaseVocoder = (timestretchMethod == ISettings::TIMESTRETCH_METHOD_PHASE_VOCODER);
+
+                if ((usePhaseVocoder && m_dspTempo1.Active()) ||
+                    (!usePhaseVocoder && m_dspTempo2.Active()))
+                {
+                    clearForTimestretch = true;
+                }
+            }
+
             m_deviceSettingsSerial = newSettingsSerial;
 
             std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> systemDeviceId;;
@@ -442,6 +455,7 @@ namespace SaneAudioRenderer
 
             if ((clearForSystemChannelMixer) ||
                 (clearForCrossfeed) ||
+                (clearForTimestretch) ||
                 (m_device->IsExclusive() != !!settingsDeviceExclusive) ||
                 (m_device->GetBufferDuration() != settingsDeviceBuffer) ||
                 (!settingsDeviceDefault && *m_device->GetId() != settingsDeviceId.get()) ||
@@ -750,9 +764,14 @@ namespace SaneAudioRenderer
         const auto outChannels = m_device->GetWaveFormat()->nChannels;
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 
+        UINT32 timestretchMethod;
+        m_settings->GetTimestretchSettings(&timestretchMethod);
+        const bool usePhaseVocoder = (timestretchMethod == ISettings::TIMESTRETCH_METHOD_PHASE_VOCODER);
+
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
-        m_dspTempo.Initialize(m_rate, outRate, outChannels);
+        m_dspTempo1.Initialize(usePhaseVocoder ? 1.0 : m_rate, outRate, outChannels);
+        m_dspTempo2.Initialize(usePhaseVocoder ? m_rate : 1.0, outRate, outChannels);
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());
         m_dspDither.Initialize(m_device->GetDspFormat());

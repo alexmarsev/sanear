@@ -82,7 +82,8 @@ namespace SaneAudioRenderer
         {
             f(&m_dspMatrix);
             f(&m_dspRate);
-            f(&m_dspTempo);
+            f(&m_dspTempo1);
+            f(&m_dspTempo2);
             f(&m_dspCrossfeed);
             f(&m_dspVolume);
             f(&m_dspBalance);
@@ -116,7 +117,8 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         DspRate m_dspRate;
-        DspTempo2 m_dspTempo;
+        DspTempo m_dspTempo1;
+        DspTempo2 m_dspTempo2;
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
         DspBalance m_dspBalance;

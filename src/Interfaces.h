@@ -41,6 +41,14 @@ namespace SaneAudioRenderer
 
         STDMETHOD_(void, SetIgnoreSystemChannelMixer)(BOOL bEnable) = 0;
         STDMETHOD_(BOOL, GetIgnoreSystemChannelMixer)() = 0;
+
+        enum
+        {
+            TIMESTRETCH_METHOD_SOLA = 0,
+            TIMESTRETCH_METHOD_PHASE_VOCODER = 1,
+        };
+        STDMETHOD(SetTimestretchSettings)(UINT32 uTimestretchMethod) = 0;
+        STDMETHOD_(void, GetTimestretchSettings)(UINT32* puTimestretchMethod) = 0;
     };
     _COM_SMARTPTR_TYPEDEF(ISettings, __uuidof(ISettings));
 
