@@ -102,8 +102,9 @@ namespace SaneAudioRenderer
 
         float* inputData = (float*)chunk.GetData();
 
-        for (size_t i = 0, n = chunk.GetSampleCount(); i < n; i++)
-            outputData[i % m_channels][i / m_channels] = inputData[i];
+        for (size_t channel = 0; channel < m_channels; channel++)
+            for (size_t i = 0, n = chunk.GetFrameCount(); i < n; i++)
+                outputData[channel][i] = inputData[channel + i * m_channels];
 
         chunk = std::move(output);
 
