@@ -169,6 +169,11 @@ namespace SaneAudioRenderer
             return E_INVALIDARG;
         }
 
+    #ifndef SANEAR_GPL_PHASE_VOCODER
+        if (uTimestretchMethod == TIMESTRETCH_METHOD_PHASE_VOCODER)
+            return E_NOTIMPL;
+    #endif
+
         CAutoLock lock(this);
 
         if (uTimestretchMethod != m_timestretchMethod)

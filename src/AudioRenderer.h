@@ -82,8 +82,12 @@ namespace SaneAudioRenderer
         {
             f(&m_dspMatrix);
             f(&m_dspRate);
+        #ifdef SANEAR_GPL_PHASE_VOCODER
             f(&m_dspTempo1);
             f(&m_dspTempo2);
+        #else
+            f(&m_dspTempo);
+        #endif
             f(&m_dspCrossfeed);
             f(&m_dspVolume);
             f(&m_dspBalance);
@@ -117,8 +121,12 @@ namespace SaneAudioRenderer
 
         DspMatrix m_dspMatrix;
         DspRate m_dspRate;
+    #ifdef SANEAR_GPL_PHASE_VOCODER
         DspTempo m_dspTempo1;
         DspTempo2 m_dspTempo2;
+    #else
+        DspTempo m_dspTempo;
+    #endif
         DspCrossfeed m_dspCrossfeed;
         DspVolume m_dspVolume;
         DspBalance m_dspBalance;

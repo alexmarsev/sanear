@@ -3,6 +3,7 @@
   <Import Project="$(SolutionDir)base.props" />
   <ItemDefinitionGroup>
     <ClCompile>
+      <PreprocessorDefinitions>SANEAR_GPL_PHASE_VOCODER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)src\baseclasses;$(SolutionDir)src\soxr\src;$(SolutionDir)src\libbs2b\src;$(SolutionDir)src\soundtouch\include;$(SolutionDir)src\zita-resampler\libs;$(SolutionDir)src\rubberband\rubberband;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>

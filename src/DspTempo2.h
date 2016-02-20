@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef SANEAR_GPL_PHASE_VOCODER
+namespace SaneAudioRenderer { struct DspTempo2 final { void ShutNoPublicSymbolsWarning(); }; }
+#else
+
 #include "DspBase.h"
 
 #include <RubberBandStretcher.h>
@@ -41,3 +45,5 @@ namespace SaneAudioRenderer
         uint32_t m_channels = 0;
     };
 }
+
+#endif

@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "DspTempo2.h"
 
+#ifndef SANEAR_GPL_PHASE_VOCODER
+namespace SaneAudioRenderer { void DspTempo2::ShutNoPublicSymbolsWarning() {} }
+#else
+
 namespace SaneAudioRenderer
 {
     void DspTempo2::Initialize(double tempo, uint32_t rate, uint32_t channels)
@@ -128,3 +132,5 @@ namespace SaneAudioRenderer
         chunk = std::move(output);
     }
 }
+
+#endif

@@ -428,6 +428,7 @@ namespace SaneAudioRenderer
 
             bool clearForTimestretch = false;
             {
+            #ifdef SANEAR_GPL_PHASE_VOCODER
                 UINT32 timestretchMethod;
                 m_settings->GetTimestretchSettings(&timestretchMethod);
                 const bool usePhaseVocoder = (timestretchMethod == ISettings::TIMESTRETCH_METHOD_PHASE_VOCODER);
@@ -437,6 +438,7 @@ namespace SaneAudioRenderer
                 {
                     clearForTimestretch = true;
                 }
+            #endif
             }
 
             m_deviceSettingsSerial = newSettingsSerial;
@@ -764,14 +766,20 @@ namespace SaneAudioRenderer
         const auto outChannels = m_device->GetWaveFormat()->nChannels;
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 
+    #ifdef SANEAR_GPL_PHASE_VOCODER
         UINT32 timestretchMethod;
         m_settings->GetTimestretchSettings(&timestretchMethod);
         const bool usePhaseVocoder = (timestretchMethod == ISettings::TIMESTRETCH_METHOD_PHASE_VOCODER);
+    #endif
 
         m_dspMatrix.Initialize(inChannels, inMask, outChannels, outMask);
         m_dspRate.Initialize(m_live || m_externalClock, inRate, outRate, outChannels);
+    #ifdef SANEAR_GPL_PHASE_VOCODER
         m_dspTempo1.Initialize(usePhaseVocoder ? 1.0 : m_rate, outRate, outChannels);
         m_dspTempo2.Initialize(usePhaseVocoder ? m_rate : 1.0, outRate, outChannels);
+    #else
+        m_dspTempo.Initialize(m_rate, outRate, outChannels);
+    #endif
         m_dspCrossfeed.Initialize(m_settings, outRate, outChannels, outMask);
         m_dspLimiter.Initialize(outRate, outChannels, m_device->IsExclusive());
         m_dspDither.Initialize(m_device->GetDspFormat());

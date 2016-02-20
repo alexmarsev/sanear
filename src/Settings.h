@@ -57,6 +57,11 @@ namespace SaneAudioRenderer
 
         BOOL m_ignoreSystemChannelMixer = TRUE;
 
-        UINT32 m_timestretchMethod = TIMESTRETCH_METHOD_PHASE_VOCODER;
+        UINT32 m_timestretchMethod =
+    #ifdef SANEAR_GPL_PHASE_VOCODER
+                   TIMESTRETCH_METHOD_PHASE_VOCODER;
+    #else
+                   TIMESTRETCH_METHOD_SOLA;
+    #endif
     };
 }
