@@ -74,7 +74,9 @@
     <ClCompile Include="rubberband\src\audiocurves\SpectralDifferenceAudioCurve.cpp" />
     <ClCompile Include="rubberband\src\base\Profiler.cpp" />
     <ClCompile Include="rubberband\src\dsp\AudioCurveCalculator.cpp" />
-    <ClCompile Include="rubberband\src\dsp\FFT.cpp" />
+    <ClCompile Include="rubberband\src\dsp\FFT.cpp">
+      <ForcedIncludeFiles Condition="'$(PlatformToolsetVersion)'=='120'">..\snprintf.h</ForcedIncludeFiles>
+    </ClCompile>
     <ClCompile Include="rubberband\src\dsp\Resampler.cpp" />
     <ClCompile Include="rubberband\src\kissfft\kiss_fft.c" />
     <ClCompile Include="rubberband\src\kissfft\kiss_fftr.c" />
