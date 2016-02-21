@@ -4,9 +4,7 @@
 #define HAVE_SSE2 1
 
 #define DISABLE_FORTRAN 1
-#define FFTW_ENABLE_ALLOCA 1
 
-#define HAVE_ALLOCA 1
 #define HAVE_ABORT 1
 #define HAVE_UINTPTR_T 1
 
