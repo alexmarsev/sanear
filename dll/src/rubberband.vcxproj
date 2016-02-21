@@ -47,9 +47,6 @@
       <AdditionalIncludeDirectories>rubberband;rubberband\src;soxr\src;fftw\api</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>__MSVC__;WIN32;NOMINMAX;_USE_MATH_DEFINES;NO_THREADING;PROCESS_SAMPLE_TYPE=double;HAVE_FFTW3;FFTW_DOUBLE_ONLY;HAVE_LIBSAMPLERATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>

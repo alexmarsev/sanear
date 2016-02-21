@@ -5,6 +5,11 @@
     <BinDir>$(SolutionDir)bin\$(Configuration)$(PlatformArchitecture)\</BinDir>
     <IntDir>$(SolutionDir)bin\$(Configuration)$(PlatformArchitecture)\obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <GenerateDebugInformation Condition="'$(PlatformToolsetVersion)'=='120'">true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>

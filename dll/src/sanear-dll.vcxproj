@@ -61,7 +61,6 @@
       <AdditionalIncludeDirectories>baseclasses</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>sanear-dll/sanear.def</ModuleDefinitionFile>
       <AdditionalDependencies>Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>

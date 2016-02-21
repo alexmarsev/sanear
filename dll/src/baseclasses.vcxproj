@@ -50,9 +50,6 @@
       <PrecompiledHeaderFile>streams.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>baseclasses</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
