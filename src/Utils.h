@@ -118,7 +118,7 @@ namespace SaneAudioRenderer
     #ifndef NDEBUG
     #   define DebugOut(...) DebugOutBody(##__VA_ARGS__)
     #else
-    #   define DebugOut(...)
+    #   define DebugOut(...) {}
     #endif
 
     template <class T>
