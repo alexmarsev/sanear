@@ -140,5 +140,5 @@ extern "C" BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
 
 BOOL WINAPI DllMain(HINSTANCE hDllHandle, DWORD dwReason, LPVOID pReserved)
 {
-	return DllEntryPoint(hDllHandle, dwReason, pReserved);
+    return DllEntryPoint(hDllHandle, dwReason, pReserved);
 }
