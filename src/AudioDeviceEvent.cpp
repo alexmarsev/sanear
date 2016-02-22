@@ -144,7 +144,7 @@ namespace SaneAudioRenderer
 
             m_backend->audioClient->Stop();
 
-            if (!m_backend->bitstream)
+            if (m_backend->exclusive && !m_backend->bitstream)
             {
                 m_observeInactivity = true;
                 m_activityPointCounter = GetPerformanceCounter();
