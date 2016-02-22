@@ -73,6 +73,8 @@ namespace SaneAudioRenderer
                              sampleProps.tStart, sampleProps.tStop, "]");
 
                     chunk.ShrinkHead(chunk.GetFrameCount() > cropFrames ? chunk.GetFrameCount() - cropFrames : 0);
+
+                    sampleProps.tStart += FramesToTime(cropFrames);
                 }
             }
             else if ((sampleProps.dwSampleFlags & AM_SAMPLE_TIMEVALID) && sampleProps.tStart > m_lastFrameEnd)
@@ -87,6 +89,8 @@ namespace SaneAudioRenderer
                              sampleProps.tStart, sampleProps.tStop, "]");
 
                     chunk.PadHead(padFrames);
+
+                    sampleProps.tStart -= FramesToTime(padFrames);
                 }
             }
         }
