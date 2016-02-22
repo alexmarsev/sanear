@@ -415,6 +415,53 @@ namespace SaneAudioRenderer
             }
         }
 
+        HRESULT RecreateAudioDeviceBackend(IMMDeviceEnumerator* pEnumerator,
+                                           std::shared_ptr<AudioDeviceBackend>& backend)
+        {
+            try
+            {
+                // Recreate
+                backend->audioClient = nullptr;
+                CreateAudioClient(pEnumerator, *backend);
+
+                // Initialize
+                {
+                    AUDCLNT_SHAREMODE mode = backend->exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE :
+                                                                  AUDCLNT_SHAREMODE_SHARED;
+
+                    DWORD flags = AUDCLNT_STREAMFLAGS_NOPERSIST;
+                    if (backend->eventMode)
+                        flags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+
+                    REFERENCE_TIME bufferDuration = llMulDiv(backend->deviceBufferSize, OneSecond,
+                                                             backend->waveFormat->nSamplesPerSec, 0);
+
+                    REFERENCE_TIME periodicy = 0;
+                    if (backend->exclusive && backend->eventMode)
+                        periodicy = bufferDuration;
+
+                    ThrowIfFailed(backend->audioClient->Initialize(mode, flags, bufferDuration,
+                                                                   periodicy, &(*backend->waveFormat), nullptr));
+                }
+
+                // Get services
+                ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioRenderClient)));
+                ThrowIfFailed(backend->audioClient->GetService(IID_PPV_ARGS(&backend->audioClock)));
+                ThrowIfFailed(backend->audioClient->GetStreamLatency(&backend->deviceLatency));
+                ThrowIfFailed(backend->audioClient->GetBufferSize(&backend->deviceBufferSize));
+            }
+            catch (std::bad_alloc&)
+            {
+                return E_OUTOFMEMORY;
+            }
+            catch (HRESULT ex)
+            {
+                return ex;
+            }
+
+            return S_OK;
+        }
+
         HRESULT GetDefaultDeviceIdInternal(IMMDeviceEnumerator* pEnumerator,
                                            std::unique_ptr<WCHAR, CoTaskMemFreeDeleter>& id)
         {
@@ -580,6 +627,27 @@ namespace SaneAudioRenderer
         catch (std::system_error&)
         {
             return nullptr;
+        }
+    }
+
+    bool AudioDeviceManager::RenewInactiveDevice(AudioDevice& device, int64_t& position)
+    {
+        auto renewFunction = [this](std::shared_ptr<AudioDeviceBackend>& backend) -> bool
+        {
+            m_function = [&] { return RecreateAudioDeviceBackend(m_enumerator, backend); };
+            m_wake.Set();
+            m_done.Wait();
+
+            return SUCCEEDED(m_result);
+        };
+
+        try
+        {
+            return device.RenewInactive(renewFunction, position);
+        }
+        catch (HRESULT)
+        {
+            return false;
         }
     }
 

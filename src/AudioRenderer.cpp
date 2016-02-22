@@ -478,6 +478,15 @@ namespace SaneAudioRenderer
         {
             try
             {
+                // Renew (effectively recreate) the device if it's been freed because of inactivity.
+                int64_t deviceRenewPosition = 0;
+                if (!m_deviceManager.RenewInactiveDevice(*m_device, deviceRenewPosition))
+                {
+                    DebugOut(ClassName(this), "failed to renew device");
+                    ClearDevice();
+                    return;
+                }
+
                 // Try to minimize clock slaving initial jitter.
                 {
                     REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime) +
@@ -508,7 +517,7 @@ namespace SaneAudioRenderer
                 }
 
                 m_guidedReclockOffset = 0;
-                m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset);
+                m_myClock.SlaveClockToAudio(m_device->GetClock(), m_startTime + m_startClockOffset + deviceRenewPosition);
                 m_clockCorrection = 0;
                 m_device->Start();
             }

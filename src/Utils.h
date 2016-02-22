@@ -155,4 +155,11 @@ namespace SaneAudioRenderer
                                                                VER_MINORVERSION, VER_GREATER_EQUAL);
         return !!VerifyVersionInfo(&info, VER_MAJORVERSION | VER_MINORVERSION, rule);
     }
+
+    template <typename... T>
+    inline HRESULT WaitForAny(DWORD timeout, T&... objects)
+    {
+        std::array<HANDLE, sizeof...(objects)> handles = {objects...};
+        return WaitForMultipleObjects(sizeof...(objects), handles.data(), FALSE, timeout);
+    }
 }

@@ -41,6 +41,7 @@ namespace SaneAudioRenderer
 
         bool BitstreamFormatSupported(SharedWaveFormat format, ISettings* pSettings);
         std::unique_ptr<AudioDevice> CreateDevice(SharedWaveFormat format, bool realtime, ISettings* pSettings);
+        bool RenewInactiveDevice(AudioDevice& device, int64_t& position);
 
         uint32_t GetDefaultDeviceSerial() { return m_defaultDeviceSerial; }
         std::unique_ptr<WCHAR, CoTaskMemFreeDeleter> GetDefaultDeviceId();

@@ -27,6 +27,8 @@ namespace SaneAudioRenderer
         void Stop() override;
         void Reset() override;
 
+        bool RenewInactive(const RenewBackendFunction& renewBackend, int64_t& position) override;
+
     private:
 
         void EventFeed();
@@ -53,5 +55,14 @@ namespace SaneAudioRenderer
         size_t m_bufferFrames = 0;
 
         bool m_queuedStart = false;
+
+        bool m_observeInactivity = false;
+        CAMEvent m_observeInactivityWake;
+        int64_t m_activityPointCounter = 0;
+
+        CCritSec m_renewMutex;
+        bool m_awaitingRenew = false;
+        int64_t m_renewPosition = 0;
+        size_t m_renewSilenceFrames = 0;
     };
 }

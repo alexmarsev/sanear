@@ -121,6 +121,12 @@ namespace SaneAudioRenderer
         m_endOfStreamPos = 0;
     }
 
+    bool AudioDevicePush::RenewInactive(const RenewBackendFunction& renewBackend, int64_t& position)
+    {
+        position = 0;
+        return true;
+    }
+
     void AudioDevicePush::SilenceFeed()
     {
         SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);

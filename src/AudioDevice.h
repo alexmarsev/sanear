@@ -70,6 +70,9 @@ namespace SaneAudioRenderer
 
         bool IgnoredSystemChannelMixer() const { return m_backend->ignoredSystemChannelMixer; }
 
+        using RenewBackendFunction = std::function<bool(std::shared_ptr<AudioDeviceBackend>&)>;
+        virtual bool RenewInactive(const RenewBackendFunction& renewBackend, int64_t& position) = 0;
+
     protected:
 
         std::shared_ptr<AudioDeviceBackend> m_backend;

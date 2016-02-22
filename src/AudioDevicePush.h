@@ -27,6 +27,8 @@ namespace SaneAudioRenderer
         void Stop() override;
         void Reset() override;
 
+        bool RenewInactive(const RenewBackendFunction& renewBackend, int64_t& position) override;
+
     private:
 
         void SilenceFeed();

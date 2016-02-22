@@ -20,8 +20,11 @@ namespace SaneAudioRenderer
         assert(backend->eventMode);
         m_backend = backend;
 
-        if (static_cast<HANDLE>(m_wake) == NULL)
+        if (static_cast<HANDLE>(m_wake) == NULL ||
+            static_cast<HANDLE>(m_observeInactivityWake) == NULL)
+        {
             throw E_OUTOFMEMORY;
+        }
 
         ThrowIfFailed(backend->audioClient->SetEventHandle(m_wake));
 
@@ -75,11 +78,16 @@ namespace SaneAudioRenderer
 
     int64_t AudioDeviceEvent::GetPosition()
     {
+        CAutoLock renewLock(&m_renewMutex);
+
+        if (m_awaitingRenew)
+            return m_renewPosition;
+
         UINT64 deviceClockFrequency, deviceClockPosition;
         ThrowIfFailed(m_backend->audioClock->GetFrequency(&deviceClockFrequency));
         ThrowIfFailed(m_backend->audioClock->GetPosition(&deviceClockPosition, nullptr));
 
-        return llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
+        return m_renewPosition + llMulDiv(deviceClockPosition, OneSecond, deviceClockFrequency, 0);
     }
 
     int64_t AudioDeviceEvent::GetEnd()
@@ -98,6 +106,8 @@ namespace SaneAudioRenderer
 
         {
             CAutoLock threadLock(&m_threadMutex);
+
+            m_observeInactivity = false;
 
             if (m_sentFrames == 0)
             {
@@ -124,10 +134,23 @@ namespace SaneAudioRenderer
 
         {
             CAutoLock threadLock(&m_threadMutex);
-            m_queuedStart = false;
-        }
 
-        m_backend->audioClient->Stop();
+            m_queuedStart = false;
+
+            CAutoLock renewLock(&m_renewMutex);
+
+            if (m_awaitingRenew)
+                return;
+
+            m_backend->audioClient->Stop();
+
+            if (!m_backend->bitstream)
+            {
+                m_observeInactivity = true;
+                m_activityPointCounter = GetPerformanceCounter();
+                m_observeInactivityWake.Set();
+            }
+        }
     }
 
     void AudioDeviceEvent::Reset()
@@ -137,7 +160,13 @@ namespace SaneAudioRenderer
         {
             CAutoLock threadLock(&m_threadMutex);
 
-            m_backend->audioClient->Reset();
+            CAutoLock renewLock(&m_renewMutex);
+
+            if (!m_awaitingRenew)
+                m_backend->audioClient->Reset();
+
+            m_renewPosition = 0;
+            m_renewSilenceFrames = 0;
 
             m_endOfStream = false;
             m_endOfStreamPos = 0;
@@ -151,7 +180,56 @@ namespace SaneAudioRenderer
                 m_bufferFrames = 0;
                 m_buffer.clear();
             }
+
+            if (m_observeInactivity)
+                m_activityPointCounter = GetPerformanceCounter();
         }
+    }
+
+    bool AudioDeviceEvent::RenewInactive(const RenewBackendFunction& renewBackend, int64_t& position)
+    {
+        CAutoLock threadLock(&m_threadMutex);
+
+        m_observeInactivity = false;
+
+        if (m_error)
+            return false;
+
+        CAutoLock renewLock(&m_renewMutex);
+
+        if (m_awaitingRenew)
+        {
+            DebugOut(ClassName(this), "renew");
+
+            if (!renewBackend(m_backend))
+                return false;
+
+            ThrowIfFailed(m_backend->audioClient->SetEventHandle(m_wake));
+            m_awaitingRenew = false;
+
+            if (m_renewSilenceFrames > 0)
+            {
+                DebugOut(ClassName(this), m_renewSilenceFrames, "frames of silence before renew");
+
+                DspChunk chunk = DspChunk(m_backend->dspFormat, m_backend->waveFormat->nChannels,
+                                          m_renewSilenceFrames, m_backend->waveFormat->nSamplesPerSec);
+
+                ZeroMemory(chunk.GetData(), chunk.GetSize());
+
+                {
+                    CAutoLock bufferLock(&m_bufferMutex);
+                    m_buffer.emplace_front(std::move(chunk));
+                    m_bufferFrames += m_renewSilenceFrames;
+                }
+
+                m_renewPosition -= llMulDiv(m_renewSilenceFrames, OneSecond,
+                                            m_backend->waveFormat->nSamplesPerSec, 0);
+            }
+
+            position = m_renewPosition;
+        }
+
+        return true;
     }
 
     void AudioDeviceEvent::EventFeed()
@@ -167,13 +245,21 @@ namespace SaneAudioRenderer
         if (taskHandle == NULL)
             SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
-        while (!m_exit)
+        for (DWORD waitTime = INFINITE;;)
         {
-            {
-                CAutoLock threadLock(&m_threadMutex);
+            HRESULT waitResult = WaitForAny(waitTime, m_wake, m_observeInactivityWake);
 
-                if (!m_error)
+            if (m_exit || m_error)
+                break;
+
+            switch (waitResult)
+            {
+                case WAIT_OBJECT_0:
                 {
+                    CAutoLock threadLock(&m_threadMutex);
+
+                    assert(m_sentFrames > 0 || m_queuedStart);
+
                     try
                     {
                         PushBufferToDevice();
@@ -189,10 +275,70 @@ namespace SaneAudioRenderer
                     {
                         m_error = true;
                     }
+
+                    break;
+                }
+
+                case WAIT_OBJECT_0 + 1:
+                case WAIT_TIMEOUT:
+                {
+                    CAutoLock threadLock(&m_threadMutex);
+
+                    waitTime = INFINITE;
+
+                    if (m_observeInactivity)
+                    {
+                        int64_t delay = GetPerformanceFrequency() / 5; // 200ms
+                        int64_t remaining = m_activityPointCounter + delay - GetPerformanceCounter();
+
+                        if (remaining > 0)
+                        {
+                            waitTime = (DWORD)llMulDiv(remaining, 1000, GetPerformanceFrequency(), 0) + 1;
+                        }
+                        else
+                        {
+                            CAutoLock renewLock(&m_renewMutex);
+
+                            DebugOut(ClassName(this), "awaiting renew");
+
+                            const uint32_t rate = m_backend->waveFormat->nSamplesPerSec;
+
+                            int64_t currentPosition = GetPosition();
+                            m_renewPosition = llMulDiv(m_receivedFrames - m_bufferFrames, OneSecond, rate, 0);
+
+                            try
+                            {
+                                int64_t renewSilence = m_renewPosition - currentPosition;
+                                if (renewSilence > 0)
+                                    m_renewSilenceFrames = (size_t)llMulDiv(renewSilence, rate, OneSecond, 0);
+                            }
+                            catch (HRESULT)
+                            {
+                                m_renewSilenceFrames = 0;
+                            }
+
+                            assert(CheckLastInstances());
+                            m_backend->audioClock = nullptr;
+                            m_backend->audioRenderClient = nullptr;
+                            m_backend->audioClient = nullptr;
+
+                            m_sentFrames = 0;
+
+                            m_awaitingRenew = true;
+                            m_observeInactivity = false;
+                        }
+
+                    }
+
+                    break;
+                }
+
+                default:
+                {
+                    DebugOut(ClassName(this), "wait error");
+                    m_error = true;
                 }
             }
-
-            m_wake.Wait();
         }
 
         if (taskHandle != NULL)
@@ -216,7 +362,10 @@ namespace SaneAudioRenderer
         CAutoLock bufferLock(&m_bufferMutex);
 
         if (deviceFrames > m_bufferFrames && !m_endOfStream && !m_backend->realtime)
+        {
+            DebugOut(ClassName(this), "buffer underrun");
             return;
+        }
 
         BYTE* deviceBuffer;
         ThrowIfFailed(m_backend->audioRenderClient->GetBuffer(deviceFrames, &deviceBuffer));
