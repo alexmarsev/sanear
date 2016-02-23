@@ -489,31 +489,26 @@ namespace SaneAudioRenderer
 
                 // Try to minimize clock slaving initial jitter.
                 {
-                    REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime) +
-                                             m_device->GetPosition();
+                    REFERENCE_TIME jitter = EstimateSlavingJitter();
 
-                    if (m_device->IsExclusive())
+                    if (jitter > OneMillisecond &&
+                        jitter < 200 * OneMillisecond)
                     {
-                        silence -= 3 * OneMillisecond; // Taking USB cards into account, could have been lower otherwise.
-                    }
-                    else
-                    {
-                        silence -= m_device->GetStreamLatency() - OneMillisecond; // Experimental guesswork.
-                    }
+                        int32_t sleepTime = (int32_t)(jitter / OneMillisecond);
+                        jitter -= sleepTime * OneMillisecond;
 
-                    int64_t sleepTime = llMulDiv(silence, 1000, OneSecond, 0);
-
-                    if (sleepTime < 0)
-                        sleepTime = 0;
-
-                    if (sleepTime > 0 && sleepTime < 200)
-                    {
                         TimePeriodHelper timePeriodHelper(1);
                         DebugOut(ClassName(this), "sleep for", sleepTime, "ms to minimize slaving jitter");
-                        Sleep((DWORD)sleepTime);
+                        Sleep(sleepTime);
+
+                        jitter = EstimateSlavingJitter();
+                    }
+                    else if (m_sampleCorrection.GetLastFrameEnd() == 0)
+                    {
+                        DebugOut(ClassName(this), "empty start");
                     }
 
-                    DebugOut(ClassName(this), "predicting approx", silence / 10000. - sleepTime, "ms slaving jitter");
+                    DebugOut(ClassName(this), "predicting approx", jitter / 10000., "ms slaving jitter");
                 }
 
                 m_guidedReclockOffset = 0;
@@ -578,6 +573,26 @@ namespace SaneAudioRenderer
         }
     }
 
+    REFERENCE_TIME AudioRenderer::EstimateSlavingJitter()
+    {
+        CAutoLock objectLock(this);
+        assert(m_device);
+
+        REFERENCE_TIME jitter = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime) +
+                                m_device->GetPosition();
+
+        if (m_device->IsExclusive())
+        {
+            jitter -= 3 * OneMillisecond; // Taking USB cards into account, could have been lower otherwise.
+        }
+        else
+        {
+            jitter -= m_device->GetStreamLatency() - OneMillisecond; // Experimental guesswork.
+        }
+
+        return jitter;
+    }
+
     void AudioRenderer::PushReslavingJitter()
     {
         CAutoLock objectLock(this);
@@ -591,24 +606,15 @@ namespace SaneAudioRenderer
 
         // Try to keep inevitable clock jerking to a minimum after re-slaving.
 
-        REFERENCE_TIME silence = m_startClockOffset - (m_myClock.GetPrivateTime() - m_startTime);
+        REFERENCE_TIME jitter = EstimateSlavingJitter();
 
-        if (m_device->IsExclusive())
+        if (jitter > 0)
         {
-            silence -= 3 * OneMillisecond; // Taking USB cards into account, could have been lower otherwise.
-        }
-        else
-        {
-            silence -= m_device->GetStreamLatency() - OneMillisecond; // Experimental guesswork.
-        }
-
-        if (silence > 0)
-        {
-            silence = std::min(silence, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
+            jitter = std::min(jitter, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
 
             uint32_t rate = m_device->GetWaveFormat()->nSamplesPerSec;
             DspChunk chunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
-                           (size_t)llMulDiv(silence, rate, OneSecond, 0), rate);
+                           (size_t)llMulDiv(jitter, rate, OneSecond, 0), rate);
 
             if (!chunk.IsEmpty())
             {

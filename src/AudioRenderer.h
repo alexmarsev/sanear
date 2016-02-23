@@ -69,6 +69,8 @@ namespace SaneAudioRenderer
         void CreateDevice();
         void ClearDevice();
 
+        REFERENCE_TIME EstimateSlavingJitter();
+
         void PushReslavingJitter();
 
         void ApplyClockCorrection();
