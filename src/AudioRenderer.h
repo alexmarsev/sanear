@@ -146,5 +146,7 @@ namespace SaneAudioRenderer
 
         std::atomic<REFERENCE_TIME> m_guidedReclockOffset = 0;
         bool m_guidedReclockActive = false;
+
+        size_t m_dropNextFrames = 0;
     };
 }

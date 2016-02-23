@@ -84,6 +84,28 @@ namespace SaneAudioRenderer
                 // Establish time/frame relation.
                 chunk = m_sampleCorrection.ProcessSample(pSample, sampleProps, m_live || m_externalClock);
 
+                // Drop frames if requested.
+                if (m_dropNextFrames > 0 && !chunk.IsEmpty())
+                {
+                    assert(!IsBitstreaming());
+
+                    const size_t chunkFrames = chunk.GetFrameCount();
+
+                    if (m_dropNextFrames >= chunkFrames)
+                    {
+                        DebugOut(ClassName(this), "dropping", chunkFrames, "frames");
+                        m_dropNextFrames -= chunkFrames;
+                        chunk = DspChunk();
+                        assert(chunk.IsEmpty());
+                    }
+                    else
+                    {
+                        DebugOut(ClassName(this), "dropping", m_dropNextFrames, "frames");
+                        chunk.ShrinkHead(chunkFrames - m_dropNextFrames);
+                        m_dropNextFrames = 0;
+                    }
+                }
+
                 // Apply clock corrections.
                 if (!m_live && m_device && m_state == State_Running)
                     ApplyClockCorrection();
@@ -220,6 +242,7 @@ namespace SaneAudioRenderer
                 m_myClock.UnslaveClockFromAudio();
                 m_device->Stop();
                 m_device->Reset();
+                m_dropNextFrames = 0;
                 m_sampleCorrection.NewDeviceBuffer();
                 InitializeProcessors();
                 m_startClockOffset = m_sampleCorrection.GetLastFrameEnd();
@@ -229,6 +252,7 @@ namespace SaneAudioRenderer
             else
             {
                 m_device->Reset();
+                m_dropNextFrames = 0;
                 m_sampleCorrection.NewDeviceBuffer();
                 InitializeProcessors();
             }
@@ -506,6 +530,35 @@ namespace SaneAudioRenderer
                     else if (m_sampleCorrection.GetLastFrameEnd() == 0)
                     {
                         DebugOut(ClassName(this), "empty start");
+                        const uint32_t rate = m_device->GetWaveFormat()->nSamplesPerSec;
+
+                        if (!m_bitstreaming && !m_device->IsRealtime())
+                        {
+                            size_t silenceFrames = rate * m_device->GetBufferDuration() / 5000; // Buffer / 5
+
+                            DspChunk chunk = DspChunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
+                                                      silenceFrames, rate);
+                            ZeroMemory(chunk.GetData(), chunk.GetSize());
+
+                            DebugOut(ClassName(this), "pushing", silenceFrames, "frames of silence");
+                            m_device->Push(chunk, nullptr);
+
+                            m_startClockOffset -= llMulDiv(silenceFrames, OneSecond, rate, 0);
+
+                            jitter = EstimateSlavingJitter();
+                        }
+
+                        if (!m_bitstreaming && jitter < 0)
+                        {
+                            m_dropNextFrames = (size_t)llMulDiv(-jitter, rate, OneSecond, 0);
+
+                            if (m_dropNextFrames > 0)
+                            {
+                                DebugOut(ClassName(this), "will be dropping next", m_dropNextFrames, "frames");
+                                m_startClockOffset += llMulDiv(m_dropNextFrames, OneSecond, rate, 0);
+                                jitter = EstimateSlavingJitter();
+                            }
+                        }
                     }
 
                     DebugOut(ClassName(this), "predicting approx", jitter / 10000., "ms slaving jitter");
@@ -571,6 +624,8 @@ namespace SaneAudioRenderer
             }
             m_device = nullptr;
         }
+
+        m_dropNextFrames = 0;
     }
 
     REFERENCE_TIME AudioRenderer::EstimateSlavingJitter()
