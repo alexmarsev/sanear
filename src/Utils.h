@@ -21,6 +21,18 @@ namespace SaneAudioRenderer
         return (size_t)(llMulDiv(time, rate, OneSecond, 0));
     }
 
+    inline int64_t FramesToTime(size_t frames, uint32_t rate)
+    {
+        assert(rate > 0);
+        return llMulDiv(frames, OneSecond, rate, 0);
+    }
+
+    inline int64_t FramesToTimeLong(int64_t frames, uint32_t rate)
+    {
+        assert(rate > 0);
+        return llMulDiv(frames, OneSecond, rate, 0);
+    }
+
     inline void ThrowIfFailed(HRESULT result)
     {
         if (FAILED(result))

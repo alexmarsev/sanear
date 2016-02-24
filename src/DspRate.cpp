@@ -101,7 +101,7 @@ namespace SaneAudioRenderer
             uint64_t inputPosition = llMulDiv(m_variableOutputFrames, m_inputRate, m_outputRate, 0);
             int64_t adjustedFrames = inputPosition + m_variableDelay - m_variableInputFrames;
 
-            REFERENCE_TIME adjustTime = m_adjustTime - llMulDiv(adjustedFrames, OneSecond, m_inputRate, 0);
+            REFERENCE_TIME adjustTime = m_adjustTime - FramesToTimeLong(adjustedFrames, m_inputRate);
 
             double ratio = (double)m_inputRate * 4 / (m_outputRate * (4 + (double)adjustTime / OneSecond));
 

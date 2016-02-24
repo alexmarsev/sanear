@@ -79,12 +79,12 @@ namespace SaneAudioRenderer
 
     int64_t AudioDevicePush::GetEnd()
     {
-        return llMulDiv(m_pushedFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+        return FramesToTimeLong(m_pushedFrames, GetRate());
     }
 
     int64_t AudioDevicePush::GetSilence()
     {
-        return llMulDiv(m_silenceFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+        return FramesToTimeLong(m_silenceFrames, GetRate());
     }
 
     void AudioDevicePush::Start()

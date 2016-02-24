@@ -92,12 +92,12 @@ namespace SaneAudioRenderer
 
     int64_t AudioDeviceEvent::GetEnd()
     {
-        return llMulDiv(m_receivedFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+        return FramesToTimeLong(m_receivedFrames, GetRate());
     }
 
     int64_t AudioDeviceEvent::GetSilence()
     {
-        return llMulDiv(m_silenceFrames, OneSecond, m_backend->waveFormat->nSamplesPerSec, 0);
+        return FramesToTimeLong(m_silenceFrames, GetRate());
     }
 
     void AudioDeviceEvent::Start()
@@ -222,8 +222,7 @@ namespace SaneAudioRenderer
                     m_bufferFrames += m_renewSilenceFrames;
                 }
 
-                m_renewPosition -= llMulDiv(m_renewSilenceFrames, OneSecond,
-                                            m_backend->waveFormat->nSamplesPerSec, 0);
+                m_renewPosition -= FramesToTime(m_renewSilenceFrames, GetRate());
             }
 
             position = m_renewPosition;
@@ -301,16 +300,14 @@ namespace SaneAudioRenderer
 
                             DebugOut(ClassName(this), "awaiting renew");
 
-                            const uint32_t rate = m_backend->waveFormat->nSamplesPerSec;
-
                             int64_t currentPosition = GetPosition();
-                            m_renewPosition = llMulDiv(m_receivedFrames - m_bufferFrames, OneSecond, rate, 0);
+                            m_renewPosition = FramesToTimeLong(m_receivedFrames - m_bufferFrames, GetRate());
 
                             try
                             {
                                 int64_t renewSilence = m_renewPosition - currentPosition;
                                 if (renewSilence > 0)
-                                    m_renewSilenceFrames = TimeToFrames(renewSilence, rate);
+                                    m_renewSilenceFrames = TimeToFrames(renewSilence, GetRate());
                             }
                             catch (HRESULT)
                             {

@@ -384,7 +384,7 @@ namespace SaneAudioRenderer
                         if (!backend->audioClient)
                             return E_FAIL;
 
-                        bufferDuration = llMulDiv(bufferFrames, OneSecond, backend->waveFormat->nSamplesPerSec, 0);
+                        bufferDuration = FramesToTime(bufferFrames, backend->waveFormat->nSamplesPerSec);
                         periodicy = bufferDuration;
 
                         // Initialize our audio client again with the right periodicity.
@@ -433,8 +433,8 @@ namespace SaneAudioRenderer
                     if (backend->eventMode)
                         flags |= AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
 
-                    REFERENCE_TIME bufferDuration = llMulDiv(backend->deviceBufferSize, OneSecond,
-                                                             backend->waveFormat->nSamplesPerSec, 0);
+                    REFERENCE_TIME bufferDuration = FramesToTime(backend->deviceBufferSize,
+                                                                 backend->waveFormat->nSamplesPerSec);
 
                     REFERENCE_TIME periodicy = 0;
                     if (backend->exclusive && backend->eventMode)

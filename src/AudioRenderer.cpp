@@ -542,7 +542,7 @@ namespace SaneAudioRenderer
                             DebugOut(ClassName(this), "pushing", silenceFrames, "frames of silence");
                             m_device->Push(chunk, nullptr);
 
-                            m_startClockOffset -= llMulDiv(silenceFrames, OneSecond, m_device->GetRate(), 0);
+                            m_startClockOffset -= FramesToTime(silenceFrames, m_device->GetRate());
 
                             jitter = EstimateSlavingJitter();
                         }
@@ -554,7 +554,7 @@ namespace SaneAudioRenderer
                             if (m_dropNextFrames > 0)
                             {
                                 DebugOut(ClassName(this), "will be dropping next", m_dropNextFrames, "frames");
-                                m_startClockOffset += llMulDiv(m_dropNextFrames, OneSecond, m_device->GetRate(), 0);
+                                m_startClockOffset += FramesToTime(m_dropNextFrames, m_device->GetRate());
                                 jitter = EstimateSlavingJitter();
                             }
                         }
@@ -671,7 +671,7 @@ namespace SaneAudioRenderer
 
             if (!chunk.IsEmpty())
             {
-                m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, m_device->GetRate(), 0);
+                m_startClockOffset -= FramesToTime(chunk.GetFrameCount(), m_device->GetRate());
 
                 DebugOut(ClassName(this), "push", chunk.GetFrameCount() * 1000. / m_device->GetRate(),
                          "ms of silence to minimize re-slaving jitter");
@@ -765,7 +765,7 @@ namespace SaneAudioRenderer
                     {
                         chunk.PadHead(padFrames);
 
-                        REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond, m_device->GetRate(), 0);
+                        REFERENCE_TIME paddedTime = FramesToTime(padFrames, m_device->GetRate());
 
                         m_myClock.OffsetAudioClock(-paddedTime);
                         padTime -= paddedTime;
@@ -794,7 +794,7 @@ namespace SaneAudioRenderer
                     {
                         chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
-                        REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond, m_device->GetRate(), 0);
+                        REFERENCE_TIME droppedTime = FramesToTime(dropFrames, m_device->GetRate());
 
                         m_myClock.OffsetAudioClock(droppedTime);
                         dropTime -= droppedTime;
