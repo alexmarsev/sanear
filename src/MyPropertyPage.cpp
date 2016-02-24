@@ -171,7 +171,7 @@ namespace SaneAudioRenderer
 
         std::wstring channelsInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nChannels) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*inputFormat)) + L")" : L"-";
-        std::wstring channelsDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetWaveFormat()->nChannels) +
+        std::wstring channelsDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetChannelCount()) +
                                               L" (" + GetHexString(DspMatrix::GetChannelMask(*pDevice->GetWaveFormat())) + L")" : L"-";
         std::wstring channelsField = (channelsInputField == channelsDeviceField) ?
                                          channelsInputField : channelsInputField + L" -> " + channelsDeviceField;

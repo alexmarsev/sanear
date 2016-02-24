@@ -535,7 +535,7 @@ namespace SaneAudioRenderer
                         {
                             size_t silenceFrames = m_device->GetRate() * m_device->GetBufferDuration() / 5000; // Buffer / 5
 
-                            DspChunk chunk = DspChunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
+                            DspChunk chunk = DspChunk(m_device->GetDspFormat(), m_device->GetChannelCount(),
                                                       silenceFrames, m_device->GetRate());
                             ZeroMemory(chunk.GetData(), chunk.GetSize());
 
@@ -666,7 +666,7 @@ namespace SaneAudioRenderer
         {
             jitter = std::min(jitter, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
 
-            DspChunk chunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
+            DspChunk chunk(m_device->GetDspFormat(), m_device->GetChannelCount(),
                            (size_t)llMulDiv(jitter, m_device->GetRate(), OneSecond, 0), m_device->GetRate());
 
             if (!chunk.IsEmpty())
@@ -825,7 +825,7 @@ namespace SaneAudioRenderer
         const auto inChannels = m_inputFormat->nChannels;
         const auto inMask = DspMatrix::GetChannelMask(*m_inputFormat);
         const auto outRate = m_device->GetRate();
-        const auto outChannels = m_device->GetWaveFormat()->nChannels;
+        const auto outChannels = m_device->GetChannelCount();
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 
     #ifdef SANEAR_GPL_PHASE_VOCODER
