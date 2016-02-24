@@ -549,7 +549,7 @@ namespace SaneAudioRenderer
 
                         if (!m_bitstreaming && jitter < 0)
                         {
-                            m_dropNextFrames = (size_t)llMulDiv(-jitter, m_device->GetRate(), OneSecond, 0);
+                            m_dropNextFrames = TimeToFrames(-jitter, m_device->GetRate());
 
                             if (m_dropNextFrames > 0)
                             {
@@ -667,7 +667,7 @@ namespace SaneAudioRenderer
             jitter = std::min(jitter, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
 
             DspChunk chunk(m_device->GetDspFormat(), m_device->GetChannelCount(),
-                           (size_t)llMulDiv(jitter, m_device->GetRate(), OneSecond, 0), m_device->GetRate());
+                           TimeToFrames(jitter, m_device->GetRate()), m_device->GetRate());
 
             if (!chunk.IsEmpty())
             {
@@ -723,7 +723,7 @@ namespace SaneAudioRenderer
             // Rate matching.
             if (remaining > latency) // x2.0
             {
-                size_t dropFrames = (size_t)llMulDiv(m_device->GetRate(), remaining - latency * 3 / 4, OneSecond, 0); // x1.5
+                size_t dropFrames = TimeToFrames(remaining - latency * 3 / 4, m_device->GetRate()); // x1.5
 
                 dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 
@@ -733,7 +733,7 @@ namespace SaneAudioRenderer
             }
             else if (remaining < latency / 2) // x1.0
             {
-                size_t padFrames = (size_t)llMulDiv(m_device->GetRate(), latency * 3 / 4 - remaining, OneSecond, 0); // x1.5
+                size_t padFrames = TimeToFrames(latency * 3 / 4 - remaining, m_device->GetRate()); // x1.5
 
                 chunk.PadHead(padFrames);
 
@@ -759,7 +759,7 @@ namespace SaneAudioRenderer
                     REFERENCE_TIME padTime = myTime - graphTime;
                     assert(padTime >= 0);
 
-                    size_t padFrames = (size_t)llMulDiv(m_device->GetRate(), padTime, OneSecond, 0);
+                    size_t padFrames = TimeToFrames(padTime, m_device->GetRate());
 
                     if (padFrames > m_device->GetRate() / 33) // ~30ms threshold
                     {
@@ -786,7 +786,7 @@ namespace SaneAudioRenderer
                     REFERENCE_TIME dropTime = std::min(graphTime - myTime, remaining - latency);
                     assert(dropTime >= 0);
 
-                    size_t dropFrames = (size_t)llMulDiv(m_device->GetRate(), dropTime, OneSecond, 0);
+                    size_t dropFrames = TimeToFrames(dropTime, m_device->GetRate());
 
                     dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 

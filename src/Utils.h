@@ -15,6 +15,12 @@ namespace SaneAudioRenderer
 
     typedef std::shared_ptr<const WAVEFORMATEX> SharedWaveFormat;
 
+    inline size_t TimeToFrames(int64_t time, uint32_t rate)
+    {
+        assert(rate > 0);
+        return (size_t)(llMulDiv(time, rate, OneSecond, 0));
+    }
+
     inline void ThrowIfFailed(HRESULT result)
     {
         if (FAILED(result))

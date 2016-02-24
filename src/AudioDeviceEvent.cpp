@@ -310,7 +310,7 @@ namespace SaneAudioRenderer
                             {
                                 int64_t renewSilence = m_renewPosition - currentPosition;
                                 if (renewSilence > 0)
-                                    m_renewSilenceFrames = (size_t)llMulDiv(renewSilence, rate, OneSecond, 0);
+                                    m_renewSilenceFrames = TimeToFrames(renewSilence, rate);
                             }
                             catch (HRESULT)
                             {
