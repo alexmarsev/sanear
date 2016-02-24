@@ -327,7 +327,6 @@ namespace SaneAudioRenderer
                             m_awaitingRenew = true;
                             m_observeInactivity = false;
                         }
-
                     }
 
                     break;
