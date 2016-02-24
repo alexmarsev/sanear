@@ -530,32 +530,31 @@ namespace SaneAudioRenderer
                     else if (m_sampleCorrection.GetLastFrameEnd() == 0)
                     {
                         DebugOut(ClassName(this), "empty start");
-                        const uint32_t rate = m_device->GetWaveFormat()->nSamplesPerSec;
 
                         if (!m_bitstreaming && !m_device->IsRealtime())
                         {
-                            size_t silenceFrames = rate * m_device->GetBufferDuration() / 5000; // Buffer / 5
+                            size_t silenceFrames = m_device->GetRate() * m_device->GetBufferDuration() / 5000; // Buffer / 5
 
                             DspChunk chunk = DspChunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
-                                                      silenceFrames, rate);
+                                                      silenceFrames, m_device->GetRate());
                             ZeroMemory(chunk.GetData(), chunk.GetSize());
 
                             DebugOut(ClassName(this), "pushing", silenceFrames, "frames of silence");
                             m_device->Push(chunk, nullptr);
 
-                            m_startClockOffset -= llMulDiv(silenceFrames, OneSecond, rate, 0);
+                            m_startClockOffset -= llMulDiv(silenceFrames, OneSecond, m_device->GetRate(), 0);
 
                             jitter = EstimateSlavingJitter();
                         }
 
                         if (!m_bitstreaming && jitter < 0)
                         {
-                            m_dropNextFrames = (size_t)llMulDiv(-jitter, rate, OneSecond, 0);
+                            m_dropNextFrames = (size_t)llMulDiv(-jitter, m_device->GetRate(), OneSecond, 0);
 
                             if (m_dropNextFrames > 0)
                             {
                                 DebugOut(ClassName(this), "will be dropping next", m_dropNextFrames, "frames");
-                                m_startClockOffset += llMulDiv(m_dropNextFrames, OneSecond, rate, 0);
+                                m_startClockOffset += llMulDiv(m_dropNextFrames, OneSecond, m_device->GetRate(), 0);
                                 jitter = EstimateSlavingJitter();
                             }
                         }
@@ -667,15 +666,14 @@ namespace SaneAudioRenderer
         {
             jitter = std::min(jitter, llMulDiv(m_device->GetBufferDuration(), OneSecond, 1000, 0));
 
-            uint32_t rate = m_device->GetWaveFormat()->nSamplesPerSec;
             DspChunk chunk(m_device->GetDspFormat(), m_device->GetWaveFormat()->nChannels,
-                           (size_t)llMulDiv(jitter, rate, OneSecond, 0), rate);
+                           (size_t)llMulDiv(jitter, m_device->GetRate(), OneSecond, 0), m_device->GetRate());
 
             if (!chunk.IsEmpty())
             {
-                m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, rate, 0);
+                m_startClockOffset -= llMulDiv(chunk.GetFrameCount(), OneSecond, m_device->GetRate(), 0);
 
-                DebugOut(ClassName(this), "push", chunk.GetFrameCount() * 1000. / rate,
+                DebugOut(ClassName(this), "push", chunk.GetFrameCount() * 1000. / m_device->GetRate(),
                          "ms of silence to minimize re-slaving jitter");
 
                 ZeroMemory(chunk.GetData(), chunk.GetSize());
@@ -725,8 +723,7 @@ namespace SaneAudioRenderer
             // Rate matching.
             if (remaining > latency) // x2.0
             {
-                size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                     remaining - latency * 3 / 4, OneSecond, 0); // x1.5
+                size_t dropFrames = (size_t)llMulDiv(m_device->GetRate(), remaining - latency * 3 / 4, OneSecond, 0); // x1.5
 
                 dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 
@@ -736,8 +733,7 @@ namespace SaneAudioRenderer
             }
             else if (remaining < latency / 2) // x1.0
             {
-                size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                    latency * 3 / 4 - remaining, OneSecond, 0); // x1.5
+                size_t padFrames = (size_t)llMulDiv(m_device->GetRate(), latency * 3 / 4 - remaining, OneSecond, 0); // x1.5
 
                 chunk.PadHead(padFrames);
 
@@ -763,15 +759,13 @@ namespace SaneAudioRenderer
                     REFERENCE_TIME padTime = myTime - graphTime;
                     assert(padTime >= 0);
 
-                    size_t padFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                        padTime, OneSecond, 0);
+                    size_t padFrames = (size_t)llMulDiv(m_device->GetRate(), padTime, OneSecond, 0);
 
-                    if (padFrames > m_device->GetWaveFormat()->nSamplesPerSec / 33) // ~30ms threshold
+                    if (padFrames > m_device->GetRate() / 33) // ~30ms threshold
                     {
                         chunk.PadHead(padFrames);
 
-                        REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond,
-                                                             m_device->GetWaveFormat()->nSamplesPerSec, 0);
+                        REFERENCE_TIME paddedTime = llMulDiv(padFrames, OneSecond, m_device->GetRate(), 0);
 
                         m_myClock.OffsetAudioClock(-paddedTime);
                         padTime -= paddedTime;
@@ -792,17 +786,15 @@ namespace SaneAudioRenderer
                     REFERENCE_TIME dropTime = std::min(graphTime - myTime, remaining - latency);
                     assert(dropTime >= 0);
 
-                    size_t dropFrames = (size_t)llMulDiv(m_device->GetWaveFormat()->nSamplesPerSec,
-                                                         dropTime, OneSecond, 0);
+                    size_t dropFrames = (size_t)llMulDiv(m_device->GetRate(), dropTime, OneSecond, 0);
 
                     dropFrames = std::min(dropFrames, chunk.GetFrameCount());
 
-                    if (dropFrames > m_device->GetWaveFormat()->nSamplesPerSec / 33) // ~30ms threshold
+                    if (dropFrames > m_device->GetRate() / 33) // ~30ms threshold
                     {
                         chunk.ShrinkHead(chunk.GetFrameCount() - dropFrames);
 
-                        REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond,
-                                                              m_device->GetWaveFormat()->nSamplesPerSec, 0);
+                        REFERENCE_TIME droppedTime = llMulDiv(dropFrames, OneSecond, m_device->GetRate(), 0);
 
                         m_myClock.OffsetAudioClock(droppedTime);
                         dropTime -= droppedTime;
@@ -832,7 +824,7 @@ namespace SaneAudioRenderer
         const auto inRate = m_inputFormat->nSamplesPerSec;
         const auto inChannels = m_inputFormat->nChannels;
         const auto inMask = DspMatrix::GetChannelMask(*m_inputFormat);
-        const auto outRate = m_device->GetWaveFormat()->nSamplesPerSec;
+        const auto outRate = m_device->GetRate();
         const auto outChannels = m_device->GetWaveFormat()->nChannels;
         const auto outMask = DspMatrix::GetChannelMask(*m_device->GetWaveFormat());
 

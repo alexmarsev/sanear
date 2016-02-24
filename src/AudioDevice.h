@@ -62,6 +62,7 @@ namespace SaneAudioRenderer
         SharedWaveFormat GetMixFormat()      const { return m_backend->mixFormat; }
 
         SharedWaveFormat GetWaveFormat()     const { return m_backend->waveFormat; }
+        uint32_t         GetRate()           const { return m_backend->waveFormat->nSamplesPerSec; }
         DspFormat        GetDspFormat()      const { return m_backend->dspFormat; }
         uint32_t         GetBufferDuration() const { return m_backend->bufferDuration; }
         REFERENCE_TIME   GetStreamLatency()  const { return m_backend->deviceLatency; }

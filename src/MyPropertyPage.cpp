@@ -182,7 +182,7 @@ namespace SaneAudioRenderer
                                        formatInputField : formatInputField + L" -> " + formatDeviceField;
 
         std::wstring rateInputField = (inputFormat && !bitstreaming) ? std::to_wstring(inputFormat->nSamplesPerSec) : L"-";
-        std::wstring rateDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetWaveFormat()->nSamplesPerSec) : L"-";
+        std::wstring rateDeviceField = (pDevice && !bitstreaming) ? std::to_wstring(pDevice->GetRate()) : L"-";
         std::wstring rateField = (rateInputField == rateDeviceField) ?
                                       rateInputField : rateInputField + L" -> " + rateDeviceField;
 
