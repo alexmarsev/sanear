@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "AudioDeviceManager.h"
 
 #include "AudioDeviceEvent.h"
@@ -208,7 +208,7 @@ namespace SaneAudioRenderer
                     return E_FAIL;
 
                 WAVEFORMATEX* pFormat;
-                ThrowIfFailed(backend->audioClient->GetMixFormat(&pFormat));
+                ThrowIfFailed(backend->audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, &(*format), &pFormat));
                 SharedWaveFormat mixFormat(pFormat, CoTaskMemFreeDeleter());
 
                 backend->mixFormat = mixFormat;
